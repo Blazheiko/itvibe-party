@@ -1,0 +1,26 @@
+# robots.txt для cosmetolog-svitlana.com
+
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://cosmetolog-svitlana.com/sitemap.xml
+
+# Швидкість сканування
+Crawl-delay: 1
+
+# Блокуємо сканування dev файлів
+Disallow: /node_modules/
+Disallow: /*.json$
+Disallow: /*.ts$
+Disallow: /src/
+
+# Дозволяємо CSS, JS, зображення для кращого рендерингу
+Allow: /*.css$
+Allow: /*.js$
+Allow: /*.jpg$
+Allow: /*.jpeg$
+Allow: /*.png$
+Allow: /*.webp$
+Allow: /*.svg$
+

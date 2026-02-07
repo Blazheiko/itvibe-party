@@ -1,0 +1,257 @@
+import type { WebSocket } from "uWebSockets.js";
+import type { ChildLogger } from "pino";
+import type { Type } from "@arktype/type";
+// import type { UserData } from '#vendor/start/server.js';
+
+export type Payload = Record<string, unknown> | string | Buffer;
+
+export type ValidatorFunction = (payload: Payload) => Promise<Payload>;
+
+export interface UserConnection extends Record<string, unknown> {
+  ip: string;
+  userAgent: string;
+  ip2: string;
+  token: string;
+  user: unknown;
+  uuid: string;
+  sessionId: string | undefined;
+  userId: string | undefined;
+  timeStart: number;
+}
+
+export interface MyWebSocket extends WebSocket<Record<string, unknown>> {
+  // sendJson: (data: any) => void;
+  // timeout: NodeJS.Timeout,
+  // UUID: string,
+  id: string;
+}
+export interface Header {
+  name: string;
+  value: string;
+}
+export interface Cookie {
+  name: string;
+  value: string;
+  path: string | undefined;
+  httpOnly: boolean | undefined;
+  secure: boolean | undefined;
+  expires: Date | undefined;
+  maxAge: number | undefined;
+  sameSite: string | undefined;
+}
+
+export interface HttpContext<TPayload = unknown> {
+  requestId: string;
+  logger: ChildLogger;
+  httpData: HttpData<TPayload>;
+  validator: Type | undefined;
+  responseData: ResponseData;
+  session: Session;
+  auth: Auth;
+}
+export interface WsContext<TPayload = unknown> {
+  requestId: string;
+  wsData: WsData<TPayload>;
+  validator: Type | undefined;
+  responseData: WsResponseData;
+  session: null;
+  auth: null;
+  logger: ChildLogger;
+}
+
+export type WsMiddleware = (
+  context: WsContext,
+  next: () => Promise<void>,
+) => Promise<void>;
+
+export type Middleware = (
+  context: HttpContext,
+  next: () => Promise<void>,
+) => Promise<void>;
+
+export interface Auth {
+  getUserId: () => string | null;
+  check: () => boolean;
+  login: (userId: string | bigint | number | undefined) => Promise<boolean>;
+  logout: () => Promise<boolean>;
+  logoutAll: () => Promise<number>;
+}
+
+export interface Session {
+  sessionInfo: SessionInfo | null;
+  updateSessionData: (newData: SessionData) => Promise<SessionInfo | null>;
+  changeSessionData: (newData: SessionData) => Promise<SessionInfo | null>;
+  destroySession: (sessionId: string | undefined) => Promise<void>;
+  destroyAllSessions: (userId: string | bigint | number) => Promise<number>;
+}
+
+export type SessionData = Record<string, unknown>;
+
+export interface SessionInfo {
+  id: string;
+  data: SessionData;
+  createdAt: string;
+  updatedAt?: string;
+  // expiresAt: string;
+}
+
+export interface HttpData<TPayload = unknown> {
+  ip: string | null | undefined;
+  params: Params;
+  payload: TPayload | null;
+  query: URLSearchParams;
+  headers: Map<string, string>;
+  contentType: string | undefined;
+  cookies: Map<string, string>;
+  isJson: boolean;
+  validator: Type | undefined;
+}
+
+export interface ErrorResponse {
+  code: number;
+  message: string;
+  messages?: Record<string, unknown> | string[];
+}
+
+export interface WsMessage {
+  payload: Payload | null;
+  event: string;
+  timestamp: number;
+}
+
+export interface WsResponseData {
+  data: Payload | null;
+  error: ErrorResponse | null;
+  event: string;
+  status: string;
+  timestamp: number;
+}
+
+export interface WsData<TPayload = unknown> {
+  middlewareData: Record<string, unknown>;
+  status: string;
+  payload: TPayload;
+}
+
+export interface CookieOptions {
+  path: string | undefined;
+  httpOnly: boolean | undefined;
+  secure: boolean | undefined;
+  maxAge: number | undefined;
+  sameSite: string | undefined;
+  expires: Date | undefined;
+}
+
+export interface ResponseData {
+  aborted: boolean;
+  payload: Payload | null;
+  middlewareData: Record<string, unknown>;
+  headers: Header[];
+  cookies: Map<string, Cookie>;
+  status: number;
+  deleteCookie: (name: string) => void;
+  setCookie: (name: string, value: string, options: CookieOptions) => void;
+  setHeader: (name: string, value: string) => void;
+}
+
+export type Method = "get" | "post" | "del" | "put" | "patch" | "ws" | "delete";
+export type WsRoutes = Record<string, RouteItem>;
+export type Validators = Record<string, Record<string, unknown>>;
+export interface RateLimit {
+  windowMs: number;
+  maxRequests: number;
+}
+
+// Helper type to infer payload type from arktype schema
+export type InferPayload<T> = T extends Type<infer U> ? U : unknown;
+
+// Handler types for routes
+type BivariantHandler<TContext> = {
+  bivarianceHack(context: TContext): Promise<Payload>;
+}["bivarianceHack"];
+
+export type RouteHandler<TPayload = unknown> = BivariantHandler<
+  HttpContext<TPayload> | WsContext<TPayload>
+>;
+export type HttpHandler<TPayload = unknown> = BivariantHandler<
+  HttpContext<TPayload>
+>;
+export type WsHandler<TPayload = unknown> = BivariantHandler<
+  WsContext<TPayload>
+>;
+
+// Controller type - allows handlers that accept narrower context types
+export type HttpController = Record<string, HttpHandler>;
+export type WsController = Record<string, WsHandler>;
+
+// Base route configuration without handler (for defineRoute)
+export interface RouteConfig<TValidator extends Type | undefined = undefined> {
+  url: string;
+  method: Method;
+  middlewares?: string[];
+  validator: TValidator;
+  description: string;
+  rateLimit?: RateLimit | undefined;
+  groupRateLimit?: RateLimit | undefined;
+  parametersKey?: string[];
+  response?: ResponseSchema;
+  requestBody?: RequestSchema;
+  typeResponse: string;
+}
+
+// RouteItem with handler - uses function overload pattern for type erasure
+export interface RouteItem extends RouteConfig<Type | undefined> {
+  handler: (context: HttpContext | WsContext) => Promise<Payload>;
+}
+
+export interface ResponseSchema {
+  type: string; // Name of the response type
+  description?: string;
+  example?: Record<string, unknown>;
+  schema?: Record<string, SchemaField>;
+}
+
+export interface RequestSchema {
+  description?: string;
+  example?: Record<string, unknown>;
+  schema?: Record<string, SchemaField>;
+}
+
+export interface SchemaField {
+  type: "string" | "number" | "boolean" | "object" | "array";
+  description?: string;
+  required?: boolean;
+  example?: Record<string, unknown>;
+  items?: SchemaField; // For arrays
+  properties?: Record<string, SchemaField>; // For objects
+}
+export interface groupRouteItem {
+  group: RouteItem[];
+  middlewares?: string[];
+  prefix?: string;
+  rateLimit?: RateLimit;
+  description: string;
+  prefix: string;
+}
+
+export interface WebSocketConnectionEvent {
+  userId: string;
+  sessionId: string;
+  uuid: string;
+  ip: string;
+  userAgent: string;
+  timestamp: number;
+  ws: MyWebSocket;
+}
+
+export interface WebSocketDisconnectionEvent {
+  userId: string;
+  sessionId: string;
+  uuid: string;
+  code: number;
+  timestamp: number;
+}
+// Legacy alias for backward compatibility
+export type routeItem = RouteItem;
+
+export type routeList = (routeItem | groupRouteItem)[];

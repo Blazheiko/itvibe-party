@@ -1,0 +1,50 @@
+{
+  "name": "backend",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "imports": {
+    "#app/*": "./dist/app/*",
+    "#config/*": "./dist/config/*",
+    "#vendor/*": "./dist/vendor/*",
+    "#database/*": "./dist/database/*",
+    "#logger": "./dist/vendor/utils/logger.js",
+    "#drizzle/*": "./dist/drizzle/*"
+  },
+  "scripts": {
+    "build": "tsc --build",
+    "dev": "tsx watch src/index.ts",
+    "start": "node dist/index.js",
+    "clean": "rm -rf dist .tsbuildinfo",
+    "typecheck": "tsc --noEmit",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:studio": "drizzle-kit studio",
+    "db:seed": "tsx src/db/seed.ts",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "shared": "workspace:*",
+    "@arktype/type": "^2.1.29",
+    "dotenv": "^16.6.1",
+    "drizzle-orm": "^0.44.7",
+    "ioredis": "^5.3.2",
+    "luxon": "^3.4.4",
+    "metautil": "^5.2.0",
+    "mysql2": "^3.15.3",
+    "pino": "^8.17.2",
+    "pino-pretty": "^10.3.1",
+    "ts-pattern": "^5.6.0",
+    "uWebSockets.js": "github:uNetworking/uWebSockets.js#v20.56.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.12",
+    "@types/luxon": "^3.7.1",
+    "@types/uuid": "^10.0.0",
+    "drizzle-kit": "^0.30.6",
+    "tsx": "^4.19.2",
+    "tsxp": "^1.1.5",
+    "vitest": "^2.1.8"
+  }
+}
