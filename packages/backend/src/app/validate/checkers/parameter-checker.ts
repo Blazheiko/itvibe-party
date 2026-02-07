@@ -1,34 +1,53 @@
 /**
- * Validates URL path parameters
+ * Validates URL path parameters using ArkType schemas.
  */
 
-const MAX_PARAMETER_LENGTH = 256;
+import { type } from "@arktype/type";
 
 /**
- * Valid parameter characters: letters, numbers, hyphens, underscores, dots, slashes
- * This pattern allows common URL-safe characters for path parameters
+ * Error class for parameter validation failures
  */
-const PARAMETER_PATTERN = /^[a-zA-Z0-9\-_./]*$/;
+export class ParameterValidationError extends Error {
+  public readonly code: string = "E_PARAMETER_VALIDATION_ERROR";
+  public readonly parameterName: string;
+  public readonly parameterValue: string;
+
+  constructor(parameterName: string, parameterValue: string, message?: string) {
+    super(
+      message ??
+        `Invalid parameter: ${parameterName} with value: ${parameterValue}`,
+    );
+    this.name = "ParameterValidationError";
+    this.parameterName = parameterName;
+    this.parameterValue = parameterValue;
+  }
+}
+
+/**
+ * Parameter value schema:
+ * - Max 256 characters
+ * - Valid characters: letters, numbers, hyphens, underscores, dots, slashes
+ */
+const ParameterSchema = type("string <= 256").and(type(/^[a-zA-Z0-9\-_./]*$/));
 
 /**
  * Validates URL path parameter value
  * @param value - Parameter value to validate
- * @returns true if parameter value is valid, false otherwise
+ * @param parameterName - Name of the parameter being validated
+ * @throws {ParameterValidationError} When parameter validation fails
  */
-export function validateParameter(value: string): boolean {
-    if (value === null || value === undefined) {
-        return true; // Empty parameters are allowed
-    }
+export function validateParameter(value: string, parameterName?: string): void {
+  const paramName = parameterName ?? "unknown";
 
-    const stringValue = String(value);
+  if (value.length === 0) return;
 
-    if (stringValue.length > MAX_PARAMETER_LENGTH) {
-        return false;
-    }
+  const result = ParameterSchema(value);
 
-    if (stringValue.length > 0 && !PARAMETER_PATTERN.test(stringValue)) {
-        return false;
-    }
-
-    return true;
+  if (result instanceof type.errors) {
+    throw new ParameterValidationError(
+      paramName,
+      value,
+      `Parameter '${paramName}' validation failed: ${result.summary}`,
+    );
+  }
 }

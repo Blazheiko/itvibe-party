@@ -724,13 +724,15 @@ const getHttpData = async (
     typeof route.validator === "function"
   ) {
     const httpPayload = await getData(res, contentType);
-    const validatedInput = route.validator(httpPayload) as Payload;
+    if (httpPayload !== null) {
+      const validatedInput = (route.validator as (payload: Payload) => unknown)(httpPayload);
 
-    if (validatedInput instanceof type.errors) {
-      throw new ValidationError([validatedInput.summary]);
+      if (validatedInput instanceof type.errors) {
+        throw new ValidationError([validatedInput.summary]);
+      }
+
+      payload = validatedInput;
     }
-
-    payload = validatedInput;
   }
 
   return {
