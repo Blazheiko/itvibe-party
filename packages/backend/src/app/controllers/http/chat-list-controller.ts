@@ -1,4 +1,4 @@
-import { HttpContext } from './../../../vendor/types/types.js';
+import { HttpContext } from '#vendor/types/types.js';
 import { getOnlineUser } from '#vendor/utils/network/ws-handlers.js';
 import ContactList from '#app/models/contact-list.js';
 import User from '#app/models/User.js';

@@ -1,6 +1,6 @@
 import { generateKey } from 'metautil';
 import redis from '#database/redis.js';
-import { SessionInfo } from '../../vendor/types/types.js';
+import { SessionInfo } from '#vendor/types/types.js';
 import configApp from '#config/app.js';
 
 export default async (sessionInfo: SessionInfo, userId: number | bigint) => {

@@ -1,5 +1,5 @@
 import Project from '#app/models/Project.js';
-import { HttpContext } from '../../../vendor/types/types.js';
+import { HttpContext } from '#vendor/types/types.js';
 import taskModel from '#app/models/Task.js';
 import type {
     GetTasksResponse,

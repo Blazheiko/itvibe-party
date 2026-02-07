@@ -4,7 +4,7 @@ import {
     WsContext,
     WsData,
     WsResponseData,
-} from '../../../vendor/types/types.js';
+} from '#vendor/types/types.js';
 import { broadcastMessage } from '#vendor/start/server.js';
 import broadcastig from '#app/servises/broadcastig.js';
 import readMessages from '#app/servises/chat/read-messages.js';

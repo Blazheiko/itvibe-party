@@ -1,4 +1,4 @@
-import { HttpContext } from '../../../vendor/types/types.js';
+import { HttpContext } from '#vendor/types/types.js';
 import Notes from '#app/models/Notes.js';
 import NotesPhoto from '#app/models/notes-photo.js';
 import type {

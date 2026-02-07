@@ -1,8 +1,8 @@
 import { db } from '#database/db.js';
 import { invitations, contactList } from '#database/schema.js';
 import { eq, and } from 'drizzle-orm';
-import ContactList from '../models/contact-list.js';
-import logger from '../../logger.js';
+import ContactList from '#app/models/contact-list.js';
+import logger from '#logger';
 
 export default async (token: string, userId: number) => {
     console.log('inventionAccept');

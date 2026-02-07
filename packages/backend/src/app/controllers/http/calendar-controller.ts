@@ -1,4 +1,4 @@
-import { HttpContext } from '../../../vendor/types/types.js';
+import { HttpContext } from '#vendor/types/types.js';
 import calendarModel from '#app/models/Calendar.js';
 import type {
     GetEventsResponse,
