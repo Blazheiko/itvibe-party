@@ -1,4 +1,21 @@
 /**
+ * Input types for InvitationController
+ */
+
+export interface CreateInvitationInput {
+    userId: number;
+    name: string;
+}
+
+export interface GetUserInvitationsInput {
+    userId: number;
+}
+
+export interface UseInvitationInput {
+    token: string;
+}
+
+/**
  * Response types for InvitationController
  */
 

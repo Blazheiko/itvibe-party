@@ -1,4 +1,4 @@
-import { HttpContext } from '#vendor/types/types.js';
+import type { HttpContext } from '#vendor/types/types.js';
 import PushSubscription from '#app/models/push-subscription.js';
 import type {
     GetSubscriptionsResponse,

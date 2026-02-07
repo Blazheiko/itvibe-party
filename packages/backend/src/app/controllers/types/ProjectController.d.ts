@@ -1,4 +1,28 @@
 /**
+ * Input types for ProjectController
+ */
+
+export interface CreateProjectInput {
+    title: string;
+    description?: string;
+    color?: string;
+    startDate?: string;
+    endDate?: string;
+    dueDate?: string;
+}
+
+export interface UpdateProjectInput {
+    title?: string;
+    description?: string;
+    color?: string;
+    startDate?: string;
+    endDate?: string;
+    dueDate?: string;
+    isActive?: boolean;
+    progress?: number;
+}
+
+/**
  * Response types for ProjectController
  */
 

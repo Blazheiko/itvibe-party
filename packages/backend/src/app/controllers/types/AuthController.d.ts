@@ -1,4 +1,21 @@
 /**
+ * Input types for AuthController
+ */
+
+export interface RegisterInput {
+    name: string;
+    email: string;
+    password: string;
+    token?: string;
+}
+
+export interface LoginInput {
+    email: string;
+    password: string;
+    token?: string;
+}
+
+/**
  * Response types for AuthController
  */
 

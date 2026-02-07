@@ -1,5 +1,5 @@
 import userModel from '#app/models/User.js';
-import { HttpContext } from '#vendor/types/types.js';
+import type { HttpContext } from '#vendor/types/types.js';
 import { hashPassword, validatePassword } from 'metautil';
 import inventionAccept from '#app/servises/invention-accept.js';
 import generateWsToken from '#app/servises/generate-ws-token.js';

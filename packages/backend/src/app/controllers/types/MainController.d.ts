@@ -1,4 +1,14 @@
 /**
+ * Input types for MainController
+ */
+
+export interface SaveUserInput {
+    name: string;
+    email: string;
+    password: string;
+}
+
+/**
  * Response types for MainController
  */
 

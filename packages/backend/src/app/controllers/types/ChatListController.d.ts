@@ -1,4 +1,43 @@
 /**
+ * Input types for Chat Controllers (ChatList & Message)
+ */
+
+export interface GetContactListInput {
+    userId: number;
+}
+
+export interface CreateChatInput {
+    participantId: number;
+}
+
+export interface DeleteChatInput {
+    chatId: number;
+}
+
+export interface GetMessagesInput {
+    userId: number;
+    contactId: number;
+}
+
+export interface SendMessageInput {
+    userId: number;
+    contactId: number;
+    content: string;
+    type?: 'TEXT' | 'IMAGE' | 'VIDEO' | 'AUDIO';
+    src?: string;
+}
+
+export interface EditMessageInput {
+    userId: number;
+    messageId: number;
+    content: string;
+}
+
+export interface MarkAsReadInput {
+    messageId: number;
+}
+
+/**
  * Response types for Chat Controllers (ChatList & Message)
  */
 

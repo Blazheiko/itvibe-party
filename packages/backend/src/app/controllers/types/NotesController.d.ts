@@ -1,4 +1,24 @@
 /**
+ * Input types for NotesController
+ */
+
+export interface CreateNoteInput {
+    title: string;
+    description: string;
+}
+
+export interface UpdateNoteInput {
+    title?: string;
+    description?: string;
+}
+
+export interface AddPhotoInput {
+    src: string;
+    filename: string;
+    size: number;
+}
+
+/**
  * Response types for NotesController
  */
 

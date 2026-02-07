@@ -1,4 +1,27 @@
 /**
+ * Input types for CalendarController
+ */
+
+export interface CreateEventInput {
+    title: string;
+    description?: string;
+    startTime: string;
+    endTime: string;
+}
+
+export interface UpdateEventInput {
+    title?: string;
+    description?: string;
+    startTime?: string;
+    endTime?: string;
+}
+
+export interface GetEventsByRangeInput {
+    startDate: string;
+    endDate: string;
+}
+
+/**
  * Response types for CalendarController
  */
 
