@@ -3,22 +3,27 @@ import type {
   RouteItem,
   RouteConfig,
   InferPayload,
-  HttpContext,
   Payload,
+  HttpContext,
 } from "#vendor/types/types.js";
+
+/**
+ * Тип возвращаемого значения handler — расширен object для совместимости с interface response-типами
+ */
+type HandlerReturn = Promise<Payload | object> | Payload | object;
 
 /**
  * Типизированный handler с payload выведенным из validator
  */
-type TypedHandler<TValidator extends Type | undefined> = TValidator extends Type
-  ? (context: HttpContext<InferPayload<TValidator>>) => Promise<Payload>
-  : (context: HttpContext) => Promise<Payload>;
+type TypedHandler<TValidator extends Type | string | undefined> = TValidator extends Type
+  ? (context: HttpContext<InferPayload<TValidator>>) => HandlerReturn
+  : (context: HttpContext) => HandlerReturn;
 
 /**
  * Конфигурация роута с типизированным handler
  */
 interface TypedRouteConfig<
-  TValidator extends Type | undefined,
+  TValidator extends Type | string | undefined,
 > extends RouteConfig<TValidator> {
   handler: TypedHandler<TValidator>;
 }
@@ -41,7 +46,7 @@ interface TypedRouteConfig<
  *   typeResponse: "ContactResponse",
  * })
  */
-export function defineRoute<TValidator extends Type | undefined = undefined>(
+export function defineRoute<TValidator extends Type | string | undefined = undefined>(
   config: TypedRouteConfig<TValidator>,
 ): RouteItem {
   return config as RouteItem;

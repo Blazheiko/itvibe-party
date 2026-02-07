@@ -185,18 +185,18 @@ export type HttpController = Record<string, HttpHandler>;
 export type WsController = Record<string, WsHandler>;
 
 // Base route configuration without handler (for defineRoute)
-export interface RouteConfig<TValidator extends Type | undefined = undefined> {
+export interface RouteConfig<TValidator extends Type | string | undefined = undefined> {
   url: string;
   method: Method;
   middlewares?: string[];
-  validator: TValidator;
-  description: string;
+  validator?: TValidator | undefined;
+  description?: string | undefined;
   rateLimit?: RateLimit | undefined;
   groupRateLimit?: RateLimit | undefined;
   parametersKey?: string[];
   response?: ResponseSchema;
   requestBody?: RequestSchema;
-  typeResponse: string;
+  typeResponse?: string | undefined;
 }
 
 // RouteItem with handler - uses function overload pattern for type erasure

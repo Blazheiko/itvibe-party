@@ -8,62 +8,63 @@ import CalendarController from '#app/controllers/http/calendar-controller.js';
 import TaskController from '#app/controllers/http/task-controller.js';
 import ProjectController from '#app/controllers/http/project-controller.js';
 import PushSubscriptionController from '#app/controllers/http/push-subscription-controller.js';
+import { defineRoute } from '#vendor/utils/routing/define-route.js';
 
 export default [
     {
         group: [
-            {
+            defineRoute({
                 url: '/test-route-4',
                 method: 'get',
                 handler: MainController.testRoute,
                 typeResponse: 'MainController.TestRouteResponse',
                 description: 'Test route',
-            },
-            {
+            }),
+            defineRoute({
                 url: '/test-tasks',
                 method: 'get',
                 handler: TaskController.testTasks,
                 typeResponse: 'TaskController.TestTasksResponse',
                 description: 'Get all tasks 4',
-            },
+            }),
         ],
         description: 'Test routes',
         prefix: 'test',
     },
     {
         group: [
-            {
+            defineRoute({
                 url: '/register',
                 method: 'post',
                 handler: AuthController.register,
                 validator: 'register',
                 typeResponse: 'AuthController.RegisterResponse',
                 description: 'Register a new user',
-            },
-            {
+            }),
+            defineRoute({
                 url: '/login',
                 method: 'post',
                 handler: AuthController.login,
                 validator: 'login',
                 typeResponse: 'AuthController.LoginResponse',
                 description: 'Login a user',
-            },
-            {
+            }),
+            defineRoute({
                 url: '/logout',
                 method: 'post',
                 handler: AuthController.logout,
                 typeResponse: 'AuthController.LogoutResponse',
                 description: 'Logout a user',
                 middlewares: ['auth_guard'],
-            },
-            {
+            }),
+            defineRoute({
                 url: '/logout-all',
                 method: 'post',
                 handler: AuthController.logoutAll,
                 typeResponse: 'AuthController.LogoutAllResponse',
                 description: 'Logout all devices',
                 middlewares: ['auth_guard'],
-            },
+            }),
         ],
         description: 'Auth routes',
         middlewares: ['session_web'],
@@ -75,86 +76,86 @@ export default [
     },
     {
         group: [
-            {
+            defineRoute({
                 url: '/get-contact-list',
                 method: 'post',
                 handler: ChatListController.getContactList,
                 typeResponse: 'ChatListController.GetContactListResponse',
                 description: 'Get contact list',
-            },
-            {
+            }),
+            defineRoute({
                 url: '/chats',
                 method: 'post',
                 handler: ChatListController.createChat,
                 validator: 'createChat',
                 typeResponse: 'ChatListController.CreateChatResponse',
                 description: 'Create a new chat',
-            },
-            {
+            }),
+            defineRoute({
                 url: '/chats/:chatId',
                 method: 'delete',
                 handler: ChatListController.deleteChat,
                 validator: 'deleteChat',
                 typeResponse: 'ChatListController.DeleteChatResponse',
                 description: 'Delete a chat',
-            },
-            {
+            }),
+            defineRoute({
                 url: '/get-messages',
                 method: 'post',
                 handler: MessageController.getMessages,
                 validator: 'getMessages',
                 typeResponse: 'ChatListController.GetMessagesResponse',
                 description: 'Get messages',
-            },
-            {
+            }),
+            defineRoute({
                 url: '/send-chat-messages',
                 method: 'post',
                 handler: MessageController.sendChatMessage,
                 validator: 'sendMessage',
                 typeResponse: 'ChatListController.SendMessageResponse',
                 description: 'Send a message',
-            },
-            {
+            }),
+            defineRoute({
                 url: '/messages/:messageId',
                 method: 'delete',
                 handler: MessageController.deleteMessage,
                 validator: 'deleteMessage',
                 typeResponse: 'ChatListController.DeleteMessageResponse',
                 description: 'Delete a message',
-            },
-            {
+            }),
+            defineRoute({
                 url: '/messages/:messageId',
                 method: 'put',
                 handler: MessageController.editMessage,
                 validator: 'editMessage',
                 typeResponse: 'ChatListController.EditMessageResponse',
                 description: 'Edit a message',
-            },
-            {
+            }),
+            defineRoute({
                 url: '/messages/:messageId/read',
                 method: 'put',
                 handler: MessageController.markAsRead,
                 validator: 'markMessageAsRead',
                 typeResponse: 'ChatListController.MarkMessageAsReadResponse',
                 description: 'Mark a message as read',
-            },
+            }),
             // Invitation Routes
-            {
+            defineRoute({
                 url: '/invitations',
                 method: 'post',
                 handler: InvitationController.createInvitation,
                 validator: 'createInvitation',
                 typeResponse: 'InvitationController.CreateInvitationResponse',
                 description: 'Create an invitation',
-            },
-            {
+            }),
+            defineRoute({
                 url: '/invitations/user/:userId',
                 method: 'get',
                 handler: InvitationController.getUserInvitations,
                 validator: 'getUserInvitations',
                 typeResponse: 'InvitationController.GetUserInvitationsResponse',
                 description: 'Get user invitations',
-            },
+            }),
         ],
         description: 'Chat routes',
         middlewares: ['session_web', 'auth_guard'],
@@ -162,98 +163,98 @@ export default [
     },
     {
         group: [
-            {
+            defineRoute({
                 url: '/init',
                 method: 'get',
                 handler: MainController.init,
                 typeResponse: 'MainController.InitResponse',
                 description: 'Initialize the main controller',
                 middlewares: ['auth_guard'],
-            },
-            {
+            }),
+            defineRoute({
                 url: '/update-ws-token',
                 method: 'get',
                 handler: MainController.updateWsToken,
                 typeResponse: 'MainController.UpdateWsTokenResponse',
                 description: 'Update the WebSocket token',
                 middlewares: ['auth_guard'],
-            },
-            {
+            }),
+            defineRoute({
                 url: '/invitations/use',
                 method: 'post',
                 handler: InvitationController.useInvitation,
                 validator: 'useInvitation',
                 typeResponse: 'InvitationController.UseInvitationResponse',
                 description: 'Use an invitation',
-            },
-            {
+            }),
+            defineRoute({
                 url: '/test-header/:testParam/param2/:testParam2',
                 method: 'get',
-                handler: MainController.testHeaders,        
+                handler: MainController.testHeaders,
                 typeResponse: 'MainController.TestHeadersResponse',
                 description: 'Test headers',
-            },
-            {
+            }),
+            defineRoute({
                 url: '/test-cookie',
                 method: 'get',
                 handler: MainController.getSetCookies,
                 typeResponse: 'MainController.GetSetCookiesResponse',
                 description: 'Test cookies',
-            },
-            {
+            }),
+            defineRoute({
                 url: '/test-session',
                 method: 'get',
                 handler: MainController.testSession,
                 typeResponse: 'MainController.TestSessionResponse',
                 description: 'Test session',
-            },
-            {
+            }),
+            defineRoute({
                 url: '/save-user',
                 method: 'post',
                 handler: MainController.saveUser,
                 validator: 'register',
                 typeResponse: 'MainController.SaveUserResponse',
                 description: 'Save a user',
-            },
-            {
+            }),
+            defineRoute({
                 url: '/set-header-and-cookie',
                 method: 'get',
                 handler: MainController.setHeaderAndCookie,
                 typeResponse: 'MainController.SetHeaderAndCookieResponse',
                 description: 'Set header and cookie',
-            },
-            {
+            }),
+            defineRoute({
                 url: '/test-middleware',
                 method: 'get',
                 handler: MainController.testMiddleware,
                 middlewares: ['test1'],
                 typeResponse: 'MainController.TestMiddlewareResponse',
                 description: 'Test middleware',
-            },
+            }),
             {
                 group: [
-                    {
+                    defineRoute({
                         url: '/test-middleware-2',
                         method: 'get',
                         handler: MainController.testMiddleware2,
                         middlewares: ['test2'],
-                    },
+                    }),
                     {
                         group: [
-                            {
+                            defineRoute({
                                 url: '/test-middleware-3',
                                 method: 'get',
                                 handler: MainController.testMiddleware3,
                                 middlewares: ['test4'],
-                            },
+                            }),
                         ],
                         middlewares: ['test3'],
                         prefix: 'test3',
-                    }
+                    },
                 ],
                 middlewares: ['test2'],
                 prefix: 'test2',
-            }
+            },
         ],
         description: 'Main routes',
         middlewares: ['session_web'],
@@ -262,62 +263,62 @@ export default [
     {
         group: [
             // Notes Routes
-            {
+            defineRoute({
                 url: '/',
                 method: 'get',
                 handler: NotesController.getNotes,
                 typeResponse: 'NotesController.GetNotesResponse',
                 description: 'Get all notes',
-            },
-            {
+            }),
+            defineRoute({
                 url: '/',
                 method: 'post',
                 handler: NotesController.createNote,
                 validator: 'createNote',
                 typeResponse: 'NotesController.CreateNoteResponse',
                 description: 'Create a new note',
-            },
-            {
+            }),
+            defineRoute({
                 url: '/:noteId',
                 method: 'get',
                 handler: NotesController.getNote,
                 validator: 'getNote',
                 typeResponse: 'NotesController.GetNoteResponse',
                 description: 'Get a note by id',
-            },
-            {
+            }),
+            defineRoute({
                 url: '/:noteId',
                 method: 'put',
                 handler: NotesController.updateNote,
                 validator: 'updateNote',
                 typeResponse: 'NotesController.UpdateNoteResponse',
                 description: 'Update a note by id',
-            },
-            {
+            }),
+            defineRoute({
                 url: '/:noteId',
                 method: 'delete',
                 handler: NotesController.deleteNote,
                 validator: 'deleteNote',
                 typeResponse: 'NotesController.DeleteNoteResponse',
                 description: 'Delete a note by id',
-            },
+            }),
             // Notes Photo Routes
-            {
+            defineRoute({
                 url: '/:noteId/photos',
                 method: 'post',
                 handler: NotesController.addPhoto,
                 validator: 'addNotePhoto',
                 typeResponse: 'NotesController.AddNotePhotoResponse',
                 description: 'Add a photo to a note',
-            },
-            {
+            }),
+            defineRoute({
                 url: '/:noteId/photos/:photoId',
                 method: 'delete',
                 handler: NotesController.deletePhoto,
                 validator: 'deleteNotePhoto',
                 typeResponse: 'NotesController.DeleteNotePhotoResponse',
                 description: 'Delete a photo from a note',
-            },
+            }),
         ],
         description: 'Notes routes',
         middlewares: ['session_web', 'auth_guard'],
@@ -326,62 +327,62 @@ export default [
     {
         group: [
             // Calendar Routes
-            {
+            defineRoute({
                 url: '/events',
                 method: 'get',
                 handler: CalendarController.getEvents,
                 typeResponse: 'CalendarController.GetEventsResponse',
                 description: 'Get all events',
-            },
-            {
+            }),
+            defineRoute({
                 url: '/events',
                 method: 'post',
                 handler: CalendarController.createEvent,
                 validator: 'createEvent',
                 typeResponse: 'CalendarController.CreateEventResponse',
                 description: 'Create a new event',
-            },
-            {
+            }),
+            defineRoute({
                 url: '/events/:eventId',
                 method: 'get',
                 handler: CalendarController.getEvent,
                 validator: 'getEvent',
                 typeResponse: 'CalendarController.GetEventResponse',
                 description: 'Get an event by id',
-            },
-            {
+            }),
+            defineRoute({
                 url: '/events/:eventId',
                 method: 'put',
                 handler: CalendarController.updateEvent,
                 validator: 'updateEvent',
                 typeResponse: 'CalendarController.UpdateEventResponse',
                 description: 'Update an event by id',
-            },
-            {
+            }),
+            defineRoute({
                 url: '/events/:eventId',
                 method: 'delete',
                 handler: CalendarController.deleteEvent,
                 validator: 'deleteEvent',
                 typeResponse: 'CalendarController.DeleteEventResponse',
                 description: 'Delete an event by id',
-            },
+            }),
             // Calendar specific routes
-            {
+            defineRoute({
                 url: '/events/date/:date',
                 method: 'get',
                 handler: CalendarController.getEventsByDate,
                 validator: 'getEventsByDate',
                 typeResponse: 'CalendarController.GetEventsByDateResponse',
                 description: 'Get all events for a date',
-            },
-            {
+            }),
+            defineRoute({
                 url: '/events/range',
                 method: 'post',
                 handler: CalendarController.getEventsByRange,
                 validator: 'getEventsByRange',
                 typeResponse: 'CalendarController.GetEventsByRangeResponse',
                 description: 'Get all events for a range of dates',
-            },
+            }),
         ],
         description: 'Calendar routes',
         middlewares: ['session_web'],
@@ -390,77 +391,77 @@ export default [
     {
         group: [
             // Task Routes
-            {
+            defineRoute({
                 url: '/',
                 method: 'get',
                 handler: TaskController.getTasks,
                 typeResponse: 'TaskController.GetTasksResponse',
                 description: 'Get all tasks',
-            },
-            {
+            }),
+            defineRoute({
                 url: '/',
                 method: 'post',
                 handler: TaskController.createTask,
                 validator: 'createTask',
                 typeResponse: 'TaskController.CreateTaskResponse',
                 description: 'Create a new task',
-            },
-            {
+            }),
+            defineRoute({
                 url: '/:taskId',
                 method: 'get',
                 handler: TaskController.getTask,
                 validator: 'getTask',
                 typeResponse: 'TaskController.GetTaskResponse',
                 description: 'Get a task by id',
-            },
-            {
+            }),
+            defineRoute({
                 url: '/:taskId',
                 method: 'put',
                 handler: TaskController.updateTask,
                 validator: 'updateTask',
                 typeResponse: 'TaskController.UpdateTaskResponse',
                 description: 'Update a task by id',
-            },
-            {
+            }),
+            defineRoute({
                 url: '/:taskId',
                 method: 'delete',
                 handler: TaskController.deleteTask,
                 validator: 'deleteTask',
                 description: 'Delete a task by id',
-            },
+            }),
             // Task specific routes
-            {
+            defineRoute({
                 url: '/:taskId/status',
                 method: 'put',
                 handler: TaskController.updateTaskStatus,
                 typeResponse: 'TaskController.UpdateTaskStatusResponse',
                 validator: 'updateTaskStatus',
-                description: 'Update a task status by id',  
-            },
-            {
+                description: 'Update a task status by id',
+            }),
+            defineRoute({
                 url: '/:taskId/progress',
                 method: 'put',
                 handler: TaskController.updateTaskProgress,
                 typeResponse: 'TaskController.UpdateTaskProgressResponse',
                 validator: 'updateTaskProgress',
                 description: 'Update a task progress by id',
-            },
-            {
+            }),
+            defineRoute({
                 url: '/project/:projectId',
                 method: 'get',
                 handler: TaskController.getTasksByProject,
                 typeResponse: 'TaskController.GetTasksByProjectResponse',
                 validator: 'getTasksByProject',
                 description: 'Get all tasks for a project',
-            },
-            {
+            }),
+            defineRoute({
                 url: '/:parentTaskId/subtasks',
                 method: 'get',
                 handler: TaskController.getSubTasks,
                 typeResponse: 'TaskController.GetSubTasksResponse',
                 validator: 'getSubTasks',
                 description: 'Get all subtasks for a task',
-            },
+            }),
         ],
         description: 'Task routes',
         middlewares: ['session_web'],
@@ -469,70 +470,70 @@ export default [
     {
         group: [
             // Project Routes
-            {
+            defineRoute({
                 url: '/',
                 method: 'get',
                 handler: ProjectController.getProjects,
                 typeResponse: 'ProjectController.GetProjectsResponse',
                 description: 'Get all projects',
-            },
-            {
+            }),
+            defineRoute({
                 url: '/create',
                 method: 'post',
                 handler: ProjectController.createProject,
                 validator: 'createProject',
                 typeResponse: 'ProjectController.CreateProjectResponse',
                 description: 'Create a new project',
-            },
-            {
+            }),
+            defineRoute({
                 url: '/:projectId',
                 method: 'get',
                 handler: ProjectController.getProject,
                 validator: 'getProject',
                 typeResponse: 'ProjectController.GetProjectResponse',
                 description: 'Get a project by id',
-            },
-            {
+            }),
+            defineRoute({
                 url: '/:projectId',
                 method: 'put',
                 handler: ProjectController.updateProject,
                 validator: 'updateProject',
                 typeResponse: 'ProjectController.UpdateProjectResponse',
                 description: 'Update a project by id',
-            },
-            {
+            }),
+            defineRoute({
                 url: '/:projectId',
                 method: 'delete',
                 handler: ProjectController.deleteProject,
                 validator: 'deleteProject',
                 typeResponse: 'ProjectController.DeleteProjectResponse',
                 description: 'Delete a project by id',
-            },
+            }),
             // Project specific routes
-            {
+            defineRoute({
                 url: '/:projectId/tasks',
                 method: 'get',
                 handler: ProjectController.getProjectTasks,
                 validator: 'getProjectTasks',
                 typeResponse: 'ProjectController.GetProjectTasksResponse',
                 description: 'Get all tasks for a project',
-            },
-            {
+            }),
+            defineRoute({
                 url: '/:projectId/statistics',
                 method: 'get',
                 handler: ProjectController.getProjectStatistics,
                 validator: 'getProjectStatistics',
                 typeResponse: 'ProjectController.GetProjectStatisticsResponse',
                 description: 'Get statistics for a project',
-            },
-            {
+            }),
+            defineRoute({
                 url: '/:projectId/archive',
                 method: 'put',
                 handler: ProjectController.archiveProject,
                 validator: 'archiveProject',
                 typeResponse: 'ProjectController.ArchiveProjectResponse',
                 description: 'Archive a project by id',
-            },
+            }),
         ],
         description: 'Project routes',
         middlewares: ['session_web'],
@@ -541,62 +542,62 @@ export default [
     {
         group: [
             // Push Subscription Routes
-            {
+            defineRoute({
                 url: '/',
                 method: 'get',
                 handler: PushSubscriptionController.getSubscriptions,
                 typeResponse: 'PushSubscriptionController.GetSubscriptionsResponse',
-            },
-            {
+            }),
+            defineRoute({
                 url: '/',
                 method: 'post',
                 handler: PushSubscriptionController.createSubscription,
                 validator: 'createPushSubscription',
                 typeResponse: 'PushSubscriptionController.CreateSubscriptionResponse',
-            },
-            {
+            }),
+            defineRoute({
                 url: '/:subscriptionId',
                 method: 'get',
                 handler: PushSubscriptionController.getSubscription,
                 validator: 'getPushSubscription',
                 typeResponse: 'PushSubscriptionController.GetSubscriptionResponse',
-            },
-            {
+            }),
+            defineRoute({
                 url: '/:subscriptionId',
                 method: 'put',
                 handler: PushSubscriptionController.updateSubscription,
                 validator: 'updatePushSubscription',
                 typeResponse: 'PushSubscriptionController.UpdateSubscriptionResponse',
-            },
-            {
+            }),
+            defineRoute({
                 url: '/:subscriptionId',
                 method: 'delete',
                 handler: PushSubscriptionController.deleteSubscription,
                 validator: 'deletePushSubscription',
                 typeResponse: 'PushSubscriptionController.DeleteSubscriptionResponse',
-            },
+            }),
             // Push Subscription specific routes
-            {
+            defineRoute({
                 url: '/:subscriptionId/logs',
                 method: 'get',
                 handler: PushSubscriptionController.getSubscriptionLogs,
                 validator: 'getPushSubscriptionLogs',
                 typeResponse: 'PushSubscriptionController.GetSubscriptionLogsResponse',
-            },
-            {
+            }),
+            defineRoute({
                 url: '/:subscriptionId/statistics',
                 method: 'get',
                 handler: PushSubscriptionController.getSubscriptionStatistics,
                 validator: 'getPushSubscriptionStatistics',
                 typeResponse: 'PushSubscriptionController.GetSubscriptionStatisticsResponse',
-            },
-            {
+            }),
+            defineRoute({
                 url: '/:subscriptionId/deactivate',
                 method: 'put',
                 handler: PushSubscriptionController.deactivateSubscription,
                 validator: 'deactivatePushSubscription',
                 typeResponse: 'PushSubscriptionController.DeactivateSubscriptionResponse',
-            },
+            }),
         ],
         description: 'Push Subscription routes',
         middlewares: ['session_web'],

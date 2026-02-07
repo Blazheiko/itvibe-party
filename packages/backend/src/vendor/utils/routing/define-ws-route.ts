@@ -3,23 +3,28 @@ import type {
   RouteItem,
   RouteConfig,
   InferPayload,
-  WsContext,
   Payload,
+  WsContext,
 } from "#vendor/types/types.js";
+
+/**
+ * Тип возвращаемого значения handler — расширен object для совместимости с interface response-типами
+ */
+type WsHandlerReturn = Promise<Payload | object> | Payload | object;
 
 /**
  * Типизированный WS handler с payload выведенным из validator
  */
-type TypedWsHandler<TValidator extends Type | undefined> =
+type TypedWsHandler<TValidator extends Type | string | undefined> =
   TValidator extends Type
-    ? (context: WsContext<InferPayload<TValidator>>) => Promise<Payload>
-    : (context: WsContext) => Promise<Payload>;
+    ? (context: WsContext<InferPayload<TValidator>>) => WsHandlerReturn
+    : (context: WsContext) => WsHandlerReturn;
 
 /**
  * Конфигурация WS роута с типизированным handler.
  * method задаётся автоматически как "ws".
  */
-type WsRouteConfig<TValidator extends Type | undefined = undefined> = Omit<
+type WsRouteConfig<TValidator extends Type | string | undefined = undefined> = Omit<
   RouteConfig<TValidator>,
   "method"
 > & {
@@ -30,7 +35,7 @@ type WsRouteConfig<TValidator extends Type | undefined = undefined> = Omit<
  * Создаёт типизированный WS роут.
  * Тип payload в handler автоматически выводится из validator.
  */
-export function defineWsRoute<TValidator extends Type | undefined = undefined>(
+export function defineWsRoute<TValidator extends Type | string | undefined = undefined>(
   config: WsRouteConfig<TValidator>,
 ): RouteItem {
   return {
