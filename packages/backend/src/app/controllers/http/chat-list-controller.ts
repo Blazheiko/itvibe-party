@@ -1,135 +1,135 @@
-import type { HttpContext } from '#vendor/types/types.js';
-import { getTypedPayload } from '#vendor/utils/validation/get-typed-payload.js';
-import { getOnlineUser } from '#vendor/utils/network/ws-handlers.js';
-import ContactList from '#app/models/contact-list.js';
-import User from '#app/models/User.js';
+import type { HttpContext } from "#vendor/types/types.js";
+import { getTypedPayload } from "#vendor/utils/validation/get-typed-payload.js";
+import { getOnlineUser } from "#vendor/utils/network/ws-handlers.js";
+import ContactList from "#app/models/contact-list.js";
+import User from "#app/models/User.js";
 import type {
-    GetContactListInput,
-    CreateChatInput,
-    DeleteChatInput,
-    GetContactListResponse,
-    CreateChatResponse,
-    DeleteChatResponse,
-    Contact,
-} from '../types/ChatListController.js';
+  GetContactListResponse,
+  CreateChatResponse,
+  DeleteChatResponse,
+} from "../types/ChatListController.js";
+import type {
+  CreateChatInput,
+  DeleteChatInput,
+  GetContactListInput,
+} from "shared/schemas";
 
 export default {
-    async getContactList(
-        context: HttpContext<GetContactListInput>,
-    ): Promise<GetContactListResponse> {
-        const { session, logger } = context;
-        logger.info('getChatList');
-        const sessionInfo = session?.sessionInfo;
-        if (!sessionInfo)
-            return { status: 'error', message: 'Session not found' };
+  async getContactList(
+    context: HttpContext<GetContactListInput>,
+  ): Promise<GetContactListResponse> {
+    const { session, logger } = context;
+    logger.info("getChatList");
+    const sessionInfo = session.sessionInfo;
+    if (!sessionInfo) return { status: "error", message: "Session not found" };
 
-        const sessionUserId = sessionInfo.data?.userId;
-        const { userId } = getTypedPayload(context);
-        if (!userId || !sessionUserId)
-            return { status: 'unauthorized', message: 'Session expired' };
+    const sessionUserId = sessionInfo.data?.userId;
+    const { userId } = getTypedPayload(context);
+    if (!userId || !sessionUserId)
+      return { status: "unauthorized", message: "Session expired" };
 
-        if (+userId !== +sessionUserId) {
-            logger.error('User used the wrong session');
-            return {
-                status: 'unauthorized',
-                message: 'Session expired',
-            };
-        }
+    if (+userId !== +sessionUserId) {
+      logger.error("User used the wrong session");
+      return {
+        status: "unauthorized",
+        message: "Session expired",
+      };
+    }
 
-        // Get chat list with contacts
-        const contactListData = await ContactList.findByUserIdWithDetails(
-            BigInt(userId),
-        );
+    // Get chat list with contacts
+    const contactListData = await ContactList.findByUserIdWithDetails(
+      BigInt(userId),
+    );
 
-        const onlineUsers = getOnlineUser(
-            contactListData.map((contact: any) => String(contact.contactId)),
-        );
+    const onlineUsers = getOnlineUser(
+      contactListData.map((contact: any) => String(contact.contactId)),
+    );
 
-        return {
-            status: 'ok',
-            contactList: contactListData as any,
-            onlineUsers,
-        };
-    },
+    return {
+      status: "ok",
+      contactList: contactListData as any,
+      onlineUsers,
+    };
+  },
 
-    async createChat(
-        context: HttpContext<CreateChatInput>,
-    ): Promise<CreateChatResponse> {
-        const { session, logger } = context;
-        logger.info('createChat');
-        const sessionInfo = session?.sessionInfo;
-        if (!sessionInfo) {
-            return { status: 'error', message: 'Session not found' };
-        }
-        const userId = sessionInfo.data?.userId;
-        if (!userId) {
-            return { status: 'unauthorized', message: 'Session expired' };
-        }
+  async createChat(
+    context: HttpContext<CreateChatInput>,
+  ): Promise<CreateChatResponse> {
+    const { session, logger } = context;
+    logger.info("createChat");
+    const sessionInfo = session?.sessionInfo;
+    if (!sessionInfo) {
+      return { status: "error", message: "Session not found" };
+    }
+    const userId = sessionInfo.data?.userId;
+    if (!userId) {
+      return { status: "unauthorized", message: "Session expired" };
+    }
 
-        const { participantId } = getTypedPayload(context);
-        if (!participantId) {
-            return { status: 'error', message: 'Participant ID is required' };
-        }
+    const { participantId } = getTypedPayload(context);
+    if (!participantId) {
+      return { status: "error", message: "Participant ID is required" };
+    }
 
-        // Check if participant exists
-        try {
-            await User.findById(BigInt(participantId));
-        } catch (error) {
-            return { status: 'error', message: 'Participant not found' };
-        }
+    // Check if participant exists
+    try {
+      await User.findById(BigInt(participantId));
+    } catch (error) {
+      return { status: "error", message: "Participant not found" };
+    }
 
-        // Check if chat already exists
-        const existingChat = await ContactList.findExistingChat(
-            BigInt(userId),
-            BigInt(participantId),
-        );
+    // Check if chat already exists
+    const existingChat = await ContactList.findExistingChat(
+      BigInt(userId),
+      BigInt(participantId),
+    );
 
-        if (existingChat) {
-            return { status: 'ok', chat: existingChat as any };
-        }
+    if (existingChat) {
+      return { status: "ok", chat: existingChat as any };
+    }
 
-        const createdChat = await ContactList.createWithUserInfo(
-            BigInt(userId),
-            BigInt(participantId),
-            'accepted',
-        );
+    const createdChat = await ContactList.createWithUserInfo(
+      BigInt(userId),
+      BigInt(participantId),
+      "accepted",
+    );
 
-        return { status: 'ok', chat: createdChat as any };
-    },
+    return { status: "ok", chat: createdChat as any };
+  },
 
-    async deleteChat(
-        context: HttpContext<DeleteChatInput>,
-    ): Promise<DeleteChatResponse> {
-        const { session, logger } = context;
-        logger.info('deleteChat');
-        const sessionInfo = session?.sessionInfo;
-        if (!sessionInfo) {
-            return { status: 'error', message: 'Session not found' };
-        }
-        const userId = sessionInfo.data?.userId;
-        if (!userId) {
-            return { status: 'unauthorized', message: 'Session expired' };
-        }
+  async deleteChat(
+    context: HttpContext<DeleteChatInput>,
+  ): Promise<DeleteChatResponse> {
+    const { session, logger } = context;
+    logger.info("deleteChat");
+    const sessionInfo = session?.sessionInfo;
+    if (!sessionInfo) {
+      return { status: "error", message: "Session not found" };
+    }
+    const userId = sessionInfo.data?.userId;
+    if (!userId) {
+      return { status: "unauthorized", message: "Session expired" };
+    }
 
-        const { chatId } = getTypedPayload(context);
-        if (!chatId) {
-            return { status: 'error', message: 'Chat ID is required' };
-        }
+    const { chatId } = getTypedPayload(context);
+    if (!chatId) {
+      return { status: "error", message: "Chat ID is required" };
+    }
 
-        const chat = await ContactList.findByIdAndUserId(
-            BigInt(chatId),
-            BigInt(userId),
-        );
+    const chat = await ContactList.findByIdAndUserId(
+      BigInt(chatId),
+      BigInt(userId),
+    );
 
-        if (!chat) {
-            return {
-                status: 'error',
-                message: 'Chat not found or access denied',
-            };
-        }
+    if (!chat) {
+      return {
+        status: "error",
+        message: "Chat not found or access denied",
+      };
+    }
 
-        await ContactList.delete(BigInt(chatId));
+    await ContactList.delete(BigInt(chatId));
 
-        return { status: 'ok', message: 'Chat deleted successfully' };
-    },
+    return { status: "ok", message: "Chat deleted successfully" };
+  },
 };

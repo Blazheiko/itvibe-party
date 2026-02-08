@@ -1,55 +1,82 @@
-import type { HttpContext } from '#vendor/types/types.js';
-import { getTypedPayload } from '#vendor/utils/validation/get-typed-payload.js';
-import PushSubscription from '#app/models/push-subscription.js';
+import type { HttpContext } from "#vendor/types/types.js";
+import { getTypedPayload } from "#vendor/utils/validation/get-typed-payload.js";
+import PushSubscription from "#app/models/push-subscription.js";
 import type {
-    CreateSubscriptionInput,
-    UpdateSubscriptionInput,
-    GetSubscriptionsResponse,
-    CreateSubscriptionResponse,
-    GetSubscriptionResponse,
-    UpdateSubscriptionResponse,
-    DeleteSubscriptionResponse,
-    GetSubscriptionLogsResponse,
-    GetSubscriptionStatisticsResponse,
-    DeactivateSubscriptionResponse,
-} from '../types/PushSubscriptionController.js';
+  GetSubscriptionsResponse,
+  CreateSubscriptionResponse,
+  GetSubscriptionResponse,
+  UpdateSubscriptionResponse,
+  DeleteSubscriptionResponse,
+  GetSubscriptionLogsResponse,
+  GetSubscriptionStatisticsResponse,
+  DeactivateSubscriptionResponse,
+} from "../types/PushSubscriptionController.js";
+import type {
+  CreateSubscriptionInput,
+  UpdateSubscriptionInput,
+} from "shared/schemas";
 
 export default {
-    async getSubscriptions(
-        context: HttpContext,
-    ): Promise<GetSubscriptionsResponse> {
-        const { auth, logger, responseData } = context;
-        logger.info('getSubscriptions handler');
+  async getSubscriptions(
+    context: HttpContext,
+  ): Promise<GetSubscriptionsResponse> {
+    const { auth, logger, responseData } = context;
+    logger.info("getSubscriptions handler");
 
-        if (!auth.check()) {
-            responseData.status = 401;
-            return { status: 'error', message: 'Unauthorized' };
-        }
+    if (!auth.check()) {
+      responseData.status = 401;
+      return { status: "error", message: "Unauthorized" };
+    }
 
-        try {
-            const userId = auth.getUserId();
-            const subscriptionsWithLogs = await PushSubscription.findByUserIdWithLogs(userId);
+    try {
+      const userId = auth.getUserId();
+      const subscriptionsWithLogs =
+        await PushSubscription.findByUserIdWithLogs(userId);
 
-            return { status: 'success', subscriptions: subscriptionsWithLogs };
-        } catch (error) {
-            logger.error({ err: error }, 'Error getting subscriptions:');
-            return { status: 'error', message: 'Failed to get subscriptions' };
-        }
-    },
+      return { status: "success", subscriptions: subscriptionsWithLogs };
+    } catch (error) {
+      logger.error({ err: error }, "Error getting subscriptions:");
+      return { status: "error", message: "Failed to get subscriptions" };
+    }
+  },
 
-    async createSubscription(
-        context: HttpContext<CreateSubscriptionInput>,
-    ): Promise<CreateSubscriptionResponse> {
-        const { auth, logger, responseData } = context;
-        logger.info('createSubscription handler');
+  async createSubscription(
+    context: HttpContext<CreateSubscriptionInput>,
+  ): Promise<CreateSubscriptionResponse> {
+    const { auth, logger, responseData } = context;
+    logger.info("createSubscription handler");
 
-        if (!auth.check()) {
-            responseData.status = 401;
-            return { status: 'error', message: 'Unauthorized' };
-        }
+    if (!auth.check()) {
+      responseData.status = 401;
+      return { status: "error", message: "Unauthorized" };
+    }
 
-        const {
-            endpoint,
+    const {
+      endpoint,
+      p256dhKey,
+      authKey,
+      userAgent,
+      ipAddress,
+      deviceType,
+      browserName,
+      browserVersion,
+      osName,
+      osVersion,
+      notificationTypes,
+      timezone,
+    } = getTypedPayload(context);
+
+    try {
+      // Check if subscription already exists for this endpoint
+      const existingSubscription =
+        await PushSubscription.findByEndpoint(endpoint);
+
+      if (existingSubscription) {
+        // Update existing subscription
+        const updatedSubscription = await PushSubscription.updateByEndpoint(
+          endpoint,
+          auth.getUserId(),
+          {
             p256dhKey,
             authKey,
             userAgent,
@@ -61,260 +88,248 @@ export default {
             osVersion,
             notificationTypes,
             timezone,
-        } = getTypedPayload(context);
+            isActive: true,
+          },
+        );
 
-        try {
-            // Check if subscription already exists for this endpoint
-            const existingSubscription = await PushSubscription.findByEndpoint(endpoint);
+        return { status: "success", subscription: updatedSubscription };
+      }
 
-            if (existingSubscription) {
-                // Update existing subscription
-                const updatedSubscription = await PushSubscription.updateByEndpoint(endpoint, auth.getUserId(), {
-                    p256dhKey,
-                    authKey,
-                    userAgent,
-                    ipAddress,
-                    deviceType,
-                    browserName,
-                    browserVersion,
-                    osName,
-                    osVersion,
-                    notificationTypes,
-                    timezone,
-                    isActive: true,
-                });
+      const createdSubscription = await PushSubscription.create({
+        endpoint,
+        p256dhKey,
+        authKey,
+        userAgent,
+        ipAddress,
+        deviceType,
+        browserName,
+        browserVersion,
+        osName,
+        osVersion,
+        notificationTypes,
+        timezone,
+        userId: auth.getUserId(),
+      });
 
-                return { status: 'success', subscription: updatedSubscription };
-            }
+      return { status: "success", subscription: createdSubscription };
+    } catch (error) {
+      logger.error({ err: error }, "Error creating subscription:");
+      return {
+        status: "error",
+        message: "Failed to create subscription",
+      };
+    }
+  },
 
-            const createdSubscription = await PushSubscription.create({
-                endpoint,
-                p256dhKey,
-                authKey,
-                userAgent,
-                ipAddress,
-                deviceType,
-                browserName,
-                browserVersion,
-                osName,
-                osVersion,
-                notificationTypes,
-                timezone,
-                userId: auth.getUserId(),
-            });
+  async getSubscription(
+    context: HttpContext,
+  ): Promise<GetSubscriptionResponse> {
+    const { httpData, auth, logger, responseData } = context;
+    logger.info("getSubscription handler");
 
-            return { status: 'success', subscription: createdSubscription };
-        } catch (error) {
-            logger.error({ err: error }, 'Error creating subscription:');
-            return {
-                status: 'error',
-                message: 'Failed to create subscription',
-            };
-        }
-    },
+    if (!auth.check()) {
+      responseData.status = 401;
+      return { status: "error", message: "Unauthorized" };
+    }
 
-    async getSubscription(
-        context: HttpContext,
-    ): Promise<GetSubscriptionResponse> {
-        const { httpData, auth, logger, responseData } = context;
-        logger.info('getSubscription handler');
+    const { subscriptionId } = httpData.params as {
+      subscriptionId: string;
+    };
 
-        if (!auth.check()) {
-            responseData.status = 401;
-            return { status: 'error', message: 'Unauthorized' };
-        }
+    try {
+      const subscription = await PushSubscription.findById(
+        BigInt(subscriptionId),
+        auth.getUserId(),
+      );
+      const logs = await PushSubscription.getLogsBySubscriptionId(
+        BigInt(subscriptionId),
+        auth.getUserId(),
+        10,
+      );
 
-        const { subscriptionId } = httpData.params as {
-            subscriptionId: string;
-        };
+      return {
+        status: "success",
+        data: { ...subscription, notificationLogs: logs },
+      };
+    } catch (error) {
+      logger.error({ err: error }, "Error getting subscription:");
+      return { status: "error", message: "Failed to get subscription" };
+    }
+  },
 
-        try {
-            const subscription = await PushSubscription.findById(BigInt(subscriptionId), auth.getUserId());
-            const logs = await PushSubscription.getLogsBySubscriptionId(BigInt(subscriptionId), auth.getUserId(), 10);
+  async updateSubscription(
+    context: HttpContext<UpdateSubscriptionInput>,
+  ): Promise<UpdateSubscriptionResponse> {
+    const { httpData, auth, logger, responseData } = context;
+    logger.info("updateSubscription handler");
 
-            return { status: 'success', data: { ...subscription, notificationLogs: logs } };
-        } catch (error) {
-            logger.error({ err: error }, 'Error getting subscription:');
-            return { status: 'error', message: 'Failed to get subscription' };
-        }
-    },
+    if (!auth.check()) {
+      responseData.status = 401;
+      return { status: "error", message: "Unauthorized" };
+    }
 
-    async updateSubscription(
-        context: HttpContext<UpdateSubscriptionInput>,
-    ): Promise<UpdateSubscriptionResponse> {
-        const { httpData, auth, logger, responseData } = context;
-        logger.info('updateSubscription handler');
+    const { subscriptionId } = httpData.params as {
+      subscriptionId: string;
+    };
+    const {
+      isActive,
+      notificationTypes,
+      timezone,
+      deviceType,
+      browserName,
+      browserVersion,
+      osName,
+      osVersion,
+    } = getTypedPayload(context);
 
-        if (!auth.check()) {
-            responseData.status = 401;
-            return { status: 'error', message: 'Unauthorized' };
-        }
+    try {
+      const updatedSubscription = await PushSubscription.update(
+        BigInt(subscriptionId),
+        auth.getUserId(),
+        {
+          isActive,
+          notificationTypes,
+          timezone,
+          deviceType,
+          browserName,
+          browserVersion,
+          osName,
+          osVersion,
+        },
+      );
 
-        const { subscriptionId } = httpData.params as {
-            subscriptionId: string;
-        };
-        const {
-            isActive,
-            notificationTypes,
-            timezone,
-            deviceType,
-            browserName,
-            browserVersion,
-            osName,
-            osVersion,
-        } = getTypedPayload(context);
+      return { status: "success", subscription: updatedSubscription };
+    } catch (error) {
+      logger.error({ err: error }, "Error updating subscription:");
+      return {
+        status: "error",
+        message: "Failed to update subscription",
+      };
+    }
+  },
 
-        try {
-            const updatedSubscription = await PushSubscription.update(
-                BigInt(subscriptionId),
-                auth.getUserId(),
-                {
-                    isActive,
-                    notificationTypes,
-                    timezone,
-                    deviceType,
-                    browserName,
-                    browserVersion,
-                    osName,
-                    osVersion,
-                }
-            );
+  async deleteSubscription(
+    context: HttpContext,
+  ): Promise<DeleteSubscriptionResponse> {
+    const { httpData, auth, logger, responseData } = context;
+    logger.info("deleteSubscription handler");
 
-            return { status: 'success', subscription: updatedSubscription };
-        } catch (error) {
-            logger.error({ err: error }, 'Error updating subscription:');
-            return {
-                status: 'error',
-                message: 'Failed to update subscription',
-            };
-        }
-    },
+    if (!auth.check()) {
+      responseData.status = 401;
+      return { status: "error", message: "Unauthorized" };
+    }
 
-    async deleteSubscription(
-        context: HttpContext,
-    ): Promise<DeleteSubscriptionResponse> {
-        const { httpData, auth, logger, responseData } = context;
-        logger.info('deleteSubscription handler');
+    const { subscriptionId } = httpData.params as {
+      subscriptionId: string;
+    };
 
-        if (!auth.check()) {
-            responseData.status = 401;
-            return { status: 'error', message: 'Unauthorized' };
-        }
+    try {
+      await PushSubscription.delete(BigInt(subscriptionId), auth.getUserId());
 
-        const { subscriptionId } = httpData.params as {
-            subscriptionId: string;
-        };
+      return {
+        status: "success",
+        message: "Subscription deleted successfully",
+      };
+    } catch (error) {
+      logger.error({ err: error }, "Error deleting subscription:");
+      return {
+        status: "error",
+        message: "Failed to delete subscription",
+      };
+    }
+  },
 
-        try {
-            await PushSubscription.delete(BigInt(subscriptionId), auth.getUserId());
+  async getSubscriptionLogs(
+    context: HttpContext,
+  ): Promise<GetSubscriptionLogsResponse> {
+    const { httpData, auth, logger, responseData } = context;
+    logger.info("getSubscriptionLogs handler");
 
-            return {
-                status: 'success',
-                message: 'Subscription deleted successfully',
-            };
-        } catch (error) {
-            logger.error({ err: error }, 'Error deleting subscription:');
-            return {
-                status: 'error',
-                message: 'Failed to delete subscription',
-            };
-        }
-    },
+    if (!auth.check()) {
+      responseData.status = 401;
+      return { status: "error", message: "Unauthorized" };
+    }
 
-    async getSubscriptionLogs(
-        context: HttpContext,
-    ): Promise<GetSubscriptionLogsResponse> {
-        const { httpData, auth, logger, responseData } = context;
-        logger.info('getSubscriptionLogs handler');
+    const { subscriptionId } = httpData.params as {
+      subscriptionId: string;
+    };
 
-        if (!auth.check()) {
-            responseData.status = 401;
-            return { status: 'error', message: 'Unauthorized' };
-        }
+    try {
+      const logs = await PushSubscription.getLogsBySubscriptionId(
+        BigInt(subscriptionId),
+        auth.getUserId(),
+        50,
+      );
 
-        const { subscriptionId } = httpData.params as {
-            subscriptionId: string;
-        };
+      return { status: "success", data: logs };
+    } catch (error) {
+      logger.error({ err: error }, "Error getting subscription logs:");
+      return {
+        status: "error",
+        message: "Failed to get subscription logs",
+      };
+    }
+  },
 
-        try {
-            const logs = await PushSubscription.getLogsBySubscriptionId(
-                BigInt(subscriptionId),
-                auth.getUserId(),
-                50
-            );
+  async getSubscriptionStatistics(
+    context: HttpContext,
+  ): Promise<GetSubscriptionStatisticsResponse> {
+    const { httpData, auth, logger, responseData } = context;
+    logger.info("getSubscriptionStatistics handler");
 
-            return { status: 'success', data: logs };
-        } catch (error) {
-            logger.error({ err: error }, 'Error getting subscription logs:');
-            return {
-                status: 'error',
-                message: 'Failed to get subscription logs',
-            };
-        }
-    },
+    if (!auth.check()) {
+      responseData.status = 401;
+      return { status: "error", message: "Unauthorized" };
+    }
 
-    async getSubscriptionStatistics(
-        context: HttpContext,
-    ): Promise<GetSubscriptionStatisticsResponse> {
-        const { httpData, auth, logger, responseData } = context;
-        logger.info('getSubscriptionStatistics handler');
+    const { subscriptionId } = httpData.params as {
+      subscriptionId: string;
+    };
 
-        if (!auth.check()) {
-            responseData.status = 401;
-            return { status: 'error', message: 'Unauthorized' };
-        }
+    try {
+      const result = await PushSubscription.getStatistics(
+        BigInt(subscriptionId),
+        auth.getUserId(),
+      );
 
-        const { subscriptionId } = httpData.params as {
-            subscriptionId: string;
-        };
+      return { status: "success", data: result };
+    } catch (error) {
+      logger.error({ err: error }, "Error getting subscription statistics:");
+      return {
+        status: "error",
+        message: "Failed to get subscription statistics",
+      };
+    }
+  },
 
-        try {
-            const result = await PushSubscription.getStatistics(
-                BigInt(subscriptionId),
-                auth.getUserId()
-            );
+  async deactivateSubscription(
+    context: HttpContext,
+  ): Promise<DeactivateSubscriptionResponse> {
+    const { httpData, auth, logger, responseData } = context;
+    logger.info("deactivateSubscription handler");
 
-            return { status: 'success', data: result };
-        } catch (error) {
-            logger.error(
-                { err: error },
-                'Error getting subscription statistics:',
-            );
-            return {
-                status: 'error',
-                message: 'Failed to get subscription statistics',
-            };
-        }
-    },
+    if (!auth.check()) {
+      responseData.status = 401;
+      return { status: "error", message: "Unauthorized" };
+    }
 
-    async deactivateSubscription(
-        context: HttpContext,
-    ): Promise<DeactivateSubscriptionResponse> {
-        const { httpData, auth, logger, responseData } = context;
-        logger.info('deactivateSubscription handler');
+    const { subscriptionId } = httpData.params as {
+      subscriptionId: string;
+    };
 
-        if (!auth.check()) {
-            responseData.status = 401;
-            return { status: 'error', message: 'Unauthorized' };
-        }
+    try {
+      const deactivatedSubscription = await PushSubscription.deactivate(
+        BigInt(subscriptionId),
+        auth.getUserId(),
+      );
 
-        const { subscriptionId } = httpData.params as {
-            subscriptionId: string;
-        };
-
-        try {
-            const deactivatedSubscription = await PushSubscription.deactivate(
-                BigInt(subscriptionId),
-                auth.getUserId()
-            );
-
-            return { status: 'success', data: deactivatedSubscription };
-        } catch (error) {
-            logger.error({ err: error }, 'Error deactivating subscription:');
-            return {
-                status: 'error',
-                message: 'Failed to deactivate subscription',
-            };
-        }
-    },
+      return { status: "success", data: deactivatedSubscription };
+    } catch (error) {
+      logger.error({ err: error }, "Error deactivating subscription:");
+      return {
+        status: "error",
+        message: "Failed to deactivate subscription",
+      };
+    }
+  },
 };
