@@ -4,7 +4,7 @@ import {
   NonNegativeIntSchema,
   PositiveIntSchema,
   TimestampSchema,
-} from "../brands/index.js";
+} from "../../brands/index.js";
 
 // Схема для валидации даты (строка в формате YYYY-MM-DD)
 const DateStringSchema = type(/^\d{4}-\d{2}-\d{2}$/);

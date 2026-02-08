@@ -1,5 +1,5 @@
 import { type } from "@arktype/type";
-import { NonEmptyStringSchema, TimestampSchema } from "../brands/index.js";
+import { NonEmptyStringSchema, TimestampSchema } from "../../brands/index.js";
 
 // Схема для валидации телефона (строка от 10 до 20 символов)
 const PhoneSchema = type(/^.{10,20}$/).brand("Phone");

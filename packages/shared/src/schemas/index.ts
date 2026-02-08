@@ -5,7 +5,7 @@ export {
   type CreateContactAsInput,
   UpdateContactAsInputSchema,
   type UpdateContactAsInput,
-} from "./contact-as.js";
+} from "./contact/contact-as.js";
 
 export {
   UserActivitySchema,
@@ -14,139 +14,129 @@ export {
   type CreateUserActivityInput,
   UpdateUserActivityInputSchema,
   type UpdateUserActivityInput,
-} from "./user-activity.js";
+} from "./activity/user-activity.js";
 
-export { RegisterInputSchema, type RegisterInput } from "./register.js";
-
-export { LoginInputSchema, type LoginInput } from "./login.js";
-
-export { CreateChatInputSchema, type CreateChatInput } from "./create-chat.js";
-
-export { DeleteChatInputSchema, type DeleteChatInput } from "./delete-chat.js";
-
-export {
-  GetMessagesInputSchema,
-  type GetMessagesInput,
-} from "./get-messages.js";
-
-export {
-  SendMessageInputSchema,
-  type SendMessageInput,
-} from "./send-message.js";
-
-export {
-  DeleteMessageInputSchema,
-  type DeleteMessageInput,
-} from "./delete-message.js";
-
-export {
-  EditMessageInputSchema,
-  type EditMessageInput,
-} from "./edit-message.js";
-
-export {
-  ReadMessagesInputSchema,
-  type ReadMessagesInput,
-} from "./read-messages.js";
-
-export {
-  MarkMessageAsReadInputSchema,
-  type MarkMessageAsReadInput,
-} from "./mark-message-as-read.js";
-
-export {
-  CreateInvitationInputSchema,
-  type CreateInvitationInput,
-} from "./create-invitation.js";
-
-export {
-  GetUserInvitationsInputSchema,
-  type GetUserInvitationsInput,
-} from "./get-user-invitations.js";
-
-export {
-  UseInvitationInputSchema,
-  type UseInvitationInput,
-} from "./use-invitation.js";
+export { RegisterInputSchema, type RegisterInput } from "./auth/register.js";
+export { LoginInputSchema, type LoginInput } from "./auth/login.js";
 
 export {
   GetContactListInputSchema,
   type GetContactListInput,
-} from "./get-contact-list.js";
+} from "./chat/get-contact-list.js";
+export { CreateChatInputSchema, type CreateChatInput } from "./chat/create-chat.js";
+export { DeleteChatInputSchema, type DeleteChatInput } from "./chat/delete-chat.js";
 
-export { SaveUserInputSchema, type SaveUserInput } from "./save-user.js";
+export {
+  GetMessagesInputSchema,
+  type GetMessagesInput,
+} from "./message/get-messages.js";
+export {
+  SendMessageInputSchema,
+  type SendMessageInput,
+} from "./message/send-message.js";
+export {
+  DeleteMessageInputSchema,
+  type DeleteMessageInput,
+} from "./message/delete-message.js";
+export {
+  EditMessageInputSchema,
+  type EditMessageInput,
+} from "./message/edit-message.js";
+export {
+  ReadMessagesInputSchema,
+  type ReadMessagesInput,
+} from "./message/read-messages.js";
+export {
+  MarkMessageAsReadInputSchema,
+  type MarkMessageAsReadInput,
+} from "./message/mark-message-as-read.js";
+
+export {
+  CreateInvitationInputSchema,
+  type CreateInvitationInput,
+} from "./invitation/create-invitation.js";
+export {
+  GetUserInvitationsInputSchema,
+  type GetUserInvitationsInput,
+} from "./invitation/get-user-invitations.js";
+export {
+  UseInvitationInputSchema,
+  type UseInvitationInput,
+} from "./invitation/use-invitation.js";
+
+export { SaveUserInputSchema, type SaveUserInput } from "./main/save-user.js";
 
 export {
   CreateEventInputSchema,
   type CreateEventInput,
-} from "./create-event.js";
-
+} from "./calendar/create-event.js";
 export {
   UpdateEventInputSchema,
   type UpdateEventInput,
-} from "./update-event.js";
-
+} from "./calendar/update-event.js";
 export {
   GetEventsByRangeInputSchema,
   type GetEventsByRangeInput,
-} from "./get-events-by-range.js";
+} from "./calendar/get-events-by-range.js";
 
-export { CreateNoteInputSchema, type CreateNoteInput } from "./create-note.js";
-
-export { UpdateNoteInputSchema, type UpdateNoteInput } from "./update-note.js";
-
-export { AddPhotoInputSchema, type AddPhotoInput } from "./add-note-photo.js";
+export {
+  CreateNoteInputSchema,
+  type CreateNoteInput,
+} from "./notes/create-note.js";
+export {
+  UpdateNoteInputSchema,
+  type UpdateNoteInput,
+} from "./notes/update-note.js";
+export {
+  AddPhotoInputSchema,
+  type AddPhotoInput,
+} from "./notes/add-note-photo.js";
 
 export {
   CreateProjectInputSchema,
   type CreateProjectInput,
-} from "./create-project.js";
-
+} from "./project/create-project.js";
 export {
   UpdateProjectInputSchema,
   type UpdateProjectInput,
-} from "./update-project.js";
+} from "./project/update-project.js";
 
-export { CreateTaskInputSchema, type CreateTaskInput } from "./create-task.js";
-
-export { UpdateTaskInputSchema, type UpdateTaskInput } from "./update-task.js";
-
+export {
+  CreateTaskInputSchema,
+  type CreateTaskInput,
+} from "./task/create-task.js";
+export { UpdateTaskInputSchema, type UpdateTaskInput } from "./task/update-task.js";
 export {
   UpdateTaskStatusInputSchema,
   type UpdateTaskStatusInput,
-} from "./update-task-status.js";
-
+} from "./task/update-task-status.js";
 export {
   UpdateTaskProgressInputSchema,
   type UpdateTaskProgressInput,
-} from "./update-task-progress.js";
+} from "./task/update-task-progress.js";
 
 export {
   CreateSubscriptionInputSchema,
   type CreateSubscriptionInput,
-} from "./create-subscription.js";
-
+} from "./push-subscription/create-subscription.js";
 export {
   UpdateSubscriptionInputSchema,
   type UpdateSubscriptionInput,
-} from "./update-subscription.js";
+} from "./push-subscription/update-subscription.js";
 
 export {
   WSEventTypingPayloadSchema,
   type WSEventTypingPayload,
-} from "./ws-event-typing.js";
-
+} from "./ws/ws-event-typing.js";
 export {
   WSSaveUserPayloadSchema,
   type WSSaveUserPayload,
-} from "./ws-save-user.js";
-
+} from "./ws/ws-save-user.js";
 export {
   WSCallerIdPayloadSchema,
   type WSCallerIdPayload,
-} from "./ws-caller-id.js";
-
+} from "./ws/ws-caller-id.js";
 export {
   WSTargetUserIdPayloadSchema,
   type WSTargetUserIdPayload,
-} from "./ws-target-user-id.js";
+} from "./ws/ws-target-user-id.js";
