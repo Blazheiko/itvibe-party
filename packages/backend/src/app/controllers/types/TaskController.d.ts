@@ -1,4 +1,43 @@
 /**
+ * Input types for TaskController
+ */
+
+export interface CreateTaskInput {
+    title: string;
+    description?: string;
+    projectId?: number;
+    status?: string;
+    priority?: string;
+    tags?: string[];
+    dueDate?: string;
+    startDate?: string;
+    estimatedHours?: number;
+    parentTaskId?: number;
+}
+
+export interface UpdateTaskInput {
+    title?: string;
+    description?: string;
+    projectId?: number;
+    status?: string;
+    priority?: string;
+    progress?: number;
+    tags?: string[];
+    dueDate?: string;
+    startDate?: string;
+    estimatedHours?: number;
+    actualHours?: number;
+}
+
+export interface UpdateTaskStatusInput {
+    status: string;
+}
+
+export interface UpdateTaskProgressInput {
+    progress: string;
+}
+
+/**
  * Response types for TaskController
  */
 
@@ -23,14 +62,14 @@ export interface Task {
 
 export interface TestTasksResponse {
     status: 'ok' | 'error';
-    tasks?: any[];
+    tasks?: unknown[];
 }
 
 export interface GetTasksResponse {
     status: 'success' | 'error';
     message?: string;
     tasks?: Task[];
-    projects?: any[];
+    projects?: unknown[];
 }
 
 export interface CreateTaskResponse {

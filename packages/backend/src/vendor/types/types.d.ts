@@ -1,9 +1,11 @@
 import type { WebSocket } from "uWebSockets.js";
-import type { ChildLogger } from "pino";
+import type { Logger } from "pino";
 import type { Type } from "@arktype/type";
 // import type { UserData } from '#vendor/start/server.js';
 
 export type Payload = Record<string, unknown> | string | Buffer;
+
+export type Params = Record<string, string>;
 
 export type ValidatorFunction = (payload: Payload) => Promise<Payload>;
 
@@ -42,7 +44,7 @@ export interface Cookie {
 
 export interface HttpContext<TPayload = unknown> {
   requestId: string;
-  logger: ChildLogger;
+  logger: Logger;
   httpData: HttpData<TPayload>;
   validator: Type | undefined;
   responseData: ResponseData;
@@ -56,7 +58,7 @@ export interface WsContext<TPayload = unknown> {
   responseData: WsResponseData;
   session: null;
   auth: null;
-  logger: ChildLogger;
+  logger: Logger;
 }
 
 export type WsMiddleware = (

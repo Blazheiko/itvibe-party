@@ -1,9 +1,12 @@
 import userModel from '#app/models/User.js';
 import type { HttpContext } from '#vendor/types/types.js';
+import { getTypedPayload } from '#vendor/utils/validation/get-typed-payload.js';
 import { hashPassword, validatePassword } from 'metautil';
 import inventionAccept from '#app/servises/invention-accept.js';
 import generateWsToken from '#app/servises/generate-ws-token.js';
 import type {
+    RegisterInput,
+    LoginInput,
     RegisterResponse,
     LoginResponse,
     LogoutResponse,
@@ -11,10 +14,11 @@ import type {
 import getWsUrl from '#app/servises/getWsUrl.js';
 
 export default {
-    async register(context: HttpContext): Promise<RegisterResponse> {
-        const { httpData, auth, session, logger } = context;
+    async register(context: HttpContext<RegisterInput>): Promise<RegisterResponse> {
+        const { auth, session, logger } = context;
         logger.info('register handler');
-        const { name, email, password, token } = httpData.payload;
+        const payload = getTypedPayload(context);
+        const { name, email, password, token } = payload;
 
         const exist = await userModel.findByEmail(email);
         if (exist) {
@@ -41,7 +45,7 @@ export default {
             await inventionAccept(oldSessionData.inventionToken, Number(rawUser.id));
             logger.info('inventionAccept register');
         }
-        
+
         await session.destroySession();
         const res = await auth.login(rawUser);
         const sessionInfo = session.sessionInfo;
@@ -55,10 +59,10 @@ export default {
             wsUrl: wsToken ? getWsUrl(wsToken) : '',
         };
     },
-    async login(context: HttpContext): Promise<LoginResponse | string> {
-        const { httpData, responseData, auth, session, logger } = context;
+    async login(context: HttpContext<LoginInput>): Promise<LoginResponse | string> {
+        const { responseData, auth, session, logger } = context;
         logger.info('login handler');
-        const { email, password, token } = httpData.payload;
+        const { email, password, token } = getTypedPayload(context);
 
         const user = await userModel.findByEmail(email);
 

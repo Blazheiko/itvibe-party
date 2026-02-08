@@ -1,8 +1,13 @@
 import type { HttpContext } from '#vendor/types/types.js';
+import { getTypedPayload } from '#vendor/utils/validation/get-typed-payload.js';
 import sendMessage from '#app/servises/chat/send-message.js';
 import getChatMessages from '#app/servises/chat/get-chat-messages.js';
 import Message from '#app/models/Message.js';
 import type {
+    GetMessagesInput,
+    SendMessageInput,
+    EditMessageInput,
+    MarkAsReadInput,
     GetMessagesResponse,
     SendMessageResponse,
     DeleteMessageResponse,
@@ -11,17 +16,16 @@ import type {
 } from '../types/ChatListController.js';
 
 export default {
-    async getMessages({
-        session,
-        httpData,
-        logger,
-    }: HttpContext): Promise<GetMessagesResponse> {
+    async getMessages(
+        context: HttpContext<GetMessagesInput>,
+    ): Promise<GetMessagesResponse> {
+        const { session, logger } = context;
         logger.info('getMessages');
         const sessionInfo = session?.sessionInfo;
         if (!sessionInfo) {
             return { status: 'error', message: 'Session not found' };
         }
-        const { contactId, userId } = httpData.payload;
+        const { contactId, userId } = getTypedPayload(context);
         const sessionUserId = sessionInfo.data?.userId;
         if (!userId || !sessionUserId || +userId !== +sessionUserId) {
             return { status: 'unauthorized', message: 'Session expired' };
@@ -39,11 +43,10 @@ export default {
         return { status: 'ok', ...data };
     },
 
-    async sendChatMessage({
-        session,
-        httpData,
-        logger,
-    }: HttpContext): Promise<SendMessageResponse> {
+    async sendChatMessage(
+        context: HttpContext<SendMessageInput>,
+    ): Promise<SendMessageResponse> {
+        const { session, logger } = context;
         logger.info('sendChatMessage');
         const sessionInfo = session?.sessionInfo;
         if (!sessionInfo) {
@@ -54,8 +57,9 @@ export default {
             return { status: 'unauthorized', message: 'Session expired' };
         }
 
-        const { contactId, content, userId } = httpData.payload;
-        logger.info(httpData.payload);
+        const payload = getTypedPayload(context);
+        const { contactId, content, userId } = payload;
+        logger.info(payload);
         logger.info({ userId });
         if (!contactId || !content || +userId !== +sessionUserId || !userId) {
             return {
@@ -106,17 +110,16 @@ export default {
         return { status: 'ok', message: 'Message deleted successfully' };
     },
 
-    async editMessage({
-        session,
-        httpData,
-        logger,
-    }: HttpContext): Promise<EditMessageResponse> {
+    async editMessage(
+        context: HttpContext<EditMessageInput>,
+    ): Promise<EditMessageResponse> {
+        const { session, logger } = context;
         logger.info('editMessage');
         const sessionInfo = session?.sessionInfo;
         if (!sessionInfo) {
             return { status: 'error', message: 'Session not found' };
         }
-        const { messageId, content, userId } = httpData.payload;
+        const { messageId, content, userId } = getTypedPayload(context);
         const sessionUserId = sessionInfo.data?.userId;
         if (!userId || +userId !== +sessionUserId) {
             return { status: 'unauthorized', message: 'Session expired' };
@@ -146,11 +149,10 @@ export default {
         };
     },
 
-    async markAsRead({
-        session,
-        httpData,
-        logger,
-    }: HttpContext): Promise<MarkAsReadResponse> {
+    async markAsRead(
+        context: HttpContext<MarkAsReadInput>,
+    ): Promise<MarkAsReadResponse> {
+        const { session, logger } = context;
         logger.info('markAsRead');
         const sessionInfo = session?.sessionInfo;
         if (!sessionInfo) {
@@ -161,7 +163,7 @@ export default {
             return { status: 'unauthorized', message: 'Session expired' };
         }
 
-        const { messageId } = httpData.payload;
+        const { messageId } = getTypedPayload(context);
         if (!messageId) {
             return { status: 'error', message: 'Message ID is required' };
         }

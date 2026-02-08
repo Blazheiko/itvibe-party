@@ -1,8 +1,10 @@
 import userModel from '#app/models/User.js';
 import type { HttpContext } from '#vendor/types/types.js';
+import { getTypedPayload } from '#vendor/utils/validation/get-typed-payload.js';
 import configApp from '#config/app.js';
 import generateWsToken from '#app/servises/generate-ws-token.js';
 import type {
+    SaveUserInput,
     PingResponse,
     TestRouteResponse,
     InitResponse,
@@ -121,7 +123,7 @@ export default {
             responseData.status = 401;
             return { status: 'unauthorized', message: 'Session expired', wsUrl: '' };
         }
-        
+
         let wsToken = '';
         if (sessionInfo)
             wsToken = await generateWsToken(sessionInfo, Number(userId));
@@ -201,12 +203,12 @@ export default {
         logger.info('testMiddleware3 controller');
         return { middlewares: responseData.middlewareData, status: 'ok' };
     },
-    async saveUser({
-        httpData,
-        logger,
-    }: HttpContext): Promise<SaveUserResponse> {
+    async saveUser(
+        context: HttpContext<SaveUserInput>,
+    ): Promise<SaveUserResponse> {
+        const { logger } = context;
         logger.info('saveUser');
-        const { payload } = httpData;
+        const payload = getTypedPayload(context);
         const user = await userModel.create({
             name: payload.name,
             email: payload.email,

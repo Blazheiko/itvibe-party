@@ -1,6 +1,10 @@
 import type { HttpContext } from '#vendor/types/types.js';
+import { getTypedPayload } from '#vendor/utils/validation/get-typed-payload.js';
 import calendarModel from '#app/models/Calendar.js';
 import type {
+    CreateEventInput,
+    UpdateEventInput,
+    GetEventsByRangeInput,
     GetEventsResponse,
     CreateEventResponse,
     GetEventResponse,
@@ -28,15 +32,18 @@ export default {
         }
     },
 
-    async createEvent(context: HttpContext): Promise<CreateEventResponse> {
-        const { httpData, auth, logger } = context;
+    async createEvent(context: HttpContext<CreateEventInput>): Promise<CreateEventResponse> {
+        const { auth, logger } = context;
         logger.info('createEvent handler');
 
         if (!auth.check()) {
             return { status: 'error', message: 'Unauthorized' };
         }
 
-        const { title, description, startTime, endTime } = httpData.payload;
+        // const { title, description, startTime, endTime } = getTypedPayload(context);
+        const payload = getTypedPayload(context);
+
+        const { title, description, startTime, endTime } = payload;
 
         try {
             const createdEvent = await calendarModel.create({
@@ -76,7 +83,7 @@ export default {
         }
     },
 
-    async updateEvent(context: HttpContext): Promise<UpdateEventResponse> {
+    async updateEvent(context: HttpContext<UpdateEventInput>): Promise<UpdateEventResponse> {
         const { httpData, auth, logger } = context;
         logger.info('updateEvent handler');
 
@@ -85,7 +92,7 @@ export default {
         }
 
         const { eventId } = httpData.params as { eventId: string };
-        const { title, description, startTime, endTime } = httpData.payload;
+        const { title, description, startTime, endTime } = getTypedPayload(context);
 
         try {
             const updatedEvent = await calendarModel.update(
@@ -150,16 +157,16 @@ export default {
     },
 
     async getEventsByRange(
-        context: HttpContext,
+        context: HttpContext<GetEventsByRangeInput>,
     ): Promise<GetEventsByRangeResponse> {
-        const { httpData, auth, logger } = context;
+        const { auth, logger } = context;
         logger.info('getEventsByRange handler');
 
         if (!auth.check()) {
             return { status: 'error', message: 'Unauthorized' };
         }
 
-        const { startDate, endDate } = httpData.payload;
+        const { startDate, endDate } = getTypedPayload(context);
 
         try {
             const events = await calendarModel.findByRange(

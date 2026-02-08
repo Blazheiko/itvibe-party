@@ -1,8 +1,12 @@
 import { randomUUID } from 'crypto';
 import type { HttpContext } from '#vendor/types/types.js';
+import { getTypedPayload } from '#vendor/utils/validation/get-typed-payload.js';
 import inventionAccept from '#app/servises/invention-accept.js';
 import Invitation from '#app/models/Invitation.js';
 import type {
+    CreateInvitationInput,
+    GetUserInvitationsInput,
+    UseInvitationInput,
     CreateInvitationResponse,
     GetUserInvitationsResponse,
     UseInvitationResponse,
@@ -10,13 +14,12 @@ import type {
 
 export default {
     // Create new invitation
-    async createInvitation({
-        httpData,
-        session,
-        logger,
-    }: HttpContext): Promise<CreateInvitationResponse> {
+    async createInvitation(
+        context: HttpContext<CreateInvitationInput>,
+    ): Promise<CreateInvitationResponse> {
+        const { session, logger } = context;
         logger.info('createInvitation');
-        const { userId, name } = httpData.payload;
+        const { userId, name } = getTypedPayload(context);
 
         const expiresIn = 7; // Invitation validity period in days
         const sessionInfo = session?.sessionInfo;
@@ -49,14 +52,13 @@ export default {
     },
 
     // Get all user invitations
-    async getUserInvitations({
-        httpData,
-        responseData,
-        logger,
-    }: HttpContext): Promise<GetUserInvitationsResponse> {
+    async getUserInvitations(
+        context: HttpContext<GetUserInvitationsInput>,
+    ): Promise<GetUserInvitationsResponse> {
+        const { responseData, logger } = context;
         logger.info('getUserInvitations');
 
-        const { userId } = httpData.payload;
+        const { userId } = getTypedPayload(context);
 
         if (!userId) {
             responseData.status = 400;
@@ -69,15 +71,13 @@ export default {
     },
 
     // Check and use invitation
-    async useInvitation({
-        httpData,
-        responseData,
-        logger,
-        session,
-    }: HttpContext): Promise<UseInvitationResponse> {
+    async useInvitation(
+        context: HttpContext<UseInvitationInput>,
+    ): Promise<UseInvitationResponse> {
+        const { responseData, logger, session } = context;
         logger.info('useInvitation');
 
-        const { token } = httpData.payload;
+        const { token } = getTypedPayload(context);
 
         logger.info(token);
 

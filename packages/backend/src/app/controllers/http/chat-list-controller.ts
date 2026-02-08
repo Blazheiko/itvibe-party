@@ -1,8 +1,12 @@
 import type { HttpContext } from '#vendor/types/types.js';
+import { getTypedPayload } from '#vendor/utils/validation/get-typed-payload.js';
 import { getOnlineUser } from '#vendor/utils/network/ws-handlers.js';
 import ContactList from '#app/models/contact-list.js';
 import User from '#app/models/User.js';
 import type {
+    GetContactListInput,
+    CreateChatInput,
+    DeleteChatInput,
     GetContactListResponse,
     CreateChatResponse,
     DeleteChatResponse,
@@ -10,18 +14,17 @@ import type {
 } from '../types/ChatListController.js';
 
 export default {
-    async getContactList({
-        session,
-        httpData,
-        logger,
-    }: HttpContext): Promise<GetContactListResponse> {
+    async getContactList(
+        context: HttpContext<GetContactListInput>,
+    ): Promise<GetContactListResponse> {
+        const { session, logger } = context;
         logger.info('getChatList');
         const sessionInfo = session?.sessionInfo;
         if (!sessionInfo)
             return { status: 'error', message: 'Session not found' };
 
         const sessionUserId = sessionInfo.data?.userId;
-        const userId = httpData.payload?.userId;
+        const { userId } = getTypedPayload(context);
         if (!userId || !sessionUserId)
             return { status: 'unauthorized', message: 'Session expired' };
 
@@ -49,11 +52,10 @@ export default {
         };
     },
 
-    async createChat({
-        session,
-        httpData,
-        logger,
-    }: HttpContext): Promise<CreateChatResponse> {
+    async createChat(
+        context: HttpContext<CreateChatInput>,
+    ): Promise<CreateChatResponse> {
+        const { session, logger } = context;
         logger.info('createChat');
         const sessionInfo = session?.sessionInfo;
         if (!sessionInfo) {
@@ -64,7 +66,7 @@ export default {
             return { status: 'unauthorized', message: 'Session expired' };
         }
 
-        const { participantId } = httpData.payload;
+        const { participantId } = getTypedPayload(context);
         if (!participantId) {
             return { status: 'error', message: 'Participant ID is required' };
         }
@@ -95,11 +97,10 @@ export default {
         return { status: 'ok', chat: createdChat as any };
     },
 
-    async deleteChat({
-        session,
-        httpData,
-        logger,
-    }: HttpContext): Promise<DeleteChatResponse> {
+    async deleteChat(
+        context: HttpContext<DeleteChatInput>,
+    ): Promise<DeleteChatResponse> {
+        const { session, logger } = context;
         logger.info('deleteChat');
         const sessionInfo = session?.sessionInfo;
         if (!sessionInfo) {
@@ -110,7 +111,7 @@ export default {
             return { status: 'unauthorized', message: 'Session expired' };
         }
 
-        const { chatId } = httpData.payload;
+        const { chatId } = getTypedPayload(context);
         if (!chatId) {
             return { status: 'error', message: 'Chat ID is required' };
         }

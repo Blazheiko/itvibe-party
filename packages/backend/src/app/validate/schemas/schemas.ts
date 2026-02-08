@@ -1,44 +1,44 @@
-import { type } from 'arktype';
+import { type, type Type } from '@arktype/type';
 
-interface FieldDoc {
-    description: string;
-    type: 'string' | 'number';
-    required: boolean;
-}
+// interface FieldDoc {
+//     description: string;
+//     type: 'string' | 'number';
+//     required: boolean;
+// }
 
-interface SchemaDoc {
-    [fieldName: string]: FieldDoc;
-}
+// interface SchemaDoc {
+//     [fieldName: string]: FieldDoc;
+// }
 
 interface Schema {
-    doc: SchemaDoc;
-    validator: ReturnType<typeof type>;
+    // doc: SchemaDoc;
+    validator: Type;
 }
 
 const schemas: Record<string, Schema> = {
     register: {
-        doc: {
-            name: {
-                description: 'User name, 1-100 characters',
-                type: 'string',
-                required: true,
-            },
-            email: {
-                description: 'Valid email address, max 255 characters',
-                type: 'string',
-                required: true,
-            },
-            password: {
-                description: 'Password, 8-32 characters',
-                type: 'string',
-                required: true,
-            },
-            token: {
-                description: 'Optional invitation token, max 60 characters',
-                type: 'string',
-                required: false,
-            },
-        },
+        // doc: {
+        //     name: {
+        //         description: 'User name, 1-100 characters',
+        //         type: 'string',
+        //         required: true,
+        //     },
+        //     email: {
+        //         description: 'Valid email address, max 255 characters',
+        //         type: 'string',
+        //         required: true,
+        //     },
+        //     password: {
+        //         description: 'Password, 8-32 characters',
+        //         type: 'string',
+        //         required: true,
+        //     },
+        //     token: {
+        //         description: 'Optional invitation token, max 60 characters',
+        //         type: 'string',
+        //         required: false,
+        //     },
+        // },
         validator: type({
             name: 'string >= 1 & string <= 100',
             email: 'string.email & string <= 255',
@@ -47,23 +47,6 @@ const schemas: Record<string, Schema> = {
         }),
     },
     login: {
-        doc: {
-            email: {
-                description: 'Valid email address, max 255 characters',
-                type: 'string',
-                required: true,
-            },
-            password: {
-                description: 'Password, 8-32 characters',
-                type: 'string',
-                required: true,
-            },
-            token: {
-                description: 'Optional token, max 60 characters',
-                type: 'string',
-                required: false,
-            },
-        },
         validator: type({
             email: 'string.email & string <= 255',
             password: 'string >= 8 & string <= 32',
@@ -73,25 +56,18 @@ const schemas: Record<string, Schema> = {
 
     // Chat List schemas
     createChat: {
-        doc: {
-            participantId: {
-                description: 'Positive integer ID of participant',
-                type: 'number',
-                required: true,
-            },
-        },
+        // doc: {
+        //     participantId: {
+        //         description: 'Positive integer ID of participant',
+        //         type: 'number',
+        //         required: true,
+        //     },
+        // },
         validator: type({
             participantId: 'number.integer > 0',
         }),
     },
     deleteChat: {
-        doc: {
-            chatId: {
-                description: 'Positive integer ID of chat to delete',
-                type: 'number',
-                required: true,
-            },
-        },
         validator: type({
             chatId: 'number.integer > 0',
         }),
@@ -99,51 +75,39 @@ const schemas: Record<string, Schema> = {
 
     // Message schemas
     getMessages: {
-        doc: {
-            userId: {
-                description: 'Positive integer ID of user',
-                type: 'number',
-                required: true,
-            },
-            contactId: {
-                description: 'Positive integer ID of contact',
-                type: 'number',
-                required: true,
-            },
-        },
         validator: type({
             userId: 'number.integer > 0',
             contactId: 'number.integer > 0',
         }),
     },
     sendMessage: {
-        doc: {
-            userId: {
-                description: 'Positive integer ID of user',
-                type: 'number',
-                required: true,
-            },
-            contactId: {
-                description: 'Positive integer ID of contact',
-                type: 'number',
-                required: true,
-            },
-            content: {
-                description: 'Message content, 1-10000 characters',
-                type: 'string',
-                required: true,
-            },
-            type: {
-                description: 'Optional message type: TEXT, IMAGE, VIDEO, AUDIO',
-                type: 'string',
-                required: false,
-            },
-            src: {
-                description: 'Optional source URL',
-                type: 'string',
-                required: false,
-            },
-        },
+        // doc: {
+        //     userId: {
+        //         description: 'Positive integer ID of user',
+        //         type: 'number',
+        //         required: true,
+        //     },
+        //     contactId: {
+        //         description: 'Positive integer ID of contact',
+        //         type: 'number',
+        //         required: true,
+        //     },
+        //     content: {
+        //         description: 'Message content, 1-10000 characters',
+        //         type: 'string',
+        //         required: true,
+        //     },
+        //     type: {
+        //         description: 'Optional message type: TEXT, IMAGE, VIDEO, AUDIO',
+        //         type: 'string',
+        //         required: false,
+        //     },
+        //     src: {
+        //         description: 'Optional source URL',
+        //         type: 'string',
+        //         required: false,
+        //     },
+        // },
         validator: type({
             userId: 'number.integer > 0',
             contactId: 'number.integer > 0',
@@ -153,41 +117,41 @@ const schemas: Record<string, Schema> = {
         }),
     },
     deleteMessage: {
-        doc: {
-            userId: {
-                description: 'Positive integer ID of user',
-                type: 'number',
-                required: true,
-            },
-            messageId: {
-                description: 'Positive integer ID of message',
-                type: 'number',
-                required: true,
-            },
-        },
+        // doc: {
+        //     userId: {
+        //         description: 'Positive integer ID of user',
+        //         type: 'number',
+        //         required: true,
+        //     },
+        //     messageId: {
+        //         description: 'Positive integer ID of message',
+        //         type: 'number',
+        //         required: true,
+        //     },
+        // },
         validator: type({
             userId: 'number.integer > 0',
             messageId: 'number.integer > 0',
         }),
     },
     editMessage: {
-        doc: {
-            userId: {
-                description: 'Positive integer ID of user',
-                type: 'number',
-                required: true,
-            },
-            messageId: {
-                description: 'Positive integer ID of message',
-                type: 'number',
-                required: true,
-            },
-            content: {
-                description: 'Updated message content, 1-10000 characters',
-                type: 'string',
-                required: true,
-            },
-        },
+        // doc: {
+        //     userId: {
+        //         description: 'Positive integer ID of user',
+        //         type: 'number',
+        //         required: true,
+        //     },
+        //     messageId: {
+        //         description: 'Positive integer ID of message',
+        //         type: 'number',
+        //         required: true,
+        //     },
+        //     content: {
+        //         description: 'Updated message content, 1-10000 characters',
+        //         type: 'string',
+        //         required: true,
+        //     },
+        // },
         validator: type({
             userId: 'number.integer > 0',
             messageId: 'number.integer > 0',
@@ -195,73 +159,73 @@ const schemas: Record<string, Schema> = {
         }),
     },
     readMessages: {
-        doc: {
-            userId: {
-                description: 'Positive integer ID of user',
-                type: 'number',
-                required: true,
-            },
-            contactId: {
-                description: 'Positive integer ID user of contact',
-                type: 'number',
-                required: true,
-            },
-        },
+        // doc: {
+        //     userId: {
+        //         description: 'Positive integer ID of user',
+        //         type: 'number',
+        //         required: true,
+        //     },
+        //     contactId: {
+        //         description: 'Positive integer ID user of contact',
+        //         type: 'number',
+        //         required: true,
+        //     },
+        // },
         validator: type({
             userId: 'number.integer > 0',
             contactId: 'number.integer > 0',
         }),
     },
     markMessageAsRead: {
-        doc: {
-            messageId: {
-                description: 'Positive integer ID of message',
-                type: 'number',
-                required: true,
-            },
-        },
+        // doc: {
+        //     messageId: {
+        //         description: 'Positive integer ID of message',
+        //         type: 'number',
+        //         required: true,
+        //     },
+        // },
         validator: type({
             messageId: 'number.integer > 0',
         }),
     },
     createInvitation: {
-        doc: {
-            userId: {
-                description: 'Positive integer ID of user',
-                type: 'number',
-                required: true,
-            },
-            name: {
-                description: 'Invitation name, 1-100 characters',
-                type: 'string',
-                required: true,
-            },
-        },
+        // doc: {
+        //     userId: {
+        //         description: 'Positive integer ID of user',
+        //         type: 'number',
+        //         required: true,
+        //     },
+        //     name: {
+        //         description: 'Invitation name, 1-100 characters',
+        //         type: 'string',
+        //         required: true,
+        //     },
+        // },
         validator: type({
             userId: 'number.integer > 0',
             name: 'string >= 1 & string <= 100',
         }),
     },
     getUserInvitations: {
-        doc: {
-            userId: {
-                description: 'Positive integer ID of user',
-                type: 'number',
-                required: true,
-            },
-        },
+        // doc: {
+        //     userId: {
+        //         description: 'Positive integer ID of user',
+        //         type: 'number',
+        //         required: true,
+        //     },
+        // },
         validator: type({
             userId: 'number.integer > 0',
         }),
     },
     useInvitation: {
-        doc: {
-            token: {
-                description: 'Invitation token, 1-50 characters',
-                type: 'string',
-                required: true,
-            },
-        },
+        // doc: {
+        //     token: {
+        //         description: 'Invitation token, 1-50 characters',
+        //         type: 'string',
+        //         required: true,
+        //     },
+        // },
         validator: type({
             token: 'string >= 1 & string <= 50',
         }),

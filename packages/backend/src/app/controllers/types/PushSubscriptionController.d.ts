@@ -1,4 +1,34 @@
 /**
+ * Input types for PushSubscriptionController
+ */
+
+export interface CreateSubscriptionInput {
+    endpoint: string;
+    p256dhKey: string;
+    authKey: string;
+    userAgent?: string;
+    ipAddress?: string;
+    deviceType?: string;
+    browserName?: string;
+    browserVersion?: string;
+    osName?: string;
+    osVersion?: string;
+    notificationTypes?: unknown;
+    timezone?: string;
+}
+
+export interface UpdateSubscriptionInput {
+    isActive?: boolean;
+    notificationTypes?: unknown;
+    timezone?: string;
+    deviceType?: string;
+    browserName?: string;
+    browserVersion?: string;
+    osName?: string;
+    osVersion?: string;
+}
+
+/**
  * Response types for PushSubscriptionController
  */
 
@@ -15,7 +45,7 @@ export interface PushSubscription {
     browserVersion: string | null;
     osName: string | null;
     osVersion: string | null;
-    notificationTypes: any;
+    notificationTypes: unknown;
     timezone: string | null;
     isActive: boolean;
     lastUsedAt: Date | null;
@@ -32,8 +62,8 @@ export interface PushSubscriptionLog {
     errorMessage?: string | null;
     messageTitle?: string | null;
     messageBody?: string | null;
-    messageData?: any;
-    responseData?: any;
+    messageData?: unknown;
+    responseData?: unknown;
     sentAt: Date;
 }
 
@@ -84,7 +114,7 @@ export interface GetSubscriptionStatisticsResponse {
     message?: string;
     data?: {
         subscription: PushSubscription;
-        statistics: any;
+        statistics: unknown;
     };
 }
 

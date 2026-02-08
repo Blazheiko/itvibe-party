@@ -1,6 +1,9 @@
 import type { HttpContext } from '#vendor/types/types.js';
+import { getTypedPayload } from '#vendor/utils/validation/get-typed-payload.js';
 import PushSubscription from '#app/models/push-subscription.js';
 import type {
+    CreateSubscriptionInput,
+    UpdateSubscriptionInput,
     GetSubscriptionsResponse,
     CreateSubscriptionResponse,
     GetSubscriptionResponse,
@@ -35,9 +38,9 @@ export default {
     },
 
     async createSubscription(
-        context: HttpContext,
+        context: HttpContext<CreateSubscriptionInput>,
     ): Promise<CreateSubscriptionResponse> {
-        const { httpData, auth, logger, responseData } = context;
+        const { auth, logger, responseData } = context;
         logger.info('createSubscription handler');
 
         if (!auth.check()) {
@@ -58,7 +61,7 @@ export default {
             osVersion,
             notificationTypes,
             timezone,
-        } = httpData.payload;
+        } = getTypedPayload(context);
 
         try {
             // Check if subscription already exists for this endpoint
@@ -137,7 +140,7 @@ export default {
     },
 
     async updateSubscription(
-        context: HttpContext,
+        context: HttpContext<UpdateSubscriptionInput>,
     ): Promise<UpdateSubscriptionResponse> {
         const { httpData, auth, logger, responseData } = context;
         logger.info('updateSubscription handler');
@@ -159,7 +162,7 @@ export default {
             browserVersion,
             osName,
             osVersion,
-        } = httpData.payload;
+        } = getTypedPayload(context);
 
         try {
             const updatedSubscription = await PushSubscription.update(

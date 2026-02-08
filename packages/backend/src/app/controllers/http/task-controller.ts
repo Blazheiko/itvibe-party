@@ -1,7 +1,12 @@
 import Project from '#app/models/Project.js';
 import type { HttpContext } from '#vendor/types/types.js';
+import { getTypedPayload } from '#vendor/utils/validation/get-typed-payload.js';
 import taskModel from '#app/models/Task.js';
 import type {
+    CreateTaskInput,
+    UpdateTaskInput,
+    UpdateTaskStatusInput,
+    UpdateTaskProgressInput,
     GetTasksResponse,
     CreateTaskResponse,
     GetTaskResponse,
@@ -44,8 +49,8 @@ export default {
         }
     },
 
-    async createTask(context: HttpContext): Promise<CreateTaskResponse> {
-        const { httpData, auth, logger } = context;
+    async createTask(context: HttpContext<CreateTaskInput>): Promise<CreateTaskResponse> {
+        const { auth, logger } = context;
         logger.info('createTask handler');
 
         if (!auth.check()) {
@@ -63,7 +68,7 @@ export default {
             startDate,
             estimatedHours,
             parentTaskId,
-        } = httpData.payload;
+        } = getTypedPayload(context);
 
         try {
             const task = await taskModel.create({
@@ -117,7 +122,7 @@ export default {
         }
     },
 
-    async updateTask(context: HttpContext): Promise<UpdateTaskResponse> {
+    async updateTask(context: HttpContext<UpdateTaskInput>): Promise<UpdateTaskResponse> {
         const { httpData, auth, logger } = context;
         logger.info('updateTask handler');
 
@@ -138,7 +143,7 @@ export default {
             startDate,
             estimatedHours,
             actualHours,
-        } = httpData.payload;
+        } = getTypedPayload(context);
 
         try {
             const task = await taskModel.update(BigInt(taskId), auth.getUserId(), {
@@ -194,7 +199,7 @@ export default {
     },
 
     async updateTaskStatus(
-        context: HttpContext,
+        context: HttpContext<UpdateTaskStatusInput>,
     ): Promise<UpdateTaskStatusResponse> {
         const { httpData, auth, logger } = context;
         logger.info('updateTaskStatus handler');
@@ -204,7 +209,7 @@ export default {
         }
 
         const { taskId } = httpData.params as { taskId: string };
-        const { status } = httpData.payload;
+        const { status } = getTypedPayload(context);
 
         try {
             const task = await taskModel.updateStatus(
@@ -226,7 +231,7 @@ export default {
     },
 
     async updateTaskProgress(
-        context: HttpContext,
+        context: HttpContext<UpdateTaskProgressInput>,
     ): Promise<UpdateTaskProgressResponse> {
         const { httpData, auth, logger } = context;
         logger.info('updateTaskProgress handler');
@@ -236,7 +241,7 @@ export default {
         }
 
         const { taskId } = httpData.params as { taskId: string };
-        const { progress } = httpData.payload;
+        const { progress } = getTypedPayload(context);
 
         try {
             const task = await taskModel.updateProgress(

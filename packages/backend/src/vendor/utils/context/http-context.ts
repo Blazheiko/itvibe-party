@@ -29,6 +29,7 @@ const getDefaultAuth = (): Auth => ({
 
 const session: Session = getDefaultSession();
 const auth: Auth = getDefaultAuth();
+
 export default (
   httpData: HttpData,
   responseData: ResponseData,

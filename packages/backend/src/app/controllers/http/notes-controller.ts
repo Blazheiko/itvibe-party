@@ -1,7 +1,11 @@
 import type { HttpContext } from '#vendor/types/types.js';
+import { getTypedPayload } from '#vendor/utils/validation/get-typed-payload.js';
 import Notes from '#app/models/Notes.js';
 import NotesPhoto from '#app/models/notes-photo.js';
 import type {
+    CreateNoteInput,
+    UpdateNoteInput,
+    AddPhotoInput,
     GetNotesResponse,
     CreateNoteResponse,
     GetNoteResponse,
@@ -36,15 +40,15 @@ export default {
         }
     },
 
-    async createNote(context: HttpContext): Promise<CreateNoteResponse> {
-        const { httpData, auth, logger } = context;
+    async createNote(context: HttpContext<CreateNoteInput>): Promise<CreateNoteResponse> {
+        const { auth, logger } = context;
         logger.info('createNote handler');
 
         if (!auth?.check()) {
             return { status: 'error', message: 'Unauthorized' };
         }
 
-        const { title, description } = httpData.payload;
+        const { title, description } = getTypedPayload(context);
 
         try {
             const userId = auth.getUserId();
@@ -92,7 +96,7 @@ export default {
         }
     },
 
-    async updateNote(context: HttpContext): Promise<UpdateNoteResponse> {
+    async updateNote(context: HttpContext<UpdateNoteInput>): Promise<UpdateNoteResponse> {
         const { httpData, auth, logger } = context;
         logger.info('updateNote handler');
 
@@ -101,7 +105,7 @@ export default {
         }
 
         const { noteId } = httpData.params as { noteId: string };
-        const { title, description } = httpData.payload;
+        const { title, description } = getTypedPayload(context);
 
         try {
             const userId = auth.getUserId();
@@ -148,7 +152,7 @@ export default {
         }
     },
 
-    async addPhoto(context: HttpContext): Promise<AddPhotoResponse> {
+    async addPhoto(context: HttpContext<AddPhotoInput>): Promise<AddPhotoResponse> {
         const { httpData, auth, logger } = context;
         logger.info('addPhoto handler');
 
@@ -157,7 +161,7 @@ export default {
         }
 
         const { noteId } = httpData.params as { noteId: string };
-        const { src, filename, size } = httpData.payload;
+        const { src, filename, size } = getTypedPayload(context);
 
         try {
             // Verify note belongs to user

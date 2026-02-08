@@ -1,6 +1,9 @@
 import type { HttpContext } from '#vendor/types/types.js';
+import { getTypedPayload } from '#vendor/utils/validation/get-typed-payload.js';
 import Project from '#app/models/Project.js';
 import type {
+    CreateProjectInput,
+    UpdateProjectInput,
     GetProjectsResponse,
     CreateProjectResponse,
     GetProjectResponse,
@@ -31,8 +34,8 @@ export default {
         }
     },
 
-    async createProject(context: HttpContext): Promise<CreateProjectResponse> {
-        const { httpData, auth, logger, responseData } = context;
+    async createProject(context: HttpContext<CreateProjectInput>): Promise<CreateProjectResponse> {
+        const { auth, logger, responseData } = context;
         logger.info('createProject handler');
 
         if (!auth.check()) {
@@ -41,7 +44,7 @@ export default {
         }
 
         const { title, description, color, startDate, endDate, dueDate } =
-            httpData.payload;
+            getTypedPayload(context);
 
         try {
             const project = await Project.create({
@@ -95,7 +98,7 @@ export default {
         }
     },
 
-    async updateProject(context: HttpContext): Promise<UpdateProjectResponse> {
+    async updateProject(context: HttpContext<UpdateProjectInput>): Promise<UpdateProjectResponse> {
         const { httpData, auth, logger, responseData } = context;
         logger.info('updateProject handler');
 
@@ -114,7 +117,7 @@ export default {
             dueDate,
             isActive,
             progress,
-        } = httpData.payload;
+        } = getTypedPayload(context);
 
         try {
             const project = await Project.update(
