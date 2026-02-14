@@ -190,8 +190,8 @@ export type WsController = Record<string, WsHandler>;
 export interface RouteConfig<TValidator extends Type | string | undefined = undefined> {
   url: string;
   method: Method;
-  middlewares: string[] | undefined;
-  validator: TValidator | undefined;
+  middlewares?: string[] | undefined;
+  validator?: TValidator | undefined;
   description?: string | undefined;
   rateLimit?: RateLimit | undefined;
   groupRateLimit?: RateLimit | undefined;

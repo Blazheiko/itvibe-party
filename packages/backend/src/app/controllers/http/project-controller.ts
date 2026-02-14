@@ -23,9 +23,13 @@ export default {
       return { status: "error", message: "Unauthorized" };
     }
 
+    const userId = auth.getUserId();
+    if (userId === null) {
+      return { status: "error", message: "Unauthorized" };
+    }
+
     try {
-      const userId = auth.getUserId();
-      const projects = await Project.findByUserId(userId);
+      const projects = await Project.findByUserId(BigInt(userId));
       return { status: "success", projects };
     } catch (error) {
       logger.error({ err: error }, "Error getting projects:");
@@ -44,6 +48,11 @@ export default {
       return { status: "error", message: "Unauthorized" };
     }
 
+    const userId = auth.getUserId();
+    if (userId === null) {
+      return { status: "error", message: "Unauthorized" };
+    }
+
     const { title, description, color, startDate, endDate, dueDate } =
       getTypedPayload(context);
 
@@ -52,7 +61,7 @@ export default {
         title,
         description,
         color,
-        userId: auth.getUserId(),
+        userId: BigInt(userId),
         startDate,
         endDate,
         dueDate,
@@ -77,12 +86,17 @@ export default {
       return { status: "error", message: "Unauthorized" };
     }
 
+    const userId = auth.getUserId();
+    if (userId === null) {
+      return { status: "error", message: "Unauthorized" };
+    }
+
     const { projectId } = httpData.params as { projectId: string };
 
     try {
       const project = await Project.findById(
         BigInt(projectId),
-        auth.getUserId(),
+        BigInt(userId),
       );
       return { status: "success", data: project };
     } catch (error) {
@@ -106,6 +120,11 @@ export default {
       return { status: "error", message: "Unauthorized" };
     }
 
+    const userId = auth.getUserId();
+    if (userId === null) {
+      return { status: "error", message: "Unauthorized" };
+    }
+
     const { projectId } = httpData.params as { projectId: string };
     const {
       title,
@@ -121,7 +140,7 @@ export default {
     try {
       const project = await Project.update(
         BigInt(projectId),
-        auth.getUserId(),
+        BigInt(userId),
         {
           title,
           description,
@@ -154,10 +173,15 @@ export default {
       return { status: "error", message: "Unauthorized" };
     }
 
+    const userId = auth.getUserId();
+    if (userId === null) {
+      return { status: "error", message: "Unauthorized" };
+    }
+
     const { projectId } = httpData.params as { projectId: string };
 
     try {
-      await Project.delete(BigInt(projectId), auth.getUserId());
+      await Project.delete(BigInt(projectId), BigInt(userId));
       return {
         status: "success",
         message: "Project deleted successfully",
@@ -183,12 +207,17 @@ export default {
       return { status: "error", message: "Unauthorized" };
     }
 
+    const userId = auth.getUserId();
+    if (userId === null) {
+      return { status: "error", message: "Unauthorized" };
+    }
+
     const { projectId } = httpData.params as { projectId: string };
 
     try {
       const tasks = await Project.getProjectTasks(
         BigInt(projectId),
-        auth.getUserId(),
+        BigInt(userId),
       );
       return { status: "success", data: tasks };
     } catch (error) {
@@ -214,12 +243,17 @@ export default {
       return { status: "error", message: "Unauthorized" };
     }
 
+    const userId = auth.getUserId();
+    if (userId === null) {
+      return { status: "error", message: "Unauthorized" };
+    }
+
     const { projectId } = httpData.params as { projectId: string };
 
     try {
       const data = await Project.getProjectStatistics(
         BigInt(projectId),
-        auth.getUserId(),
+        BigInt(userId),
       );
       return { status: "success", data };
     } catch (error) {
@@ -243,12 +277,17 @@ export default {
       return { status: "error", message: "Unauthorized" };
     }
 
+    const userId = auth.getUserId();
+    if (userId === null) {
+      return { status: "error", message: "Unauthorized" };
+    }
+
     const { projectId } = httpData.params as { projectId: string };
 
     try {
       const archivedProject = await Project.archive(
         BigInt(projectId),
-        auth.getUserId(),
+        BigInt(userId),
       );
       return { status: "success", data: archivedProject };
     } catch (error) {

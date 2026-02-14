@@ -214,7 +214,7 @@ const staticPageHandler = async (
   htmlData: string | Buffer
 ): Promise<void> => {
   console.log('staticPageHandler');
-  if (state.listenSocket !== undefined) {
+  if (state['listenSocket'] !== undefined) {
     try {
       let aborted = false as boolean;
       res.onAborted(() => {

@@ -34,10 +34,14 @@ export default {
       return { status: "error", message: "Unauthorized" };
     }
 
+    const userId = auth.getUserId();
+    if (userId === null) {
+      return { status: "error", message: "Unauthorized" };
+    }
+
     try {
-      const userId = auth.getUserId();
-      const tasks = await taskModel.findByUserId(userId);
-      const projects = await Project.getShortProjects(userId);
+      const tasks = await taskModel.findByUserId(BigInt(userId));
+      const projects = await Project.getShortProjects(BigInt(userId));
       return { status: "success", tasks, projects };
     } catch (error) {
       logger.error({ err: error }, "Error getting tasks:");
@@ -58,6 +62,11 @@ export default {
       return { status: "error", message: "Unauthorized" };
     }
 
+    const userId = auth.getUserId();
+    if (userId === null) {
+      return { status: "error", message: "Unauthorized" };
+    }
+
     const {
       title,
       description,
@@ -75,7 +84,7 @@ export default {
       const task = await taskModel.create({
         title,
         description,
-        userId: auth.getUserId(),
+        userId: BigInt(userId),
         projectId,
         status,
         priority,
@@ -104,10 +113,15 @@ export default {
       return { status: "error", message: "Unauthorized" };
     }
 
+    const userId = auth.getUserId();
+    if (userId === null) {
+      return { status: "error", message: "Unauthorized" };
+    }
+
     const { taskId } = httpData.params as { taskId: string };
 
     try {
-      const task = await taskModel.findById(BigInt(taskId), auth.getUserId());
+      const task = await taskModel.findById(BigInt(taskId), BigInt(userId));
       return { status: "success", task };
     } catch (error) {
       logger.error({ err: error }, "Error getting task:");
@@ -128,6 +142,11 @@ export default {
       return { status: "error", message: "Unauthorized" };
     }
 
+    const userId = auth.getUserId();
+    if (userId === null) {
+      return { status: "error", message: "Unauthorized" };
+    }
+
     const { taskId } = httpData.params as { taskId: string };
     const {
       title,
@@ -144,7 +163,7 @@ export default {
     } = getTypedPayload(context);
 
     try {
-      const task = await taskModel.update(BigInt(taskId), auth.getUserId(), {
+      const task = await taskModel.update(BigInt(taskId), BigInt(userId), {
         title,
         description,
         projectId,
@@ -177,10 +196,15 @@ export default {
       return { status: "error", message: "Unauthorized" };
     }
 
+    const userId = auth.getUserId();
+    if (userId === null) {
+      return { status: "error", message: "Unauthorized" };
+    }
+
     const { taskId } = httpData.params as { taskId: string };
 
     try {
-      await taskModel.delete(BigInt(taskId), auth.getUserId());
+      await taskModel.delete(BigInt(taskId), BigInt(userId));
       return { status: "success", message: "Task deleted successfully" };
     } catch (error) {
       logger.error({ err: error }, "Error deleting task:");
@@ -202,13 +226,18 @@ export default {
       return { status: "error", message: "Unauthorized" };
     }
 
+    const userId = auth.getUserId();
+    if (userId === null) {
+      return { status: "error", message: "Unauthorized" };
+    }
+
     const { taskId } = httpData.params as { taskId: string };
     const { status } = getTypedPayload(context);
 
     try {
       const task = await taskModel.updateStatus(
         BigInt(taskId),
-        auth.getUserId(),
+        BigInt(userId),
         status,
       );
       return { status: "success", task };
@@ -234,13 +263,18 @@ export default {
       return { status: "error", message: "Unauthorized" };
     }
 
+    const userId = auth.getUserId();
+    if (userId === null) {
+      return { status: "error", message: "Unauthorized" };
+    }
+
     const { taskId } = httpData.params as { taskId: string };
     const { progress } = getTypedPayload(context);
 
     try {
       const task = await taskModel.updateProgress(
         BigInt(taskId),
-        auth.getUserId(),
+        BigInt(userId),
         parseInt(progress),
       );
       return { status: "success", task };
@@ -266,12 +300,17 @@ export default {
       return { status: "error", message: "Unauthorized" };
     }
 
+    const userId = auth.getUserId();
+    if (userId === null) {
+      return { status: "error", message: "Unauthorized" };
+    }
+
     const { projectId } = httpData.params as { projectId: string };
 
     try {
       const tasks = await taskModel.findByProjectId(
         BigInt(projectId),
-        auth.getUserId(),
+        BigInt(userId),
       );
       return { status: "success", tasks };
     } catch (error) {
@@ -294,12 +333,17 @@ export default {
       return { status: "error", message: "Unauthorized" };
     }
 
+    const userId = auth.getUserId();
+    if (userId === null) {
+      return { status: "error", message: "Unauthorized" };
+    }
+
     const { parentTaskId } = httpData.params as { parentTaskId: string };
 
     try {
       const subTasks = await taskModel.findSubTasks(
         BigInt(parentTaskId),
-        auth.getUserId(),
+        BigInt(userId),
       );
       return { status: "success", tasks: subTasks };
     } catch (error) {

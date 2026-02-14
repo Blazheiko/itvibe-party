@@ -15,6 +15,6 @@ export default Object.freeze({
         "style-src": ["'self'", "'unsafe-inline'"],
         "img-src": ["'self'", 'data:', 'blob:'],
         "font-src": ["'self'", 'data:'],
-        "connect-src": env.APP_ENV === 'production' || env.APP_ENV === 'prod' ? ["'self'", 'wss:', 'https:', 'blob:'] : ["'self'", 'ws:', 'wss:', 'https:', 'http:', 'blob:'],
+        "connect-src": env['APP_ENV'] === 'production' || env['APP_ENV'] === 'prod' ? ["'self'", 'wss:', 'https:', 'blob:'] : ["'self'", 'ws:', 'wss:', 'https:', 'http:', 'blob:'],
     },
 });

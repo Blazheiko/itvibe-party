@@ -30,20 +30,20 @@ function parsePort(
 
 const config = Object.freeze({
     /* eslint-disable no-undef */
-    appName: env.APP_NAME || 'uwebsockets-api',
-    key: env.APP_KEY,
-    env: env.APP_ENV,
-    url: env.APP_URL,
-    domain: env.DOMAIN || '127.0.0.1',
-    host: env.HOST || '0.0.0.0',
+    appName: env['APP_NAME'] || 'uwebsockets-api',
+    key: env['APP_KEY'],
+    env: env['APP_ENV'],
+    url: env['APP_URL'],
+    domain: env['DOMAIN'] || '127.0.0.1',
+    host: env['HOST'] || '0.0.0.0',
     port: parsePort(process.env.PORT, 3000),
-    pathPrefix: normalizePath(env.API_PATH_PREFIX || 'api'),
-    unixPath: env.APP_UNIX_PATH,
+    pathPrefix: normalizePath(env['API_PATH_PREFIX'] || 'api'),
+    unixPath: env['APP_UNIX_PATH'],
     // Примеры использования логических значений:
     // SERVE_STATIC=true, SERVE_STATIC=1, SERVE_STATIC=yes, SERVE_STATIC=on
-    serveStatic: parseBoolean(env.SERVE_STATIC, false),
+    serveStatic: parseBoolean(env['SERVE_STATIC'], false),
     // DOC_PAGE=false, DOC_PAGE=0, DOC_PAGE=no, DOC_PAGE=off или не указано
-    docPage: parseBoolean(env.DOC_PAGE, false),
+    docPage: parseBoolean(env['DOC_PAGE'], false),
     characters:
         'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789',
     reasonableCookieLimit: 10000, // Reasonable limit for cookie value

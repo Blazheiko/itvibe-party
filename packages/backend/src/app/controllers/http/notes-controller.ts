@@ -26,9 +26,13 @@ export default {
       return { status: "error", message: "Unauthorized" };
     }
 
+    const userId = auth.getUserId();
+    if (userId === null) {
+      return { status: "error", message: "Unauthorized" };
+    }
+
     try {
-      const userId = auth.getUserId();
-      const notes = await Notes.findByUserId(userId);
+      const notes = await Notes.findByUserId(BigInt(userId));
       return { status: "ok", data: notes };
     } catch (error) {
       logger.error({ err: error }, "Error getting notes:");
@@ -49,14 +53,18 @@ export default {
       return { status: "error", message: "Unauthorized" };
     }
 
+    const userId = auth.getUserId();
+    if (userId === null) {
+      return { status: "error", message: "Unauthorized" };
+    }
+
     const { title, description } = getTypedPayload(context);
 
     try {
-      const userId = auth.getUserId();
       const note = await Notes.create({
         title,
         description,
-        userId,
+        userId: BigInt(userId),
       });
       return { status: "ok", data: note };
     } catch (error) {
@@ -77,11 +85,15 @@ export default {
       return { status: "error", message: "Unauthorized" };
     }
 
+    const userId = auth.getUserId();
+    if (userId === null) {
+      return { status: "error", message: "Unauthorized" };
+    }
+
     const { noteId } = httpData.params as { noteId: string };
 
     try {
-      const userId = auth.getUserId();
-      const note = await Notes.findById(BigInt(noteId), userId);
+      const note = await Notes.findById(BigInt(noteId), BigInt(userId));
       return { status: "ok", data: note };
     } catch (error) {
       logger.error({ err: error }, "Error getting note:");
@@ -102,12 +114,16 @@ export default {
       return { status: "error", message: "Unauthorized" };
     }
 
+    const userId = auth.getUserId();
+    if (userId === null) {
+      return { status: "error", message: "Unauthorized" };
+    }
+
     const { noteId } = httpData.params as { noteId: string };
     const { title, description } = getTypedPayload(context);
 
     try {
-      const userId = auth.getUserId();
-      const note = await Notes.update(BigInt(noteId), userId, {
+      const note = await Notes.update(BigInt(noteId), BigInt(userId), {
         title,
         description,
       });
@@ -130,11 +146,15 @@ export default {
       return { status: "error", message: "Unauthorized" };
     }
 
+    const userId = auth.getUserId();
+    if (userId === null) {
+      return { status: "error", message: "Unauthorized" };
+    }
+
     const { noteId } = httpData.params as { noteId: string };
 
     try {
-      const userId = auth.getUserId();
-      await Notes.delete(BigInt(noteId), userId);
+      await Notes.delete(BigInt(noteId), BigInt(userId));
       return { status: "ok", message: "Note deleted successfully" };
     } catch (error) {
       logger.error({ err: error }, "Error deleting note:");
@@ -156,13 +176,17 @@ export default {
       return { status: "error", message: "Unauthorized" };
     }
 
+    const userId = auth.getUserId();
+    if (userId === null) {
+      return { status: "error", message: "Unauthorized" };
+    }
+
     const { noteId } = httpData.params as { noteId: string };
     const { src, filename, size } = getTypedPayload(context);
 
     try {
       // Verify note belongs to user
-      const userId = auth.getUserId();
-      const hasAccess = await Notes.verifyOwnership(BigInt(noteId), userId);
+      const hasAccess = await Notes.verifyOwnership(BigInt(noteId), BigInt(userId));
       if (!hasAccess) {
         return {
           status: "error",
@@ -194,6 +218,11 @@ export default {
       return { status: "error", message: "Unauthorized" };
     }
 
+    const userId = auth.getUserId();
+    if (userId === null) {
+      return { status: "error", message: "Unauthorized" };
+    }
+
     const { noteId, photoId } = httpData.params as {
       noteId: string;
       photoId: string;
@@ -201,8 +230,7 @@ export default {
 
     try {
       // Verify note belongs to user
-      const userId = auth.getUserId();
-      const hasAccess = await Notes.verifyOwnership(BigInt(noteId), userId);
+      const hasAccess = await Notes.verifyOwnership(BigInt(noteId), BigInt(userId));
       if (!hasAccess) {
         return {
           status: "error",

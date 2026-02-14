@@ -25,8 +25,13 @@ export default {
       return { status: "error", message: "Unauthorized" };
     }
 
+    const userId = auth.getUserId();
+    if (userId === null) {
+      return { status: "error", message: "Unauthorized" };
+    }
+
     try {
-      const events = await calendarModel.findByUserId(auth.user.id);
+      const events = await calendarModel.findByUserId(BigInt(userId));
       return { status: "success", data: events };
     } catch (error) {
       logger.error({ err: error }, "Error getting events:");
@@ -44,6 +49,11 @@ export default {
       return { status: "error", message: "Unauthorized" };
     }
 
+    const userId = auth.getUserId();
+    if (userId === null) {
+      return { status: "error", message: "Unauthorized" };
+    }
+
     // const { title, description, startTime, endTime } = getTypedPayload(context);
     const payload = getTypedPayload(context);
 
@@ -55,7 +65,7 @@ export default {
         description,
         startTime,
         endTime,
-        userId: auth.user.id,
+        userId: BigInt(userId),
       });
 
       return { status: "success", data: createdEvent };
@@ -73,10 +83,15 @@ export default {
       return { status: "error", message: "Unauthorized" };
     }
 
+    const userId = auth.getUserId();
+    if (userId === null) {
+      return { status: "error", message: "Unauthorized" };
+    }
+
     const { eventId } = httpData.params as { eventId: string };
 
     try {
-      const event = await calendarModel.findById(BigInt(eventId), auth.user.id);
+      const event = await calendarModel.findById(BigInt(eventId), BigInt(userId));
       return { status: "success", data: event };
     } catch (error) {
       logger.error({ err: error }, "Error getting event:");
@@ -94,13 +109,18 @@ export default {
       return { status: "error", message: "Unauthorized" };
     }
 
+    const userId = auth.getUserId();
+    if (userId === null) {
+      return { status: "error", message: "Unauthorized" };
+    }
+
     const { eventId } = httpData.params as { eventId: string };
     const { title, description, startTime, endTime } = getTypedPayload(context);
 
     try {
       const updatedEvent = await calendarModel.update(
         BigInt(eventId),
-        auth.user.id,
+        BigInt(userId),
         {
           title,
           description,
@@ -124,10 +144,15 @@ export default {
       return { status: "error", message: "Unauthorized" };
     }
 
+    const userId = auth.getUserId();
+    if (userId === null) {
+      return { status: "error", message: "Unauthorized" };
+    }
+
     const { eventId } = httpData.params as { eventId: string };
 
     try {
-      await calendarModel.delete(BigInt(eventId), auth.user.id);
+      await calendarModel.delete(BigInt(eventId), BigInt(userId));
       return { status: "success", message: "Event deleted successfully" };
     } catch (error) {
       logger.error({ err: error }, "Error deleting event:");
@@ -145,11 +170,16 @@ export default {
       return { status: "error", message: "Unauthorized" };
     }
 
+    const userId = auth.getUserId();
+    if (userId === null) {
+      return { status: "error", message: "Unauthorized" };
+    }
+
     const { date } = httpData.params as { date: string };
 
     try {
       const events = await calendarModel.findByDate(
-        auth.user.id,
+        BigInt(userId),
         new Date(date),
       );
       return { status: "success", data: events };
@@ -169,11 +199,16 @@ export default {
       return { status: "error", message: "Unauthorized" };
     }
 
+    const userId = auth.getUserId();
+    if (userId === null) {
+      return { status: "error", message: "Unauthorized" };
+    }
+
     const { startDate, endDate } = getTypedPayload(context);
 
     try {
       const events = await calendarModel.findByRange(
-        auth.user.id,
+        BigInt(userId),
         new Date(startDate),
         new Date(endDate),
       );

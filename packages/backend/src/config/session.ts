@@ -12,7 +12,7 @@ export default Object.freeze({
     cookie: {
         path: '/',
         httpOnly: true,
-        secure: env.APP_ENV !== 'local',
+        secure: env['APP_ENV'] !== 'local',
         sameSite: 'Lax', // 'Strict' || 'Lax' . 'None' is not secure use only for CSRF protection
     },
 

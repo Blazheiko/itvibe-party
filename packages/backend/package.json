@@ -4,12 +4,12 @@
   "private": true,
   "type": "module",
   "imports": {
-    "#app/*": "./src/app/*",
-    "#config/*": "./src/config/*",
-    "#vendor/*": "./src/vendor/*",
-    "#database/*": "./src/database/*",
-    "#logger": "./src/vendor/utils/logger.ts",
-    "#drizzle/*": "./src/drizzle/*"
+    "#app/*": "./dist/app/*",
+    "#config/*": "./dist/config/*",
+    "#vendor/*": "./dist/vendor/*",
+    "#database/*": "./dist/database/*",
+    "#logger": "./dist/vendor/utils/logger.js",
+    "#drizzle/*": "./dist/drizzle/*"
   },
   "scripts": {
     "build": "tsc --build",

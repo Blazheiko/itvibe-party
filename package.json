@@ -11,7 +11,7 @@
   "scripts": {
     "build": "pnpm -r build",
     "build:shared": "pnpm --filter shared build",
-    "dev": "pnpm run build:shared && pnpm --filter backend --filter frontend --parallel dev",
+    "dev": "pnpm run build:shared && pnpm --filter backend build && pnpm --filter backend --filter frontend --parallel dev",
     "dev:manual_test": "pnpm run build:shared && sh -c 'pnpm --filter ./packages/backend dev & pnpm --filter ./packages/api-playground dev & wait'",
     "dev:backend": "pnpm --filter backend dev",
     "dev:frontend": "pnpm --filter frontend dev",

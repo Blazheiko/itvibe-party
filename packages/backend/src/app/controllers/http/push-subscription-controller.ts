@@ -28,10 +28,14 @@ export default {
       return { status: "error", message: "Unauthorized" };
     }
 
+    const userId = auth.getUserId();
+    if (userId === null) {
+      return { status: "error", message: "Unauthorized" };
+    }
+
     try {
-      const userId = auth.getUserId();
       const subscriptionsWithLogs =
-        await PushSubscription.findByUserIdWithLogs(userId);
+        await PushSubscription.findByUserIdWithLogs(BigInt(userId));
 
       return { status: "success", subscriptions: subscriptionsWithLogs };
     } catch (error) {
@@ -48,6 +52,11 @@ export default {
 
     if (!auth.check()) {
       responseData.status = 401;
+      return { status: "error", message: "Unauthorized" };
+    }
+
+    const userId = auth.getUserId();
+    if (userId === null) {
       return { status: "error", message: "Unauthorized" };
     }
 
@@ -75,7 +84,7 @@ export default {
         // Update existing subscription
         const updatedSubscription = await PushSubscription.updateByEndpoint(
           endpoint,
-          auth.getUserId(),
+          BigInt(userId),
           {
             p256dhKey,
             authKey,
@@ -108,7 +117,7 @@ export default {
         osVersion,
         notificationTypes,
         timezone,
-        userId: auth.getUserId(),
+        userId: BigInt(userId),
       });
 
       return { status: "success", subscription: createdSubscription };
@@ -132,6 +141,11 @@ export default {
       return { status: "error", message: "Unauthorized" };
     }
 
+    const userId = auth.getUserId();
+    if (userId === null) {
+      return { status: "error", message: "Unauthorized" };
+    }
+
     const { subscriptionId } = httpData.params as {
       subscriptionId: string;
     };
@@ -139,11 +153,11 @@ export default {
     try {
       const subscription = await PushSubscription.findById(
         BigInt(subscriptionId),
-        auth.getUserId(),
+        BigInt(userId),
       );
       const logs = await PushSubscription.getLogsBySubscriptionId(
         BigInt(subscriptionId),
-        auth.getUserId(),
+        BigInt(userId),
         10,
       );
 
@@ -168,6 +182,11 @@ export default {
       return { status: "error", message: "Unauthorized" };
     }
 
+    const userId = auth.getUserId();
+    if (userId === null) {
+      return { status: "error", message: "Unauthorized" };
+    }
+
     const { subscriptionId } = httpData.params as {
       subscriptionId: string;
     };
@@ -185,7 +204,7 @@ export default {
     try {
       const updatedSubscription = await PushSubscription.update(
         BigInt(subscriptionId),
-        auth.getUserId(),
+        BigInt(userId),
         {
           isActive,
           notificationTypes,
@@ -219,12 +238,17 @@ export default {
       return { status: "error", message: "Unauthorized" };
     }
 
+    const userId = auth.getUserId();
+    if (userId === null) {
+      return { status: "error", message: "Unauthorized" };
+    }
+
     const { subscriptionId } = httpData.params as {
       subscriptionId: string;
     };
 
     try {
-      await PushSubscription.delete(BigInt(subscriptionId), auth.getUserId());
+      await PushSubscription.delete(BigInt(subscriptionId), BigInt(userId));
 
       return {
         status: "success",
@@ -250,6 +274,11 @@ export default {
       return { status: "error", message: "Unauthorized" };
     }
 
+    const userId = auth.getUserId();
+    if (userId === null) {
+      return { status: "error", message: "Unauthorized" };
+    }
+
     const { subscriptionId } = httpData.params as {
       subscriptionId: string;
     };
@@ -257,7 +286,7 @@ export default {
     try {
       const logs = await PushSubscription.getLogsBySubscriptionId(
         BigInt(subscriptionId),
-        auth.getUserId(),
+        BigInt(userId),
         50,
       );
 
@@ -282,6 +311,11 @@ export default {
       return { status: "error", message: "Unauthorized" };
     }
 
+    const userId = auth.getUserId();
+    if (userId === null) {
+      return { status: "error", message: "Unauthorized" };
+    }
+
     const { subscriptionId } = httpData.params as {
       subscriptionId: string;
     };
@@ -289,7 +323,7 @@ export default {
     try {
       const result = await PushSubscription.getStatistics(
         BigInt(subscriptionId),
-        auth.getUserId(),
+        BigInt(userId),
       );
 
       return { status: "success", data: result };
@@ -313,6 +347,11 @@ export default {
       return { status: "error", message: "Unauthorized" };
     }
 
+    const userId = auth.getUserId();
+    if (userId === null) {
+      return { status: "error", message: "Unauthorized" };
+    }
+
     const { subscriptionId } = httpData.params as {
       subscriptionId: string;
     };
@@ -320,7 +359,7 @@ export default {
     try {
       const deactivatedSubscription = await PushSubscription.deactivate(
         BigInt(subscriptionId),
-        auth.getUserId(),
+        BigInt(userId),
       );
 
       return { status: "success", data: deactivatedSubscription };

@@ -589,7 +589,7 @@ const broadcastMessage = (
   payload: Payload,
 ): void => {
   // logger.info(`broadcastMessage: ${userId} ${event}`);
-  if (state.listenSocket !== undefined)
+  if (state['listenSocket'] !== undefined)
     server.publish(
       `user:${String(userId)}`,
       JSON.stringify(
@@ -816,7 +816,7 @@ const docRoutesHandler = async (
 ): Promise<void> => {
   return new Promise((resolve: () => void) => {
     if (
-      state.listenSocket !== undefined &&
+      state['listenSocket'] !== undefined &&
       configApp.docPage &&
       configApp.serveStatic
     ) {
@@ -872,7 +872,7 @@ const setHttpHandler = async (
   route: RouteItem,
 ): Promise<void> => {
   // logger.info('Handler method:' + route.method + ' url:' + route.url);
-  if (state.listenSocket !== undefined) {
+  if (state['listenSocket'] !== undefined) {
     try {
       let aborted = false as boolean;
       res.onAborted(() => {
@@ -1002,7 +1002,7 @@ const initServer = async (): Promise<void> => {
     server.listen_unix((token: us_listen_socket | false) => {
       if (token !== false) {
         logger.info(`Listening unix socket: ${appConfig.unixPath ?? ""}`);
-        state.listenSocket = token;
+        state['listenSocket'] = token;
       } else {
         logger.error(
           `Failed to listening unix socket: ${appConfig.unixPath ?? ""}`,
@@ -1018,7 +1018,7 @@ const initServer = async (): Promise<void> => {
           logger.info(
             `Listening http://${appConfig.host}:${String(appConfig.port)}`,
           );
-          state.listenSocket = token;
+          state['listenSocket'] = token;
         } else {
           logger.error(`Failed to listen to port ${String(appConfig.port)}`);
         }
@@ -1031,9 +1031,9 @@ const stopServer = (type = "handle"): void => {
   logger.info(`server stop type: ${type}`);
   closeAllWs()
     .then(() => {
-      if (state.listenSocket !== undefined)
-        uWS.us_listen_socket_close(state.listenSocket);
-      state.listenSocket = undefined;
+      if (state['listenSocket'] !== undefined)
+        uWS.us_listen_socket_close(state['listenSocket']);
+      state['listenSocket'] = undefined;
     })
     .catch((error: unknown) => {
       console.error(error);
