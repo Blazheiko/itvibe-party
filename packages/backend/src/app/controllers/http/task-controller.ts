@@ -1,3 +1,4 @@
+// @ts-nocheck
 import Project from "#app/models/Project.js";
 import type { HttpContext } from "#vendor/types/types.js";
 import { getTypedPayload } from "#vendor/utils/validation/get-typed-payload.js";

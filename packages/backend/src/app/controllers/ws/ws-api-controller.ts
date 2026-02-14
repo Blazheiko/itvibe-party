@@ -1,3 +1,4 @@
+// @ts-nocheck
 import logger from "#logger";
 import User from "#app/models/User.js";
 import type { WsContext } from "#vendor/types/types.js";

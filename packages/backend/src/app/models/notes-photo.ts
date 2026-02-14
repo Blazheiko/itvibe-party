@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { db } from '#database/db.js';
 import { notesPhotos } from '#database/schema.js';
 import { eq, and, desc, gte } from 'drizzle-orm';

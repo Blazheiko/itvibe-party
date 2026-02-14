@@ -17,8 +17,12 @@ type WsHandlerReturn = Promise<Payload | object> | Payload | object;
  */
 type TypedWsHandler<TValidator extends Type | string | undefined> =
   TValidator extends Type
-    ? (context: WsContext<InferPayload<TValidator>>) => WsHandlerReturn
-    : (context: WsContext) => WsHandlerReturn;
+    ? {
+        bivarianceHack(context: WsContext<InferPayload<TValidator>>): WsHandlerReturn;
+      }["bivarianceHack"]
+    : {
+        bivarianceHack(context: WsContext<any>): WsHandlerReturn;
+      }["bivarianceHack"];
 
 /**
  * Конфигурация WS роута с типизированным handler.

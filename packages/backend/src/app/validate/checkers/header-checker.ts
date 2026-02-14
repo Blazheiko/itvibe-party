@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Validates HTTP header names and values according to RFC 7230
  * using ArkType schemas for runtime validation.

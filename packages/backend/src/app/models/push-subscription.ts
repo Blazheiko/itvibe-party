@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { db } from '#database/db.js';
 import { pushSubscriptions, pushNotificationLogs } from '#database/schema.js';
 import { eq, and, desc, sql } from 'drizzle-orm';

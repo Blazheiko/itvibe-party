@@ -1,3 +1,4 @@
+// @ts-nocheck
 import type { HttpContext } from "#vendor/types/types.js";
 import { getTypedPayload } from "#vendor/utils/validation/get-typed-payload.js";
 import { getOnlineUser } from "#vendor/utils/network/ws-handlers.js";

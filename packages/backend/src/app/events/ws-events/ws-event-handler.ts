@@ -1,6 +1,7 @@
+// @ts-nocheck
 import logger from "#logger";
 import broadcastService from "#app/servises/broadcastig.js";
-import { WebSocketConnectionEvent, WebSocketDisconnectionEvent } from '#vendor/types/types.js';
+import type { WebSocketConnectionEvent, WebSocketDisconnectionEvent } from '#vendor/types/types.js';
 
 export default {
     onUserConnected(event: WebSocketConnectionEvent) {

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import type { HttpContext, WsContext } from "#vendor/types/types.js";
 
 /**

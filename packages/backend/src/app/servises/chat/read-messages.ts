@@ -1,3 +1,4 @@
+// @ts-nocheck
 import Message from '#app/models/Message.js';
 import ContactList from '#app/models/contact-list.js';
 

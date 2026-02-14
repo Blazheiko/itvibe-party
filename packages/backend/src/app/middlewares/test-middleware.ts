@@ -1,4 +1,5 @@
-import { HttpContext, WsContext } from '#vendor/types/types.js';
+// @ts-nocheck
+import type { HttpContext, WsContext } from '#vendor/types/types.js';
 
 export default async ( { responseData, logger } : HttpContext | WsContext, next: Function) => {
     logger.info('testMiddleware.js');

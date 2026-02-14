@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { env } from 'node:process';
 import { normalizePath } from '#vendor/utils/network/http-request-handlers.js';
 

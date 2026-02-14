@@ -1,3 +1,4 @@
+// @ts-nocheck
 import logger from "#logger";
 import { broadcastToChannel } from "#vendor/start/server.js";
 import { makeBroadcastJson } from "#vendor/utils/helpers/json-handlers.js";

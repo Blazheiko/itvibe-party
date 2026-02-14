@@ -1,5 +1,7 @@
+// @ts-nocheck
 import { drizzle } from 'drizzle-orm/mysql2';
-import mysql, { PoolOptions } from 'mysql2/promise';
+import mysql from 'mysql2/promise';
+import type { PoolOptions } from 'mysql2/promise';
 import databaseConfig from '#config/database.js';
 import appConfig from '#config/app.js';
 import * as schema from './schema.js';

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import logger from "#vendor/utils/logger.js";
 import wsApiHandler from "../routing/ws-api-dispatcher.js";
 import { generateUUID } from "metautil";

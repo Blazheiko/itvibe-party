@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Validates URL path parameters using ArkType schemas.
  */

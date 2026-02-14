@@ -3,7 +3,14 @@ import type { Logger } from "pino";
 import type { Type } from "@arktype/type";
 // import type { UserData } from '#vendor/start/server.js';
 
-export type Payload = Record<string, unknown> | string | Buffer;
+export type Payload =
+  | Record<string, unknown>
+  | string
+  | Buffer
+  | number
+  | boolean
+  | bigint
+  | null;
 
 export type Params = Record<string, string>;
 
@@ -87,7 +94,10 @@ export interface Session {
   destroyAllSessions: (userId: string | bigint | number) => Promise<number>;
 }
 
-export type SessionData = Record<string, unknown>;
+export interface SessionData extends Record<string, unknown> {
+  userId?: string | number | bigint;
+  wsToken?: string;
+}
 
 export interface SessionInfo {
   id: string;
@@ -112,7 +122,7 @@ export interface HttpData<TPayload = unknown> {
 export interface ErrorResponse {
   code: number;
   message: string;
-  messages?: Record<string, unknown> | string[];
+  messages?: Record<string, unknown> | string[] | string;
 }
 
 export interface WsMessage {
@@ -132,7 +142,7 @@ export interface WsResponseData {
 export interface WsData<TPayload = unknown> {
   middlewareData: Record<string, unknown>;
   status: string;
-  payload: TPayload;
+  payload: TPayload | Payload;
 }
 
 export interface CookieOptions {
@@ -152,7 +162,10 @@ export interface ResponseData {
   cookies: Map<string, Cookie>;
   status: number;
   deleteCookie: (name: string) => void;
-  setCookie: (name: string, value: string, options: CookieOptions) => void;
+  setCookie: {
+    (name: string, value: string, options?: CookieOptions): void;
+    (cookie: Cookie): void;
+  };
   setHeader: (name: string, value: string) => void;
 }
 
@@ -168,8 +181,9 @@ export interface RateLimit {
 export type InferPayload<T> = T extends Type<infer U> ? U : unknown;
 
 // Handler types for routes
+type HandlerReturn = Promise<Payload | object> | Payload | object;
 type BivariantHandler<TContext> = {
-  bivarianceHack(context: TContext): Promise<Payload>;
+  bivarianceHack(context: TContext): HandlerReturn;
 }["bivarianceHack"];
 
 export type RouteHandler<TPayload = unknown> = BivariantHandler<
@@ -203,7 +217,7 @@ export interface RouteConfig<TValidator extends Type | string | undefined = unde
 
 // RouteItem with handler - uses function overload pattern for type erasure
 export interface RouteItem extends RouteConfig<Type | undefined> {
-  handler: (context: HttpContext | WsContext) => Promise<Payload>;
+  handler: BivariantHandler<HttpContext | WsContext>;
 }
 
 export interface ResponseSchema {

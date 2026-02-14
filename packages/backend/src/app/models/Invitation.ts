@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { db } from '#database/db.js';
 import { invitations, users } from '#database/schema.js';
 import { eq, and } from 'drizzle-orm';

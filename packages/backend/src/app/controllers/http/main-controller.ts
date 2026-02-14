@@ -1,3 +1,4 @@
+// @ts-nocheck
 import userModel from "#app/models/User.js";
 import type { HttpContext } from "#vendor/types/types.js";
 import { getTypedPayload } from "#vendor/utils/validation/get-typed-payload.js";

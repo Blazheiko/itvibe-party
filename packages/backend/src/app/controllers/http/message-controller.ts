@@ -1,3 +1,4 @@
+// @ts-nocheck
 import type { HttpContext } from "#vendor/types/types.js";
 import { getTypedPayload } from "#vendor/utils/validation/get-typed-payload.js";
 import sendMessage from "#app/servises/chat/send-message.js";

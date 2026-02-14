@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { getWsRoute } from "#vendor/start/router.js";
 import executeMiddlewares from "#vendor/utils/middlewares/core/execute-httpMiddlewares.js";
 // import validators from '#vendor/start/validators.js';

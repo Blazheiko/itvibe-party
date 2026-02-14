@@ -16,8 +16,12 @@ type HandlerReturn = Promise<Payload | object> | Payload | object;
  * Типизированный handler с payload выведенным из validator
  */
 type TypedHandler<TValidator extends Type | string | undefined> = TValidator extends Type
-  ? (context: HttpContext<InferPayload<TValidator>>) => HandlerReturn
-  : (context: HttpContext) => HandlerReturn;
+  ? {
+      bivarianceHack(context: HttpContext<InferPayload<TValidator>>): HandlerReturn;
+    }["bivarianceHack"]
+  : {
+      bivarianceHack(context: HttpContext<any>): HandlerReturn;
+    }["bivarianceHack"];
 
 /**
  * Конфигурация роута с типизированным handler

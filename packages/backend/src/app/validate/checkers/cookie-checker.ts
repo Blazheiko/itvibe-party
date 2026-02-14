@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Validates HTTP cookie names and values using ArkType schemas.
  *

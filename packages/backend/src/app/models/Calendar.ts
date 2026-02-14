@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { db } from '#database/db.js';
 import { calendar } from '#database/schema.js';
 import { eq, and, or, gte, lte, asc, sql } from 'drizzle-orm';

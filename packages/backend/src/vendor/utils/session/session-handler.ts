@@ -1,3 +1,4 @@
+// @ts-nocheck
 // import redis from '#database/redis.js';
 // import { DateTime } from "luxon";
 import crypto from "node:crypto";

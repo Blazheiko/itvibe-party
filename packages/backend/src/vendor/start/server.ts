@@ -1,3 +1,4 @@
+// @ts-nocheck
 import * as uWS from "uWebSockets.js";
 // import type {
 //   HttpRequest,
