@@ -184,7 +184,7 @@ export const sessionHandler = async (
 
       // Destroy old session with normalized userId
       if (oldSessionId !== undefined) {
-        const normalizedOldUserId = normalizeUserId(String(oldUserId));
+        const normalizedOldUserId = normalizeUserId(oldUserId);
         await destroySession(oldSessionId, normalizedOldUserId);
       }
 

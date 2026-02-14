@@ -15,6 +15,13 @@
       "when": 1768992000000,
       "tag": "0001_add_click_booking_to_user_activity",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1771086360005,
+      "tag": "0002_complete_black_bird",
+      "breakpoints": true
     }
   ]
 }

@@ -719,7 +719,7 @@ const getHttpData = async (
     contentType?.trim().toLowerCase() === "application/json";
 
   let payload: Payload | null = null;
-  console.log(route.validator)
+  logger.info({validator: route.validator}, "getHttpData")
 
   if (
     isJson &&

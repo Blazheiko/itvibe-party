@@ -66,10 +66,12 @@ export default {
   ): Promise<LoginResponse | string> {
     const { responseData, auth, session, logger } = context;
     logger.info("login handler");
-    logger.info(context.httpData);
+    // logger.info(context.httpData);
     const { email, password, token } = getTypedPayload(context);
+    // logger.info(`email: ${email}, password: ${password}, token: ${token}`)
 
     const user = await userModel.findByEmail(email);
+    logger.info(user, "user");
 
     if (user) {
       const valid = await validatePassword(password, user.password);
