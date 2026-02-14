@@ -64,6 +64,7 @@ import {
   makeJson,
 } from "#vendor/utils/helpers/json-handlers.js";
 import { type } from "@arktype/type";
+import * as console from "node:console";
 
 export interface us_listen_socket {
   fd: number;
@@ -718,12 +719,14 @@ const getHttpData = async (
     contentType?.trim().toLowerCase() === "application/json";
 
   let payload: Payload | null = null;
+  console.log(route.validator)
 
   if (
     isJson &&
-    route.validator !== undefined &&
-    typeof route.validator === "function"
+    route.validator !== undefined
   ) {
+    logger.info('route.validator Get Http Data')
+
     const httpPayload = await getData(res, contentType);
     if (httpPayload !== null) {
       const validatedInput = (route.validator as (payload: Payload) => unknown)(httpPayload);

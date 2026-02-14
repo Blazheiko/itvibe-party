@@ -15,24 +15,24 @@ import {
   UseInvitationInputSchema,
 } from "shared/schemas";
 
-interface Schema {
-  validator: Type;
-}
+// interface Schema {
+//   validator: Type;
+// }
 
-const schemas: Record<string, Schema> = {
-  register: { validator: RegisterInputSchema },
-  login: { validator: LoginInputSchema },
-  createChat: { validator: CreateChatInputSchema },
-  deleteChat: { validator: DeleteChatInputSchema },
-  getMessages: { validator: GetMessagesInputSchema },
-  sendMessage: { validator: SendMessageInputSchema },
-  deleteMessage: { validator: DeleteMessageInputSchema },
-  editMessage: { validator: EditMessageInputSchema },
-  readMessages: { validator: ReadMessagesInputSchema },
-  markMessageAsRead: { validator: MarkMessageAsReadInputSchema },
-  createInvitation: { validator: CreateInvitationInputSchema },
-  getUserInvitations: { validator: GetUserInvitationsInputSchema },
-  useInvitation: { validator: UseInvitationInputSchema },
+const schemas: Record<string, Type> = {
+  register: RegisterInputSchema,
+  login: LoginInputSchema,
+  createChat: CreateChatInputSchema,
+  deleteChat: DeleteChatInputSchema,
+  getMessages: GetMessagesInputSchema,
+  sendMessage: SendMessageInputSchema,
+  deleteMessage: DeleteMessageInputSchema,
+  editMessage: EditMessageInputSchema,
+  readMessages: ReadMessagesInputSchema,
+  markMessageAsRead: MarkMessageAsReadInputSchema,
+  createInvitation: CreateInvitationInputSchema,
+  getUserInvitations: GetUserInvitationsInputSchema,
+  useInvitation: UseInvitationInputSchema,
 };
 
 export default schemas;

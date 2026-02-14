@@ -24,14 +24,11 @@ const HeaderNameSchema = type("string >= 1 & string <= 256").and(
  * Header value schema:
  * - Can be empty string (valid per RFC 7230)
  * - Max 3072 characters (uWebSockets.js default total header size is 4 KB)
- * - Valid characters: HTAB (0x09) + SP (0x20) + VCHAR (0x21-0x7E) excluding '%' (0x25)
- *
- * Note: Percent-encoding is not standard practice in HTTP header values per RFC 7230.
- * Prohibiting '%' simplifies validation and prevents potential security issues.
+ * - Valid characters: HTAB (0x09) + SP (0x20) + VCHAR (0x21-0x7E)
  */
 const HeaderValueSchema = type("string <= 3072").and(
   // eslint-disable-next-line no-control-regex
-  type(/^[\x09\x20-\x24\x26-\x7E]*$/),
+  type(/^[\x09\x20-\x7E]*$/),
 );
 
 /**

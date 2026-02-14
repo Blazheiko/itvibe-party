@@ -66,6 +66,7 @@ export default {
   ): Promise<LoginResponse | string> {
     const { responseData, auth, session, logger } = context;
     logger.info("login handler");
+    logger.info(context.httpData);
     const { email, password, token } = getTypedPayload(context);
 
     const user = await userModel.findByEmail(email);
