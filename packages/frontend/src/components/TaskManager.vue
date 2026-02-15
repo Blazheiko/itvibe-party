@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, reactive, computed, nextTick } from 'vue'
-import { tasksApi, type Task, type CreateTaskRequest } from '@/utils/tasks-api'
-import { type Project } from '@/utils/projects-api'
+import { tasksApi, type Task, type CreateTaskRequest, type Project } from '@/utils/api'
 import VoiceInput from './VoiceInput.vue'
 
 const STATUSES: Task['status'][] = ['TODO', 'IN_PROGRESS', 'ON_HOLD', 'COMPLETED', 'CANCELLED']

@@ -22,12 +22,12 @@ import LoaderOverlay from '@/components/LoaderOverlay.vue'
 import ConnectionStatus from '@/components/ConnectionStatus.vue'
 import formatMessageDate from '@/utils/formatMessageDate'
 import baseApi from '@/utils/base-api'
+import { chatApi, messagesApi } from '@/utils/api'
 import { useMessagesStore, type Message } from '@/stores/messages'
 import type { Contact } from '@/stores/contacts'
 import { useEventBus } from '@/utils/event-bus'
 import type { WebsocketPayload } from '@/utils/websocket-base'
 import { useStateStore } from '@/stores/state'
-import api from '@/utils/base-api'
 const messagesStore = useMessagesStore()
 const eventBus = useEventBus()
 
@@ -189,13 +189,9 @@ const handleConnectionRetry = () => {
 const initChatData = async () => {
     contactsStore.setLoading(true)
     try {
-        const { error, data } = await baseApi.http<ApiInitialResponse>(
-            'POST',
-            '/api/chat/get-contact-list',
-            {
-                userId: userStore.user?.id,
-            },
-        )
+        const { error, data } = await chatApi.getContactList({
+            userId: userStore.user?.id,
+        }) as { error: { message: string; code: number } | null; data: ApiInitialResponse | null }
         if (error) {
             console.error('Failed to get contact list: ', error)
         } else if (data?.status === 'ok' && data.contactList?.length > 0) {
@@ -318,7 +314,7 @@ const sendMessage = async (newMessage: string) => {
 
             console.log('selectedContact', contactsStore.selectedContact)
             const contactId = contactsStore.selectedContact.contactId
-            const { error, data } = await baseApi.http('POST', '/api/chat/send-chat-messages', {
+            const { error, data } = await messagesApi.sendMessage({
                 contactId,
                 content: newMessage,
                 userId: userStore.user?.id,
@@ -375,14 +371,10 @@ const selectContact = async (contact: Contact) => {
     messagesStore.setLoading(true)
 
     try {
-        const { error, data } = await baseApi.http<MessagesResponse>(
-            'POST',
-            '/api/chat/get-messages',
-            {
-                contactId: contact.contactId,
-                userId: userStore.user?.id,
-            },
-        )
+        const { error, data } = await messagesApi.getMessages<MessagesResponse>({
+            contactId: contact.contactId,
+            userId: userStore.user?.id,
+        })
         if (error) {
             console.error(error)
         } else if (data && data.messages && data.messages.length > 0 && data.contact) {
@@ -482,7 +474,7 @@ onMounted(() => {
                 nextTick(() => {
                     scrollToBottom()
                 })
-                api.ws('main/read_message', {
+                baseApi.ws('main/read_message', {
                     userId: userStore.user?.id,
                     contactId: contactsStore.selectedContact.contactId,
                 })

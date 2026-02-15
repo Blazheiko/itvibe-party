@@ -1,7 +1,7 @@
 <script setup lang="ts">
 defineOptions({ name: 'ProjectsView' })
 import { ref, computed, onMounted, reactive, nextTick } from 'vue'
-import { projectsApi, type Project, type CreateProjectRequest } from '@/utils/projects-api'
+import { projectsApi, type Project, type CreateProjectRequest } from '@/utils/api'
 import VoiceInput from '@/components/VoiceInput.vue'
 
 // Define emits

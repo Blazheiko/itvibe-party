@@ -9,6 +9,7 @@ import type { User } from '@/stores/user'
 import { useContactsStore } from '@/stores/contacts'
 import { useMessagesStore } from '@/stores/messages'
 import baseApi from '@/utils/base-api'
+import { mainApi } from '@/utils/api'
 import { useEventBus } from '@/utils/event-bus'
 import AppHeader from '@/components/AppHeader.vue'
 import VideoCallModal from '@/components/VideoCallModal.vue'
@@ -177,7 +178,7 @@ onBeforeUnmount(() => {
 
 const initializeApp = async () => {
     try {
-        const { data, error } = await baseApi.http('GET', '/api/main/init')
+        const { data, error } = await mainApi.init()
         console.log(data)
 
         if (error) {

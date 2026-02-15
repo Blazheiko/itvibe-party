@@ -3,7 +3,7 @@ import { ref, onMounted, onBeforeUnmount} from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import AuthModals from '@/components/AuthModals.vue'
-import baseApi from '@/utils/base-api'
+import { mainApi } from '@/utils/api'
 
 const route = useRoute()
 const router = useRouter()
@@ -37,7 +37,7 @@ onBeforeUnmount(() => {
 
 const joinChat = async (token: string) => {
     console.log('joinChat')
-    const { data, error } = await baseApi.http('POST', '/api/main/invitations/use', {
+    const { data, error } = await mainApi.useInvitation({
         token: token
     })
     if (error) {

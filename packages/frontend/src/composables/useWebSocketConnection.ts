@@ -4,7 +4,7 @@ import { ref, computed } from 'vue'
 import type { WebsocketMessage, WebsocketPayload } from '@/utils/websocket-base'
 import { useBroadcastHandler } from '@/composables/useBroadcastHandler'
 import { useEventBus } from '@/utils/event-bus'
-import baseApi from '@/utils/base-api'
+import { mainApi } from '@/utils/api'
 
 // Interfaces for API resolve
 interface ApiResolveItem {
@@ -124,7 +124,7 @@ const unauthorized = async () => {
     clearReconnectTimeout()
 
     isUpdatingWsToken = true
-    const { data, error } = await baseApi.http('GET', '/api/main/update-ws-token')
+    const { data, error } = await mainApi.updateWsToken()
     isUpdatingWsToken = false
 
     if (error) {

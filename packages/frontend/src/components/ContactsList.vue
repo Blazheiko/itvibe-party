@@ -4,7 +4,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { useContactsStore } from '@/stores/contacts'
 import { useUserStore } from '@/stores/user'
 import type { Contact } from '@/stores/contacts'
-import baseApi from '@/utils/base-api'
+import { chatApi } from '@/utils/api'
 import LoaderOverlay from './LoaderOverlay.vue'
 // import { TransitionGroup } from 'vue'
 
@@ -183,7 +183,7 @@ const generateShareLink = async () => {
 
     try {
         // Генерируем уникальный идентификатор для ссылки
-        const { error, data } = await baseApi.http('POST', '/api/chat/invitations', {
+        const { error, data } = await chatApi.createInvitation({
             name: newContact.value.name,
             userId: userStore.user?.id,
         })

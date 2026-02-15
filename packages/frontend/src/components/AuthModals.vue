@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import baseApi from '@/utils/base-api'
+import { authApi } from '@/utils/api'
 import { useUserStore } from '@/stores/user'
 import type { User } from '@/stores/user'
 import { useRouter } from 'vue-router'
@@ -84,7 +84,7 @@ const handleLogin = async () => {
     isLoginLoading.value = true
 
     try {
-        const { data, error } = await baseApi.http('POST', '/api/auth/login', {
+        const { data, error } = await authApi.login({
             email: email.value,
             password: password.value,
             token: props.token,
@@ -164,7 +164,7 @@ const handleRegister = async () => {
     isRegisterLoading.value = true
 
     try {
-        const { data, error } = await baseApi.http('POST', '/api/auth/register', {
+        const { data, error } = await authApi.register({
             name: name.value,
             email: email.value,
             password: password.value,

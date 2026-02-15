@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
-import baseApi from '@/utils/base-api'
+import { authApi } from '@/utils/api'
 import { useEventBus } from '@/utils/event-bus'
 
 const router = useRouter()
@@ -90,7 +90,7 @@ const logout = async () => {
     isLoggingOut.value = true
     
     try {
-        const { error, data } = await baseApi.http('POST', '/api/auth/logout')
+        const { error, data } = await authApi.logout()
         if (error) {
             console.error(error)
         } else {
