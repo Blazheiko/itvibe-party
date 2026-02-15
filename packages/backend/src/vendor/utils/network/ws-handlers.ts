@@ -160,7 +160,7 @@ const onMessage = async (
   if (token !== "" && typeof token === "string") {
     await updateExpiration(token)
       .then(() => {
-        logger.info("Expiration updated");
+        // logger.info("Expiration updated");
       })
       .catch((error: unknown) => {
         logger.error({ err: error }, "Error update expiration");
