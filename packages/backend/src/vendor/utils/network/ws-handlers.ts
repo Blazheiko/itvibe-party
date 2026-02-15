@@ -315,7 +315,11 @@ const onOpen = (ws: MyWebSocket): void => {
     const userData: UserConnection = ws.getUserData() as UserConnection;
     // const token = userData.token;
 
-    if (userData.userId !== undefined || userData.sessionId !== undefined) {
+    if (userData.userId === undefined || userData.sessionId === undefined) {
+      logger.warn(
+        { userId: userData.userId, sessionId: userData.sessionId },
+        "Closing WS connection: missing auth data",
+      );
       const errorMessage = unAuthorizedMessage();
       logger.info(errorMessage);
       ws.cork(() => {

@@ -38,6 +38,7 @@ import {
     UpdateProjectInputSchema,
     CreateSubscriptionInputSchema,
     UpdateSubscriptionInputSchema,
+    GetContactListInputSchema,
 } from "shared/schemas";
 
 export default [
@@ -110,6 +111,7 @@ export default [
                 url: '/get-contact-list',
                 method: 'post',
                 handler: ChatListController.getContactList,
+                validator: GetContactListInputSchema,
                 typeResponse: 'ChatListController.GetContactListResponse',
                 description: 'Get contact list',
             }),
