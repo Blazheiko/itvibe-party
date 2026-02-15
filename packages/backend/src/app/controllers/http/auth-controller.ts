@@ -19,8 +19,7 @@ export default {
     const { auth, session, logger } = context;
     logger.info("register handler");
     const payload = getTypedPayload(context);
-    const { name, email, password } = payload;
-    const token = payload.token;
+    const { name, email, password, token } = payload;
 
     const exist = await userModel.findByEmail(email);
     if (exist) {

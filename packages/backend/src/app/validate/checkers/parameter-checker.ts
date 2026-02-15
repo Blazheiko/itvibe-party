@@ -1,9 +1,6 @@
-// @ts-nocheck
 /**
- * Validates URL path parameters using ArkType schemas.
+ * Validates URL path parameters using regex and length constraints.
  */
-
-import { type } from "@arktype/type";
 
 /**
  * Error class for parameter validation failures
@@ -24,12 +21,8 @@ export class ParameterValidationError extends Error {
   }
 }
 
-/**
- * Parameter value schema:
- * - Max 256 characters
- * - Valid characters: letters, numbers, hyphens, underscores, dots, slashes
- */
-const ParameterSchema = type("string <= 256").and(type(/^[a-zA-Z0-9\-_./]*$/));
+const PARAMETER_MAX_LENGTH = 256;
+const PARAMETER_PATTERN = /^[a-zA-Z0-9\-_./]*$/;
 
 /**
  * Validates URL path parameter value
@@ -42,13 +35,19 @@ export function validateParameter(value: string, parameterName?: string): void {
 
   if (value.length === 0) return;
 
-  const result = ParameterSchema(value);
-
-  if (result instanceof type.errors) {
+  if (value.length > PARAMETER_MAX_LENGTH) {
     throw new ParameterValidationError(
       paramName,
       value,
-      `Parameter '${paramName}' validation failed: ${result.summary}`,
+      `Parameter '${paramName}' validation failed: must be at most ${String(PARAMETER_MAX_LENGTH)} characters`,
+    );
+  }
+
+  if (!PARAMETER_PATTERN.test(value)) {
+    throw new ParameterValidationError(
+      paramName,
+      value,
+      `Parameter '${paramName}' validation failed: contains invalid characters`,
     );
   }
 }

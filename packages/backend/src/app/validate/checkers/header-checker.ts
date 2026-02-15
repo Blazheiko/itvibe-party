@@ -1,35 +1,18 @@
-// @ts-nocheck
 /**
  * Validates HTTP header names and values according to RFC 7230
- * using ArkType schemas for runtime validation.
+ * using regex and length constraints.
  *
  * Note: RFC 7230 does not specify maximum lengths, but uWebSockets.js
  * has a default limit of 4 KB for the total size of all headers.
  * These limits are set to reasonable values that work well with uWebSockets.js
  */
 
-import { type } from "@arktype/type";
-
-/**
- * Header name schema:
- * - Must be a non-empty string
- * - Max 256 characters (most header names are 10-50 characters)
- * - Valid characters: letters, numbers, hyphens, underscores (RFC 7230 tchar subset)
- */
-const HeaderNameSchema = type("string >= 1 & string <= 256").and(
-  type(/^[a-zA-Z0-9\-_]+$/),
-);
-
-/**
- * Header value schema:
- * - Can be empty string (valid per RFC 7230)
- * - Max 3072 characters (uWebSockets.js default total header size is 4 KB)
- * - Valid characters: HTAB (0x09) + SP (0x20) + VCHAR (0x21-0x7E)
- */
-const HeaderValueSchema = type("string <= 3072").and(
-  // eslint-disable-next-line no-control-regex
-  type(/^[\x09\x20-\x7E]*$/),
-);
+const HEADER_NAME_MIN_LENGTH = 1;
+const HEADER_NAME_MAX_LENGTH = 256;
+const HEADER_VALUE_MAX_LENGTH = 3072;
+const HEADER_NAME_PATTERN = /^[a-zA-Z0-9\-_]+$/;
+// eslint-disable-next-line no-control-regex
+const HEADER_VALUE_PATTERN = /^[\x09\x20-\x7E]*$/;
 
 /**
  * Validates HTTP header name
@@ -37,7 +20,11 @@ const HeaderValueSchema = type("string <= 3072").and(
  * @returns true if header name is valid, false otherwise
  */
 export function validateHeaderName(name: string): boolean {
-  return !(HeaderNameSchema(name) instanceof type.errors);
+  return (
+    name.length >= HEADER_NAME_MIN_LENGTH &&
+    name.length <= HEADER_NAME_MAX_LENGTH &&
+    HEADER_NAME_PATTERN.test(name)
+  );
 }
 
 /**
@@ -46,7 +33,9 @@ export function validateHeaderName(name: string): boolean {
  * @returns true if header value is valid, false otherwise
  */
 export function validateHeaderValue(value: string): boolean {
-  return !(HeaderValueSchema(value) instanceof type.errors);
+  return (
+    value.length <= HEADER_VALUE_MAX_LENGTH && HEADER_VALUE_PATTERN.test(value)
+  );
 }
 
 /**
