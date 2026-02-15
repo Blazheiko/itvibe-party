@@ -254,7 +254,9 @@ export const chatApi = {
   getContactList: async (body: {
     userId: string | number | undefined
   }): Promise<ApiResponse<Record<string, unknown>>> => {
-    return baseApi.http('POST', '/api/chat/get-contact-list', body)
+    return baseApi.http('POST', '/api/chat/get-contact-list', {
+      userId: Number(body.userId),
+    })
   },
 
   createChat: async (
@@ -271,7 +273,10 @@ export const chatApi = {
     name: string
     userId: string | number | undefined
   }): Promise<ApiResponse<Record<string, unknown>>> => {
-    return baseApi.http('POST', '/api/chat/invitations', body)
+    return baseApi.http('POST', '/api/chat/invitations', {
+      name: body.name,
+      userId: Number(body.userId),
+    })
   },
 
   getUserInvitations: async (
@@ -305,7 +310,10 @@ export const messagesApi = {
     contactId: string | number
     userId: string | number | undefined
   }): Promise<ApiResponse<T>> => {
-    return baseApi.http<T>('POST', '/api/chat/get-messages', body)
+    return baseApi.http<T>('POST', '/api/chat/get-messages', {
+      userId: Number(body.userId),
+      contactId: Number(body.contactId),
+    })
   },
 
   sendMessage: async (body: {
@@ -313,7 +321,11 @@ export const messagesApi = {
     content: string
     userId: string | number | undefined
   }): Promise<ApiResponse<Record<string, unknown>>> => {
-    return baseApi.http('POST', '/api/chat/send-chat-messages', body)
+    return baseApi.http('POST', '/api/chat/send-chat-messages', {
+      userId: Number(body.userId),
+      contactId: Number(body.contactId),
+      content: body.content,
+    })
   },
 
   deleteMessage: async (
@@ -344,7 +356,9 @@ export const messagesApi = {
   markAsRead: async (
     messageId: number,
   ): Promise<ApiResponse<Record<string, unknown>>> => {
-    return baseApi.http('PUT', `/api/chat/messages/${messageId}/read`)
+    return baseApi.http('PUT', `/api/chat/messages/${messageId}/read`, {
+      messageId,
+    })
   },
 }
 
@@ -395,10 +409,26 @@ export const tasksApi = {
 
   async createTask(taskData: CreateTaskRequest): Promise<Task | null> {
     try {
+      // Only send fields accepted by CreateTaskInputSchema ("+": "reject")
+      const payload: Record<string, unknown> = {
+        title: taskData.title,
+      }
+      if (taskData.description !== undefined) payload.description = taskData.description
+      if (taskData.projectId != null) payload.projectId = Number(taskData.projectId)
+      if (taskData.status !== undefined) payload.status = taskData.status
+      if (taskData.priority !== undefined) payload.priority = taskData.priority
+      if (taskData.tags != null) {
+        payload.tags = Array.isArray(taskData.tags) ? taskData.tags : [taskData.tags]
+      }
+      if (taskData.dueDate != null) payload.dueDate = taskData.dueDate
+      if (taskData.startDate != null) payload.startDate = taskData.startDate
+      if (taskData.estimatedHours != null) payload.estimatedHours = Number(taskData.estimatedHours)
+      if (taskData.parentTaskId != null) payload.parentTaskId = Number(taskData.parentTaskId)
+
       const response = await baseApi.http<Record<string, unknown>>(
         'POST',
         '/api/tasks',
-        taskData,
+        payload,
       )
 
       if (response.error) {
@@ -424,10 +454,34 @@ export const tasksApi = {
     taskData: UpdateTaskRequest,
   ): Promise<Task | null> {
     try {
+      // Only send fields accepted by UpdateTaskInputSchema ("+": "reject")
+      const payload: Record<string, unknown> = {}
+      if (taskData.title !== undefined) payload.title = taskData.title
+      if (taskData.description !== undefined) payload.description = taskData.description
+      if (taskData.projectId !== undefined) {
+        payload.projectId = taskData.projectId != null ? Number(taskData.projectId) : undefined
+      }
+      if (taskData.status !== undefined) payload.status = taskData.status
+      if (taskData.priority !== undefined) payload.priority = taskData.priority
+      if (taskData.progress !== undefined) payload.progress = Number(taskData.progress)
+      if (taskData.tags !== undefined) {
+        payload.tags = taskData.tags != null
+          ? (Array.isArray(taskData.tags) ? taskData.tags : [taskData.tags])
+          : undefined
+      }
+      if (taskData.dueDate !== undefined) payload.dueDate = taskData.dueDate
+      if (taskData.startDate !== undefined) payload.startDate = taskData.startDate
+      if (taskData.estimatedHours !== undefined) {
+        payload.estimatedHours = taskData.estimatedHours != null ? Number(taskData.estimatedHours) : undefined
+      }
+      if (taskData.actualHours !== undefined) {
+        payload.actualHours = taskData.actualHours != null ? Number(taskData.actualHours) : undefined
+      }
+
       const response = await baseApi.http<Record<string, unknown>>(
         'PUT',
         `/api/tasks/${taskId}`,
-        taskData,
+        payload,
       )
 
       if (response.error) {
@@ -500,7 +554,7 @@ export const tasksApi = {
       const response = await baseApi.http<Record<string, unknown>>(
         'PUT',
         `/api/tasks/${taskId}/progress`,
-        { progress },
+        { progress: String(progress) },
       )
 
       if (response.error) {
@@ -649,10 +703,20 @@ export const projectsApi = {
     projectData: CreateProjectRequest,
   ): Promise<Project | null> {
     try {
+      // Only send fields accepted by CreateProjectInputSchema ("+": "reject")
+      const payload: Record<string, unknown> = {
+        title: projectData.title,
+      }
+      if (projectData.description !== undefined) payload.description = projectData.description
+      if (projectData.color != null) payload.color = projectData.color
+      if (projectData.startDate != null) payload.startDate = projectData.startDate
+      if (projectData.endDate != null) payload.endDate = projectData.endDate
+      if (projectData.dueDate != null) payload.dueDate = projectData.dueDate
+
       const response = await baseApi.http<Record<string, unknown>>(
         'POST',
         '/api/projects/create',
-        projectData,
+        payload,
       )
 
       if (response.error) {
@@ -678,10 +742,21 @@ export const projectsApi = {
     projectData: UpdateProjectRequest,
   ): Promise<Project | null> {
     try {
+      // Only send fields accepted by UpdateProjectInputSchema ("+": "reject")
+      const payload: Record<string, unknown> = {}
+      if (projectData.title !== undefined) payload.title = projectData.title
+      if (projectData.description !== undefined) payload.description = projectData.description
+      if (projectData.color !== undefined) payload.color = projectData.color
+      if (projectData.startDate !== undefined) payload.startDate = projectData.startDate
+      if (projectData.endDate !== undefined) payload.endDate = projectData.endDate
+      if (projectData.dueDate !== undefined) payload.dueDate = projectData.dueDate
+      if (projectData.isActive !== undefined) payload.isActive = projectData.isActive
+      if (projectData.progress !== undefined) payload.progress = Number(projectData.progress)
+
       const response = await baseApi.http<Record<string, unknown>>(
         'PUT',
         `/api/projects/${projectId}`,
-        projectData,
+        payload,
       )
 
       if (response.error) {
@@ -823,6 +898,7 @@ export const pushSubscriptionApi = {
     return baseApi.http<PushSubscriptionResponse>(
       'PUT',
       `/api/push-subscriptions/${subscriptionId}/deactivate`,
+      {},
     )
   },
 
