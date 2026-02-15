@@ -4,6 +4,7 @@ import { validateHeader } from '#app/validate/checkers/header-checker.js';
 import { validateParameter } from '#app/validate/checkers/parameter-checker.js';
 import type { Payload } from '#vendor/types/types.js';
 import { validateCookie } from '#app/validate/checkers/cookie-checker.js';
+import config from '#config/app.js';
 
 const getHeaders = (req: HttpRequest): Map<string, string> => {
     const headers: Map<string, string> = new Map<string, string>();
@@ -18,22 +19,49 @@ const getHeaders = (req: HttpRequest): Map<string, string> => {
     return headers;
 };
 
+const FORBIDDEN_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
+
 const parseFormDataStream = (body: string, boundary: string): Record<string, string> => {
-    const result: Record<string, string> = {};
+    const result = Object.create(null) as Record<string, string>;
     let start = 0;
+    let fieldCount = 0;
 
     while ((start = body.indexOf(boundary, start)) !== -1) {
         const nameStart = body.indexOf('name="', start);
         if (nameStart === -1) break;
 
         const nameEnd = body.indexOf('"', nameStart + 6);
+        if (nameEnd === -1) break;
+
         const fieldName = body.slice(nameStart + 6, nameEnd);
 
-        const valueStart = body.indexOf('\r\n\r\n', nameEnd) + 4;
+        const headerEnd = body.indexOf('\r\n\r\n', nameEnd);
+        if (headerEnd === -1) break;
+
+        const valueStart = headerEnd + 4;
         const valueEnd = body.indexOf('\r\n--', valueStart);
+        if (valueEnd === -1) break;
 
-        result[fieldName] = body.slice(valueStart, valueEnd).trim();
+        if (FORBIDDEN_KEYS.has(fieldName)) {
+            logger.warn(`Blocked dangerous form field name: ${fieldName}`);
+            start = valueEnd;
+            continue;
+        }
 
+        fieldCount++;
+        if (fieldCount > config.maxFormFields) {
+            logger.warn(`Form data exceeded max field count (${String(config.maxFormFields)})`);
+            break;
+        }
+
+        const rawValue = body.slice(valueStart, valueEnd);
+        if (rawValue.length > config.maxFieldValueLength) {
+            logger.warn(`Form field "${fieldName}" value exceeds max length, skipped`);
+            start = valueEnd;
+            continue;
+        }
+
+        result[fieldName] = rawValue.trim();
         start = valueEnd;
     }
 
@@ -43,20 +71,25 @@ const parseFormDataStream = (body: string, boundary: string): Record<string, str
 const readData = (res: HttpResponse): Promise<Buffer | null> => {
     logger.info('readData');
     return new Promise((resolve: (value: Buffer | null) => void, reject: (reason?: unknown) => void) => {
-        let buffer: Buffer | null = null;
+        const chunks: Buffer[] = [];
+        let totalSize = 0;
         res.onData((ab, isLast) => {
             try {
-            const chunk = Buffer.from(ab);
+                const chunk = Buffer.from(ab);
+                totalSize += chunk.length;
 
-                if (buffer !== null) buffer = Buffer.concat([buffer, chunk]);
-                else buffer = Buffer.concat([chunk]);
-
-                if (isLast) {
-                    resolve(buffer);
+                if (totalSize > config.maxBodySize) {
+                    reject(new Error(`Request body exceeds max size (${String(config.maxBodySize)} bytes)`));
                     return;
                 }
+
+                chunks.push(chunk);
+
+                if (isLast) {
+                    resolve(chunks.length === 1 ? chunks[0] ?? null : Buffer.concat(chunks));
+                }
             } catch (e) {
-                console.error(e);
+                logger.error(e, 'error read data');
                 reject(new Error('error read data'));
             }
         });
@@ -80,7 +113,16 @@ const parseContentType = (contentType: string): string => {
     if (boundaryIndex === -1)
         throw new Error('Boundary not found in Content-Type');
 
-    const boundary = contentType.slice(boundaryIndex + 9).trim();
+    let boundary = contentType.slice(boundaryIndex + 9).trim();
+
+    const semicolonIndex = boundary.indexOf(';');
+    if (semicolonIndex !== -1) boundary = boundary.slice(0, semicolonIndex).trim();
+
+    if (boundary.startsWith('"') && boundary.endsWith('"')) {
+        boundary = boundary.slice(1, -1);
+    }
+
+    if (boundary === '') throw new Error('Empty boundary in Content-Type');
 
     return `--${boundary}`;
 };
