@@ -1,5 +1,12 @@
-import Redis from 'ioredis';
+import { Redis } from 'ioredis';
+import type { RedisOptions } from 'ioredis';
 import config from '#config/redis.js';
 
-// @ts-ignore
-export default new Redis(config);
+const { password, ...baseConfig } = config;
+
+const redisConfig: RedisOptions = {
+    ...baseConfig,
+    ...(password !== null ? { password } : {}),
+};
+
+export default new Redis(redisConfig);
