@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { db } from '#database/db.js';
 import { projects, tasks } from '#database/schema.js';
 import { eq, and, desc, sql } from 'drizzle-orm';
@@ -19,8 +18,6 @@ const schema = {
 
 const required = ['title', 'userId'];
 const hidden: string[] = [];
-
-const projectStatuses = ['planning', 'in_progress', 'on_hold', 'completed', 'archived'] as const;
 
 export default {
     async create(payload: any) {

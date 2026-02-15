@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { db } from '#database/db.js';
 import { calendar } from '#database/schema.js';
 import { eq, and, or, gte, lte, asc, sql } from 'drizzle-orm';
@@ -176,7 +175,8 @@ export default {
             .from(calendar)
             .where(eq(calendar.id, id));
 
-        if (checkDeleted[0]?.count > 0) {
+        const deletedCheck = checkDeleted.at(0);
+        if ((deletedCheck?.count ?? 0) > 0) {
             throw new Error('Calendar event not found or access denied');
         }
 
@@ -195,4 +195,3 @@ export default {
         return serializeArray(events, schema, hidden);
     },
 };
-

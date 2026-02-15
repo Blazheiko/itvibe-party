@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { randomUUID } from "crypto";
 import type { HttpContext } from "#vendor/types/types.js";
 import { getTypedPayload } from "#vendor/utils/validation/get-typed-payload.js";
@@ -30,7 +29,7 @@ export default {
     if (
       !userId ||
       !userIdFromSession ||
-      +userId !== +userIdFromSession ||
+      Number(userId) !== Number(userIdFromSession) ||
       !name
     ) {
       logger.error("User ID is required");

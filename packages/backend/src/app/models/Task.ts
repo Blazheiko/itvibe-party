@@ -1,7 +1,6 @@
-// @ts-nocheck
 import { db } from '#database/db.js';
 import { tasks, projects } from '#database/schema.js';
-import { eq, and, desc, isNull, sql } from 'drizzle-orm';
+import { eq, and, desc, sql } from 'drizzle-orm';
 import { DateTime } from 'luxon';
 import { serializeModel } from '#vendor/utils/serialization/serialize-model.js';
 import logger from '#logger';
@@ -17,9 +16,6 @@ const schema = {
 
 const required = ['title', 'userId'];
 const hidden: string[] = [];
-
-const taskStatuses = ['TODO', 'IN_PROGRESS', 'ON_HOLD', 'COMPLETED', 'CANCELLED'] as const;
-const taskPriorities = ['LOW', 'MEDIUM', 'HIGH', 'URGENT'] as const;
 
 export default {
     async create(payload: any) {
@@ -74,13 +70,17 @@ export default {
         if (task.length === 0) {
             throw new Error(`Task with id ${id} not found`);
         }
+        const taskItem = task.at(0);
+        if (!taskItem) {
+            throw new Error(`Task with id ${id} not found`);
+        }
 
         // Get project info if exists
         let project = null;
-        if (task[0].projectId) {
+        if (taskItem.projectId) {
             const projectData = await db.select()
                 .from(projects)
-                .where(eq(projects.id, task[0].projectId))
+                .where(eq(projects.id, taskItem.projectId))
                 .limit(1);
             project = projectData[0] || null;
         }
@@ -90,7 +90,7 @@ export default {
             .from(tasks)
             .where(eq(tasks.parentTaskId, id));
 
-        return serializeModel({ ...task[0], project, subTasks }, schema, hidden);
+        return serializeModel({ ...taskItem, project, subTasks }, schema, hidden);
     },
 
     async findByUserId(userId: bigint) {
@@ -206,13 +206,17 @@ export default {
         if (updatedTask.length === 0) {
             throw new Error('Task not found or access denied');
         }
+        const updatedTaskItem = updatedTask.at(0);
+        if (!updatedTaskItem) {
+            throw new Error('Task not found or access denied');
+        }
 
         // Get project info if exists
         let project = null;
-        if (updatedTask[0].projectId) {
+        if (updatedTaskItem.projectId) {
             const projectData = await db.select()
                 .from(projects)
-                .where(eq(projects.id, updatedTask[0].projectId))
+                .where(eq(projects.id, updatedTaskItem.projectId))
                 .limit(1);
             project = projectData[0] || null;
         }
@@ -222,7 +226,7 @@ export default {
             .from(tasks)
             .where(eq(tasks.parentTaskId, id));
 
-        return serializeModel({ ...updatedTask[0], project, subTasks }, schema, hidden);
+        return serializeModel({ ...updatedTaskItem, project, subTasks }, schema, hidden);
     },
 
     async updateStatus(id: bigint, userId: bigint, status: 'TODO' | 'IN_PROGRESS' | 'ON_HOLD' | 'COMPLETED' | 'CANCELLED') {
@@ -237,7 +241,7 @@ export default {
         (updateData as any).status = status;
 
         if (status === 'COMPLETED') {
-            updateData.progress = 100;
+            updateData['progress'] = 100;
         }
 
         await db.update(tasks)
@@ -252,18 +256,22 @@ export default {
         if (updatedTask.length === 0) {
             throw new Error('Task not found or access denied');
         }
+        const updatedTaskItem = updatedTask.at(0);
+        if (!updatedTaskItem) {
+            throw new Error('Task not found or access denied');
+        }
 
         // Get project info if exists
         let project = null;
-        if (updatedTask[0].projectId) {
+        if (updatedTaskItem.projectId) {
             const projectData = await db.select()
                 .from(projects)
-                .where(eq(projects.id, updatedTask[0].projectId))
+                .where(eq(projects.id, updatedTaskItem.projectId))
                 .limit(1);
             project = projectData[0] || null;
         }
 
-        return serializeModel({ ...updatedTask[0], project }, schema, hidden);
+        return serializeModel({ ...updatedTaskItem, project }, schema, hidden);
     },
 
     async updateProgress(id: bigint, userId: bigint, progress: number) {
@@ -295,18 +303,22 @@ export default {
         if (updatedTask.length === 0) {
             throw new Error('Task not found or access denied');
         }
+        const updatedTaskItem = updatedTask.at(0);
+        if (!updatedTaskItem) {
+            throw new Error('Task not found or access denied');
+        }
 
         // Get project info if exists
         let project = null;
-        if (updatedTask[0].projectId) {
+        if (updatedTaskItem.projectId) {
             const projectData = await db.select()
                 .from(projects)
-                .where(eq(projects.id, updatedTask[0].projectId))
+                .where(eq(projects.id, updatedTaskItem.projectId))
                 .limit(1);
             project = projectData[0] || null;
         }
 
-        return serializeModel({ ...updatedTask[0], project }, schema, hidden);
+        return serializeModel({ ...updatedTaskItem, project }, schema, hidden);
     },
 
     async delete(id: bigint, userId: bigint) {
@@ -324,8 +336,9 @@ export default {
         const checkDeleted = await db.select({ count: sql<number>`count(*)` })
             .from(tasks)
             .where(and(eq(tasks.id, id), eq(tasks.userId, userId)));
-        
-        if (checkDeleted[0]?.count === 0) {
+
+        const deletedCheck = checkDeleted.at(0);
+        if ((deletedCheck?.count ?? 0) === 0) {
             throw new Error('Task not found or access denied');
         }
 

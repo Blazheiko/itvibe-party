@@ -1,13 +1,12 @@
-// @ts-nocheck
 import { generateKey } from 'metautil';
 import redis from '#database/redis.js';
 import type { SessionInfo } from '#vendor/types/types.js';
 import configApp from '#config/app.js';
 
-export default async (sessionInfo: SessionInfo, userId: number | bigint) => {
-    let wsToken = ''
+export default async (sessionInfo: SessionInfo, userId: number | bigint): Promise<string> => {
+    let wsToken = '';
     const userIdNumber = Number(userId);
-    if(sessionInfo && userIdNumber) {
+    if (sessionInfo && userIdNumber) {
         wsToken = generateKey(configApp.characters, 16);
         await redis.setex(
             `auth:ws:${wsToken}`,
@@ -20,4 +19,4 @@ export default async (sessionInfo: SessionInfo, userId: number | bigint) => {
     }
 
     return wsToken;
-}
+};

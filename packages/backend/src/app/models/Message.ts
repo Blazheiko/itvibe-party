@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { db } from '#database/db.js';
 import { messages, contactList, users } from '#database/schema.js';
 import { eq, and, or, sql } from 'drizzle-orm';
@@ -72,7 +71,12 @@ export default {
             .where(eq(messages.id, BigInt(message.insertId)))
             .limit(1);
 
-        return serializeModel(createdMessage[0].message, schema, hidden);
+        const createdMessageRow = createdMessage.at(0);
+        if (!createdMessageRow) {
+            throw new Error('Failed to create message');
+        }
+
+        return serializeModel(createdMessageRow.message, schema, hidden);
     },
 
     async findById(id: bigint) {
@@ -148,7 +152,12 @@ export default {
             throw new Error(`Message with id ${messageId} not found`);
         }
 
-        if (message[0].receiverId !== userId) {
+        const messageItem = message.at(0);
+        if (!messageItem) {
+            throw new Error(`Message with id ${messageId} not found`);
+        }
+
+        if (messageItem.receiverId !== userId) {
             throw new Error('User is not the receiver of this message');
         }
 
@@ -165,7 +174,7 @@ export default {
             .where(
                 and(
                     eq(contactList.userId, userId),
-                    eq(contactList.contactId, message[0].senderId),
+                    eq(contactList.contactId, messageItem.senderId),
                 ),
             );
 
@@ -174,7 +183,12 @@ export default {
             .from(messages)
             .where(eq(messages.id, messageId))
             .limit(1);
-        return serializeModel(updatedMessage[0], schema, hidden);
+        const updatedMessageItem = updatedMessage.at(0);
+        if (!updatedMessageItem) {
+            throw new Error(`Message with id ${messageId} not found`);
+        }
+
+        return serializeModel(updatedMessageItem, schema, hidden);
     },
 
     async getUnreadCount(userId: bigint) {

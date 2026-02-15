@@ -1,4 +1,3 @@
-// @ts-nocheck
 import process from "node:process";
 import path from "node:path";
 import { promises as fs } from "node:fs";
@@ -153,28 +152,32 @@ const getStaticHttpData = (
   };
 };
 
-type SetCookie = (name: string, value: string, options: CookieOptions) => void;
 type DeleteCookie = (name: string) => void;
 type SetHeader = (name: string, value: string) => void;
 // CSP header is applied from staticServer for HTML responses
 const getResponseData = (): ResponseData => {
   const cookies: Map<string, Cookie> = new Map<string, Cookie>();
   const headers: Header[] = [];
-  const setCookie: SetCookie = (
-    name: string,
-    value: string,
-    options: CookieOptions
+  const setCookie: ResponseData["setCookie"] = (
+    nameOrCookie: string | Cookie,
+    value?: string,
+    options?: CookieOptions
   ): void => {
-    cookies.set(name, {
-      name,
-      value,
-      path: options.path ?? cookiesConfig.default.path,
-      httpOnly: options.httpOnly ?? cookiesConfig.default.httpOnly,
-      secure: options.secure ?? cookiesConfig.default.secure,
-      expires: options.expires ?? undefined,
-      maxAge: options.maxAge ?? cookiesConfig.default.maxAge,
-      sameSite: options.sameSite ?? cookiesConfig.default.sameSite,
-    });
+    if (typeof nameOrCookie === "string") {
+      cookies.set(nameOrCookie, {
+        name: nameOrCookie,
+        value: value ?? "",
+        path: options?.path ?? cookiesConfig.default.path,
+        httpOnly: options?.httpOnly ?? cookiesConfig.default.httpOnly,
+        secure: options?.secure ?? cookiesConfig.default.secure,
+        expires: options?.expires ?? undefined,
+        maxAge: options?.maxAge ?? cookiesConfig.default.maxAge,
+        sameSite: options?.sameSite ?? cookiesConfig.default.sameSite,
+      });
+      return;
+    }
+
+    cookies.set(nameOrCookie.name, nameOrCookie);
   };
 
   const deleteCookie: DeleteCookie = (name: string): void => {

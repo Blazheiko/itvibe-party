@@ -1,4 +1,3 @@
-// @ts-nocheck
 import type {
   Auth,
   HttpContext,
@@ -37,7 +36,7 @@ export default (
   validator: Type | undefined,
 ): HttpContext => {
   const requestId = randomUUID();
-  const requestLogger = logger.child({ requestId });
+  const requestLogger = logger.child({ requestId }) as unknown as HttpContext["logger"];
 
   return {
     requestId,

@@ -1,4 +1,3 @@
-// @ts-nocheck
 // import redis from '#database/redis.js';
 // import { DateTime } from "luxon";
 import crypto from "node:crypto";
@@ -140,9 +139,9 @@ export const sessionHandler = async (
     sessionInfo = await getSession(sessionId, cookieUserId ?? "0");
   }
 
-  sessionInfo ??= await createSessionInfo({
-    userId: normalizedUserId ?? undefined,
-  });
+  sessionInfo ??= await createSessionInfo(
+    normalizedUserId !== undefined ? { userId: normalizedUserId } : {}
+  );
 
   const finalUserId = normalizedUserId ?? cookieUserId;
   const cookieValue = createCookieValue(sessionInfo.id, finalUserId);

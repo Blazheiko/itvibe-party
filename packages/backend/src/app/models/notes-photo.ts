@@ -1,7 +1,6 @@
-// @ts-nocheck
 import { db } from '#database/db.js';
 import { notesPhotos } from '#database/schema.js';
-import { eq, and, desc, gte } from 'drizzle-orm';
+import { eq, and, desc } from 'drizzle-orm';
 import { DateTime } from 'luxon';
 import { serializeModel } from '#vendor/utils/serialization/serialize-model.js';
 import logger from '#logger';

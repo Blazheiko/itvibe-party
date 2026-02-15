@@ -1,7 +1,6 @@
-// @ts-nocheck
 import { db } from '#database/db.js';
 import { invitations, users } from '#database/schema.js';
-import { eq, and } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { DateTime } from 'luxon';
 import { serializeModel } from '#vendor/utils/serialization/serialize-model.js';
 import logger from '#logger';
@@ -180,4 +179,3 @@ export default {
         );
     },
 };
-

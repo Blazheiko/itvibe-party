@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { env } from 'node:process';
 import { normalizePath } from '#vendor/utils/network/http-request-handlers.js';
 
@@ -37,7 +36,7 @@ const config = Object.freeze({
     url: env['APP_URL'],
     domain: env['DOMAIN'] || '127.0.0.1',
     host: env['HOST'] || '0.0.0.0',
-    port: parsePort(process.env.PORT, 3000),
+    port: parsePort(env['PORT'], 3000),
     pathPrefix: normalizePath(env['API_PATH_PREFIX'] || 'api'),
     unixPath: env['APP_UNIX_PATH'],
     // Примеры использования логических значений:

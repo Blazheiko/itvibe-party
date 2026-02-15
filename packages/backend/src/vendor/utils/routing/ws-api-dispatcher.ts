@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { getWsRoute } from "#vendor/start/router.js";
 import executeMiddlewares from "#vendor/utils/middlewares/core/execute-httpMiddlewares.js";
 // import validators from '#vendor/start/validators.js';
@@ -32,7 +31,7 @@ export default async (
   const responseData: WsResponseData = {
     data: {},
     event: message.event,
-    timestamp: message.timestamp,
+    timestamp: Number(message.timestamp),
     status: "200",
     error: null,
   };
@@ -60,15 +59,17 @@ export default async (
         );
       }
 
-      let payload: Payload | null = message.payload ?? null;
+      const rawPayload = (message as { payload?: unknown }).payload;
+      let payload: Payload | null = (rawPayload as unknown as Payload | null) ?? null;
       if (route.validator !== undefined) {
-        const validatedInput = route.validator(message.payload) as Payload;
+        const validate = route.validator as unknown as (input: unknown) => unknown;
+        const validatedInput = validate(rawPayload);
 
         if (validatedInput instanceof type.errors) {
-          throw new ValidationError([validatedInput.summary]);
+          throw new ValidationError([(validatedInput as type.errors).summary]);
         }
 
-        payload = validatedInput;
+        payload = validatedInput as Payload;
       }
       const wsData: WsData = {
         middlewareData: { userData },
@@ -77,8 +78,8 @@ export default async (
           payload !== null &&
           typeof payload === "object" &&
           !Buffer.isBuffer(payload)
-            ? Object.freeze({ ...payload })
-            : (payload ?? {}),
+            ? (Object.freeze({ ...payload }) as Payload)
+            : ((payload ?? {}) as Payload),
       };
 
       // const context = { wsData, responseData , session : null , auth: null};
@@ -93,7 +94,7 @@ export default async (
         ))
       ) {
         const handler = route.handler;
-        responseData.data = await handler(context);
+        responseData.data = (await handler(context)) as Payload;
       }
 
       return responseData;

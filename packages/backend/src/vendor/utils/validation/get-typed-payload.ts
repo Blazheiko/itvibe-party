@@ -1,4 +1,3 @@
-// @ts-nocheck
 import type { HttpContext, WsContext } from "#vendor/types/types.js";
 
 /**
@@ -8,16 +7,17 @@ import type { HttpContext, WsContext } from "#vendor/types/types.js";
  */
 export function getTypedPayload<TPayload>(
   context: HttpContext<TPayload> | WsContext<TPayload>
-): TPayload{
-  const payload = "httpData" in context 
-    ? context.httpData.payload 
+): TPayload {
+  const payload = "httpData" in context
+    ? context.httpData.payload
     : context.wsData.payload;
-    
+
   if (payload === null) {
     throw new Error("Payload is missing");
   }
-  
-  return payload;
+
+  // Runtime validation happens before this helper is called.
+  return payload as TPayload;
 }
 
 /**

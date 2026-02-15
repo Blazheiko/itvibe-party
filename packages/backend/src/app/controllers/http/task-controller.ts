@@ -1,4 +1,3 @@
-// @ts-nocheck
 import Project from "#app/models/Project.js";
 import type { HttpContext } from "#vendor/types/types.js";
 import { getTypedPayload } from "#vendor/utils/validation/get-typed-payload.js";
@@ -23,7 +22,7 @@ import type {
 } from "shared/schemas";
 
 export default {
-  async testTasks(context: HttpContext): Promise<TestTasksResponse> {
+  async testTasks(_context: HttpContext): Promise<TestTasksResponse> {
     const allTasks = await taskModel.query();
     return { status: "ok", tasks: allTasks };
   },
@@ -234,12 +233,22 @@ export default {
 
     const { taskId } = httpData.params as { taskId: string };
     const { status } = getTypedPayload(context);
+    const allowedStatuses = [
+      "TODO",
+      "IN_PROGRESS",
+      "ON_HOLD",
+      "COMPLETED",
+      "CANCELLED",
+    ] as const;
+    if (!allowedStatuses.includes(status as (typeof allowedStatuses)[number])) {
+      return { status: "error", message: "Invalid task status" };
+    }
 
     try {
       const task = await taskModel.updateStatus(
         BigInt(taskId),
         BigInt(userId),
-        status,
+        status as (typeof allowedStatuses)[number],
       );
       return { status: "success", task };
     } catch (error) {

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import type { HttpContext } from "#vendor/types/types.js";
 import { getTypedPayload } from "#vendor/utils/validation/get-typed-payload.js";
 import sendMessage from "#app/servises/chat/send-message.js";
@@ -30,7 +29,7 @@ export default {
     }
     const { contactId, userId } = getTypedPayload(context);
     const sessionUserId = sessionInfo.data?.userId;
-    if (!userId || !sessionUserId || +userId !== +sessionUserId) {
+    if (!userId || !sessionUserId || Number(userId) !== Number(sessionUserId)) {
       return { status: "unauthorized", message: "Session expired" };
     }
 
@@ -38,7 +37,7 @@ export default {
       return { status: "error", message: "Contact ID is required" };
     }
 
-    const data = await getChatMessages(userId, contactId);
+    const data = await getChatMessages(BigInt(userId), BigInt(contactId));
     if (!data) {
       return { status: "error", message: "Messages not found" };
     }
@@ -64,14 +63,22 @@ export default {
     const { contactId, content, userId } = payload;
     logger.info(payload);
     logger.info({ userId });
-    if (!contactId || !content || +userId !== +sessionUserId || !userId) {
+    if (
+      !contactId ||
+      !content ||
+      !userId ||
+      Number(userId) !== Number(sessionUserId)
+    ) {
       return {
         status: "error",
         message: "Contact ID, content and user ID are required",
       };
     }
 
-    const message = await sendMessage(content, userId, contactId);
+    const message = await sendMessage(content, String(userId), String(contactId));
+    if (!message) {
+      return { status: "error", message: "Failed to send message" };
+    }
 
     return { status: "ok", message };
   },
@@ -96,9 +103,11 @@ export default {
       return { status: "error", message: "Message ID is required" };
     }
 
+    const messageBigIntId = BigInt(messageId);
+    const sessionUserBigInt = BigInt(userId);
     const message = await Message.findByIdAndUserId(
-      messageId,
-      userId,
+      messageBigIntId,
+      sessionUserBigInt,
       "sender",
     );
     if (!message) {
@@ -108,7 +117,7 @@ export default {
       };
     }
 
-    await Message.deleteById(messageId);
+    await Message.deleteById(messageBigIntId);
 
     return { status: "ok", message: "Message deleted successfully" };
   },
@@ -124,7 +133,7 @@ export default {
     }
     const { messageId, content, userId } = getTypedPayload(context);
     const sessionUserId = sessionInfo.data?.userId;
-    if (!userId || +userId !== +sessionUserId) {
+    if (!userId || !sessionUserId || Number(userId) !== Number(sessionUserId)) {
       return { status: "unauthorized", message: "Session expired" };
     }
 
@@ -141,8 +150,8 @@ export default {
     // }
 
     const updatedMessage = await Message.updateContent(
-      userId,
-      messageId,
+      BigInt(userId),
+      BigInt(messageId),
       content,
     );
 
@@ -172,8 +181,8 @@ export default {
     }
 
     const message = await Message.findByIdAndUserId(
-      messageId,
-      userId,
+      BigInt(messageId),
+      BigInt(userId),
       "receiver",
     );
     if (!message) {
@@ -184,7 +193,7 @@ export default {
     }
 
     try {
-      const result = await Message.markAsRead(messageId, userId);
+      const result = await Message.markAsRead(BigInt(messageId), BigInt(userId));
       return { status: "ok", message: result };
     } catch (error) {
       logger.error({ err: error }, "Error marking message as read:");

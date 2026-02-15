@@ -1,4 +1,3 @@
-// @ts-nocheck
 import type {
     Session,
     WsContext,
@@ -32,7 +31,7 @@ export default (
     _session: Session | null,
 ): WsContext => {
     const requestId = randomUUID();
-    const requestLogger = logger.child({ requestId });
+    const requestLogger = logger.child({ requestId }) as unknown as WsContext["logger"];
     // const userData = wsData.middlewareData.userData;
     // let session: Session | null = null;
     // if (userData && userData.sessionId && userData.userId) {

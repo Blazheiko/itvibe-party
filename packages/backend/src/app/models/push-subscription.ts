@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { db } from '#database/db.js';
 import { pushSubscriptions, pushNotificationLogs } from '#database/schema.js';
 import { eq, and, desc, sql } from 'drizzle-orm';
@@ -234,7 +233,8 @@ export default {
             .from(pushSubscriptions)
             .where(eq(pushSubscriptions.id, id));
 
-        if (checkDeleted[0]?.count > 0) {
+        const deletedCheck = checkDeleted.at(0);
+        if ((deletedCheck?.count ?? 0) > 0) {
             throw new Error('Push subscription not found or access denied');
         }
 
@@ -271,6 +271,10 @@ export default {
         if (subscription.length === 0) {
             throw new Error('Push subscription not found');
         }
+        const subscriptionItem = subscription.at(0);
+        if (!subscriptionItem) {
+            throw new Error('Push subscription not found');
+        }
 
         // Get logs
         const logs = await db.select()
@@ -303,13 +307,13 @@ export default {
                     ? (sentNotifications / totalNotifications) * 100
                     : 0,
             last7DaysCount: last7DaysLogs.length,
-            lastUsed: subscription[0].lastUsedAt,
-            isActive: subscription[0].isActive,
-            createdAt: subscription[0].createdAt,
+            lastUsed: subscriptionItem.lastUsedAt,
+            isActive: subscriptionItem.isActive,
+            createdAt: subscriptionItem.createdAt,
         };
 
         return {
-            subscription: serializeModel(subscription[0], schema, hidden),
+            subscription: serializeModel(subscriptionItem, schema, hidden),
             statistics,
         };
     },
@@ -328,4 +332,3 @@ export default {
         );
     },
 };
-

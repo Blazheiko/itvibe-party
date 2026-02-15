@@ -1,4 +1,3 @@
-// @ts-nocheck
 import type { HttpContext } from "#vendor/types/types.js";
 import { getTypedPayload } from "#vendor/utils/validation/get-typed-payload.js";
 import { getOnlineUser } from "#vendor/utils/network/ws-handlers.js";
@@ -29,7 +28,7 @@ export default {
     if (!userId || !sessionUserId)
       return { status: "unauthorized", message: "Session expired" };
 
-    if (+userId !== +sessionUserId) {
+    if (Number(userId) !== Number(sessionUserId)) {
       logger.error("User used the wrong session");
       return {
         status: "unauthorized",

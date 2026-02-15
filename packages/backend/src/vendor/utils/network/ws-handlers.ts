@@ -1,4 +1,3 @@
-// @ts-nocheck
 import logger from "#vendor/utils/logger.js";
 import wsApiHandler from "../routing/ws-api-dispatcher.js";
 import { generateUUID } from "metautil";
@@ -180,7 +179,8 @@ const onMessage = async (
 
   try {
     const parsedMessage = JSON.parse(jsonMessage) as WsMessage;
-    const message = WsMessageSchema(parsedMessage);
+    const validateWsMessage = WsMessageSchema as unknown as (input: unknown) => WsMessage | type.errors;
+    const message = validateWsMessage(parsedMessage);
     if (message instanceof type.errors) {
       // hover summary to see validation errors
       console.error(message.summary);

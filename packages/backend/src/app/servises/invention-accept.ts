@@ -1,11 +1,8 @@
-// @ts-nocheck
 import { db } from '#database/db.js';
 import { invitations, contactList } from '#database/schema.js';
 import { eq, and } from 'drizzle-orm';
-import ContactList from '#app/models/contact-list.js';
-import logger from '#logger';
 
-export default async (token: string, userId: number) => {
+export default async (token: string, userId: number): Promise<void> => {
     console.log('inventionAccept');
     if (!token || !userId) return;
 
@@ -14,20 +11,21 @@ export default async (token: string, userId: number) => {
         .where(and(eq(invitations.token, token), eq(invitations.isUsed, false)))
         .limit(1);
 
-    if (invention.length === 0 || Number(invention[0].invitedId) === userId) return;
+    const inventionItem = invention.at(0);
+    if (!inventionItem || Number(inventionItem.invitedId) === userId) return;
 
     await db.update(invitations)
         .set({
             isUsed: true,
-            invitedId: BigInt(userId)
+            invitedId: BigInt(userId),
         })
-        .where(eq(invitations.id, invention[0].id));
+        .where(eq(invitations.id, inventionItem.id));
 
     const contact = await db.select({ id: contactList.id })
         .from(contactList)
         .where(and(
             eq(contactList.userId, BigInt(userId)),
-            eq(contactList.contactId, invention[0].userId)
+            eq(contactList.contactId, inventionItem.userId),
         ))
         .limit(1);
 
@@ -35,7 +33,7 @@ export default async (token: string, userId: number) => {
     if (contact.length === 0) {
         await db.insert(contactList).values({
             userId: BigInt(userId),
-            contactId: invention[0].userId,
+            contactId: inventionItem.userId,
             status: 'accepted',
             rename: null,
             createdAt: now,
@@ -46,19 +44,19 @@ export default async (token: string, userId: number) => {
     const contactOwner = await db.select({ id: contactList.id })
         .from(contactList)
         .where(and(
-            eq(contactList.userId, invention[0].userId),
-            eq(contactList.contactId, BigInt(userId))
+            eq(contactList.userId, inventionItem.userId),
+            eq(contactList.contactId, BigInt(userId)),
         ))
         .limit(1);
 
     if (contactOwner.length === 0) {
         await db.insert(contactList).values({
-            userId: invention[0].userId,
+            userId: inventionItem.userId,
             contactId: BigInt(userId),
             status: 'accepted',
-            rename: invention[0].name,
+            rename: inventionItem.name,
             createdAt: now,
             updatedAt: now,
         });
     }
-}
+};

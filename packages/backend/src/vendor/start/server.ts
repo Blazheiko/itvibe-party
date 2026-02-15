@@ -1,4 +1,3 @@
-// @ts-nocheck
 import * as uWS from "uWebSockets.js";
 // import type {
 //   HttpRequest,
@@ -652,28 +651,32 @@ const configureWebsockets = (server: TemplatedApp): TemplatedApp => {
   });
 };
 
-type SetCookie = (name: string, value: string, options: CookieOptions) => void;
 type DeleteCookie = (name: string) => void;
 type SetHeader = (name: string, value: string) => void;
 // CSP header is applied from staticServer for HTML responses
 const getResponseData = (): ResponseData => {
   const cookies: Map<string, Cookie> = new Map<string, Cookie>();
   const headers: Header[] = [];
-  const setCookie: SetCookie = (
-    name: string,
-    value: string,
-    options: CookieOptions,
+  const setCookie: ResponseData["setCookie"] = (
+    nameOrCookie: string | Cookie,
+    value?: string,
+    options?: CookieOptions,
   ): void => {
-    cookies.set(name, {
-      name,
-      value,
-      path: options.path ?? cookiesConfig.default.path,
-      httpOnly: options.httpOnly ?? cookiesConfig.default.httpOnly,
-      secure: options.secure ?? cookiesConfig.default.secure,
-      expires: options.expires ?? undefined,
-      maxAge: options.maxAge ?? cookiesConfig.default.maxAge,
-      sameSite: options.sameSite ?? cookiesConfig.default.sameSite,
-    });
+    if (typeof nameOrCookie === "string") {
+      cookies.set(nameOrCookie, {
+        name: nameOrCookie,
+        value: value ?? "",
+        path: options?.path ?? cookiesConfig.default.path,
+        httpOnly: options?.httpOnly ?? cookiesConfig.default.httpOnly,
+        secure: options?.secure ?? cookiesConfig.default.secure,
+        expires: options?.expires ?? undefined,
+        maxAge: options?.maxAge ?? cookiesConfig.default.maxAge,
+        sameSite: options?.sameSite ?? cookiesConfig.default.sameSite,
+      });
+      return;
+    }
+
+    cookies.set(nameOrCookie.name, nameOrCookie);
   };
 
   const deleteCookie: DeleteCookie = (name: string): void => {
@@ -729,13 +732,14 @@ const getHttpData = async (
 
     const httpPayload = await getData(res, contentType);
     if (httpPayload !== null) {
-      const validatedInput = (route.validator as (payload: Payload) => unknown)(httpPayload);
+      const validate = route.validator as unknown as (payload: Payload) => unknown;
+      const validatedInput = validate(httpPayload);
 
       if (validatedInput instanceof type.errors) {
-        throw new ValidationError([validatedInput.summary]);
+        throw new ValidationError([(validatedInput as type.errors).summary]);
       }
 
-      payload = validatedInput;
+      payload = validatedInput as Payload;
     }
   }
 
@@ -901,7 +905,7 @@ const setHttpHandler = async (
         responseData.status >= 200 &&
         responseData.status < 300
       )
-        responseData.payload = await route.handler(context);
+        responseData.payload = (await route.handler(context)) as Payload;
 
       if (aborted) return;
 

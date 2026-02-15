@@ -1,8 +1,6 @@
-// @ts-nocheck
 import userModel from "#app/models/User.js";
 import type { HttpContext } from "#vendor/types/types.js";
 import { getTypedPayload } from "#vendor/utils/validation/get-typed-payload.js";
-import configApp from "#config/app.js";
 import generateWsToken from "#app/servises/generate-ws-token.js";
 import type {
   PingResponse,
@@ -45,7 +43,7 @@ export default {
     logger.info("testHeaders");
     logger.info(httpData.params);
     const headers: Array<{ key: string; value: string }> = [];
-    const params: any[] = httpData.params;
+    const params: any[] = Object.entries(httpData.params);
     httpData.headers.forEach((value, key) => {
       headers.push({ key, value });
     });
@@ -183,6 +181,8 @@ export default {
       httpOnly: true,
       secure: false,
       maxAge: 3600,
+      expires: undefined,
+      sameSite: undefined,
     });
     responseData.setCookie("cookieTest2", "test");
     return { status: "ok" };
@@ -192,21 +192,30 @@ export default {
     logger,
   }: HttpContext): Promise<TestMiddlewareResponse> {
     logger.info("testMiddleware controller");
-    return { middlewares: responseData.middlewareData, status: "ok" };
+    return {
+      middlewares: responseData.middlewareData as unknown as string[],
+      status: "ok",
+    };
   },
   async testMiddleware2({
     responseData,
     logger,
   }: HttpContext): Promise<TestMiddlewareResponse> {
     logger.info("testMiddleware2 controller");
-    return { middlewares: responseData.middlewareData, status: "ok" };
+    return {
+      middlewares: responseData.middlewareData as unknown as string[],
+      status: "ok",
+    };
   },
   async testMiddleware3({
     responseData,
     logger,
   }: HttpContext): Promise<TestMiddlewareResponse> {
     logger.info("testMiddleware3 controller");
-    return { middlewares: responseData.middlewareData, status: "ok" };
+    return {
+      middlewares: responseData.middlewareData as unknown as string[],
+      status: "ok",
+    };
   },
   async saveUser(
     context: HttpContext<SaveUserInput>,

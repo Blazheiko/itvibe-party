@@ -1,9 +1,7 @@
-// @ts-nocheck
 import { db } from '#database/db.js';
 import { messages, contactList, users } from '#database/schema.js';
 import { eq, and, or, desc } from 'drizzle-orm';
 import { getOnlineUser } from '#vendor/utils/network/ws-handlers.js';
-import ContactList from '#app/models/contact-list.js';
 import readMessages from '#app/servises/chat/read-messages.js';
 
 type Message = typeof messages.$inferSelect;
@@ -30,10 +28,12 @@ export default async (
         .limit(1);
 
     if (contactData.length === 0) return null;
+    const contactRow = contactData.at(0);
+    if (!contactRow) return null;
 
     const contact = {
-        ...contactData[0].contact_list,
-        contact: contactData[0].users,
+        ...contactRow.contact_list,
+        contact: contactRow.users,
     };
 
     if (contact.unreadCount > 0) {
