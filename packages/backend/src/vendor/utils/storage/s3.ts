@@ -1,27 +1,28 @@
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import * as Minio from "minio";
 import diskConfig from "#config/disk.js";
+import logger from "#logger";
 
-const s3Client = new S3Client({
+const endpoint = (diskConfig.s3Endpoint ?? "").replace(/^https?:\/\//, "");
+
+logger.info({ endpoint, bucket: diskConfig.s3Bucket, region: diskConfig.s3Region }, "S3 config (minio)");
+
+const minioClient = new Minio.Client({
+  endPoint: endpoint,
+  useSSL: diskConfig.s3Endpoint?.startsWith("https") !== false,
+  accessKey: diskConfig.s3AccessKeyId ?? "",
+  secretKey: diskConfig.s3SecretAccessKey ?? "",
   region: diskConfig.s3Region ?? "us-east-1",
-  endpoint: diskConfig.s3Endpoint,
-  credentials: {
-    accessKeyId: diskConfig.s3AccessKeyId ?? "",
-    secretAccessKey: diskConfig.s3SecretAccessKey ?? "",
-  },
-  forcePathStyle: true,
 });
 
 export async function uploadToS3(
   key: string,
   body: Buffer,
   contentType: string,
-): Promise<PutObjectCommand> {
-  return  await s3Client.send(
-    new PutObjectCommand({
-      Bucket: diskConfig.s3Bucket,
-      Key: key,
-      Body: body,
-      ContentType: contentType,
-    }),
-  );
+): Promise<void> {
+  const bucket = diskConfig.s3Bucket ?? "";
+  logger.info({ bucket, key, contentType, size: body.length }, "Uploading to S3");
+
+  await minioClient.putObject(bucket, key, body, body.length, {
+    "Content-Type": contentType,
+  });
 }

@@ -205,7 +205,7 @@ export default {
       // Generate unique S3 key
       const ext = path.extname(file.filename) || ".bin";
       const uniqueName = `${randomUUID()}${ext}`;
-      const prefix = diskConfig.s3DynamicDataPrefix ?? "uploads";
+      const prefix = (diskConfig.s3DynamicDataPrefix ?? "uploads").replace(/^\/+/, "");
       const s3Key = `${prefix}/${uniqueName}`;
 
       // Upload to S3
