@@ -2,6 +2,7 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import VoiceInput from './VoiceInput.vue'
+import { notesApi } from '@/utils/api'
 
 // Добавляем проп для управления отображением шапки
 defineProps({
@@ -137,13 +138,15 @@ const closeCreatePost = () => {
     newsTitle.value = ''
     newsDescription.value = ''
     newsImages.value = []
+    newsImagePreviews.value = []
     error.value = ''
 }
 
 // Переменные для создания новости
 const newsTitle = ref('')
 const newsDescription = ref('')
-const newsImages = ref<string[]>([])
+const newsImages = ref<File[]>([])
+const newsImagePreviews = ref<string[]>([])
 const isLoading = ref(false)
 const error = ref('')
 
@@ -159,10 +162,11 @@ const handleImageUpload = (event: Event) => {
     }
 
     Array.from(input.files).forEach((file) => {
+        newsImages.value.push(file)
         const reader = new FileReader()
         reader.onload = (e) => {
             if (e.target?.result && typeof e.target.result === 'string') {
-                newsImages.value.push(e.target.result)
+                newsImagePreviews.value.push(e.target.result)
             }
         }
         reader.readAsDataURL(file)
@@ -175,6 +179,7 @@ const handleImageUpload = (event: Event) => {
 // Удаление изображения из предпросмотра
 const removeImage = (index: number) => {
     newsImages.value.splice(index, 1)
+    newsImagePreviews.value.splice(index, 1)
 }
 
 // Voice input handlers
@@ -202,28 +207,52 @@ const postNews = async () => {
     error.value = ''
 
     try {
-        // Симуляция отправки на сервер
-        await new Promise((resolve) => setTimeout(resolve, 1000))
-
-        // Создаем новый объект новости
-        const newPost = {
-            id: `news-${Date.now()}`,
-            userId: 'current-user',
-            userName: 'You',
-            userAvatar: '/avatars/user1.png',
+        // Создаём заметку на сервере
+        const noteResponse = await notesApi.createNote({
             title: newsTitle.value,
             description: newsDescription.value,
-            images: [...newsImages.value],
-            timeAgo: 'Just now',
+        })
+
+        if (noteResponse.error !== null || noteResponse.data === null) {
+            error.value = noteResponse.error?.message ?? 'Failed to create note'
+            return
+        }
+
+        const noteData = noteResponse.data as Record<string, unknown>
+        const note = (noteData.data ?? noteData) as Record<string, unknown>
+        const noteId = note.id as string | number
+
+        // Загружаем фото
+        const uploadedImages: string[] = []
+        for (const file of newsImages.value) {
+            const photoResponse = await notesApi.addPhoto(noteId, file)
+            if (photoResponse.error === null && photoResponse.data !== null) {
+                const photoData = photoResponse.data as Record<string, unknown>
+                const photo = (photoData.photo ?? photoData) as Record<string, unknown>
+                if (typeof photo.src === 'string') {
+                    const baseUrl = import.meta.env.VITE_BASE_URL || 'http://127.0.0.1:5174'
+                    uploadedImages.push(`${baseUrl}/api/storage/${photo.src}`)
+                }
+            }
         }
 
         // Добавляем в начало списка
+        const newPost = {
+            id: noteId,
+            userId: 'current-user',
+            userName: 'You',
+            title: newsTitle.value,
+            description: newsDescription.value,
+            images: uploadedImages,
+            timeAgo: 'Just now',
+        }
         newsItems.value.unshift(newPost)
 
         // Сбрасываем форму
         newsTitle.value = ''
         newsDescription.value = ''
         newsImages.value = []
+        newsImagePreviews.value = []
 
         // Закрываем форму создания новости
         showCreateNews.value = false
@@ -398,9 +427,9 @@ function updateWindowWidth() {
                         </div>
 
                         <!-- Preview of uploaded images -->
-                        <div v-if="newsImages.length > 0" class="image-previews">
+                        <div v-if="newsImagePreviews.length > 0" class="image-previews">
                             <div
-                                v-for="(image, index) in newsImages"
+                                v-for="(image, index) in newsImagePreviews"
                                 :key="index"
                                 class="image-preview"
                             >

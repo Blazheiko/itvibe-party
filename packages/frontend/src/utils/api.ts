@@ -937,3 +937,29 @@ export const pushSubscriptionApi = {
     )
   },
 }
+
+// ============================================================================
+// Notes API
+// ============================================================================
+
+export const notesApi = {
+  getNotes: async (): Promise<ApiResponse<Record<string, unknown>>> => {
+    return baseApi.http('GET', '/api/notes')
+  },
+
+  createNote: async (body: {
+    title: string
+    description: string
+  }): Promise<ApiResponse<Record<string, unknown>>> => {
+    return baseApi.http('POST', '/api/notes', body)
+  },
+
+  addPhoto: async (
+    noteId: string | number,
+    file: File,
+  ): Promise<ApiResponse<Record<string, unknown>>> => {
+    const formData = new FormData()
+    formData.append('photo', file)
+    return baseApi.upload('POST', `/api/notes/${noteId}/photos`, formData)
+  },
+}

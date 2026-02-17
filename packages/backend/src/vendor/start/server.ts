@@ -59,6 +59,8 @@ import getIP from "#vendor/utils/network/get-ip.js";
 import { getApiTypesForDocumentation } from "#vendor/utils/tooling/parse-types-from-dts.js";
 import { serializeRoutes } from "#vendor/utils/routing/serialize-routes.js";
 import path from "path";
+import { readFile } from "node:fs/promises";
+import { MIME_TYPES } from "#vendor/constants/mime-types.js";
 import {
   makeBroadcastJson,
   makeJson,
@@ -441,6 +443,60 @@ const configureHttp = async (server: TemplatedApp): Promise<void> => {
     //     });
     // });
   }
+  // Serve uploaded files from storage/app
+  server.get(
+    `/${appConfig.pathPrefix}/storage/:filename`,
+    async (res: HttpResponse, req: HttpRequest) => {
+      let aborted = false;
+      res.onAborted(() => {
+        aborted = true;
+      });
+
+      const filename = req.getParameter(0) ?? "";
+
+      if (
+        filename === "" ||
+        filename.includes("..") ||
+        filename.includes("/") ||
+        filename.includes("\\")
+      ) {
+        if (!aborted)
+          res.cork(() => {
+            res.writeStatus("400").end("Bad request");
+          });
+        return;
+      }
+
+      try {
+        const filePath = path.join(process.cwd(), "storage", "app", filename);
+        const data = await readFile(filePath);
+        if (aborted) return;
+
+        const ext = path.extname(filename).substring(1).toLowerCase();
+        const contentType =
+          MIME_TYPES[ext] ??
+          MIME_TYPES["default"] ??
+          "application/octet-stream";
+
+        res.cork(() => {
+          if (corsConfig.enabled) setCorsHeader(res);
+          res.writeStatus("200");
+          res.writeHeader("content-type", contentType);
+          res.writeHeader(
+            "cache-control",
+            "public, max-age=31536000, immutable",
+          );
+          res.end(data);
+        });
+      } catch {
+        if (!aborted)
+          res.cork(() => {
+            res.writeStatus("404").end("File not found");
+          });
+      }
+    },
+  );
+
   getListRoutes().forEach((route: RouteItem) => {
     if (route.method !== "ws" && route.method !== "delete") {
       server[route.method](

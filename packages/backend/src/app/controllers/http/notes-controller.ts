@@ -12,10 +12,14 @@ import type {
   DeletePhotoResponse,
 } from "../types/NotesController.js";
 import type {
-  AddPhotoInput,
   CreateNoteInput,
   UpdateNoteInput,
 } from "shared/schemas";
+import { randomUUID } from "node:crypto";
+import { writeFile, mkdir } from "node:fs/promises";
+import path from "node:path";
+
+const STORAGE_DIR = path.join(process.cwd(), "storage", "app");
 
 export default {
   async getNotes(context: HttpContext): Promise<GetNotesResponse> {
@@ -167,7 +171,7 @@ export default {
   },
 
   async addPhoto(
-    context: HttpContext<AddPhotoInput>,
+    context: HttpContext,
   ): Promise<AddPhotoResponse> {
     const { httpData, auth, logger } = context;
     logger.info("addPhoto handler");
@@ -182,7 +186,11 @@ export default {
     }
 
     const { noteId } = httpData.params as { noteId: string };
-    const { src, filename, size } = getTypedPayload(context);
+
+    const file = httpData.files?.get("photo");
+    if (file === undefined) {
+      return { status: "error", message: "No file uploaded" };
+    }
 
     try {
       // Verify note belongs to user
@@ -194,11 +202,22 @@ export default {
         };
       }
 
+      // Generate unique filename
+      const ext = path.extname(file.filename) || ".bin";
+      const uniqueName = `${randomUUID()}${ext}`;
+
+      // Ensure storage directory exists
+      await mkdir(STORAGE_DIR, { recursive: true });
+
+      // Write file to disk
+      const filePath = path.join(STORAGE_DIR, uniqueName);
+      await writeFile(filePath, Buffer.from(file.data));
+
       const photo = await NotesPhoto.create({
         noteId: parseInt(noteId),
-        src,
-        filename,
-        size,
+        src: uniqueName,
+        filename: file.filename,
+        size: file.data.byteLength,
       });
       return { status: "ok", photo };
     } catch (error) {

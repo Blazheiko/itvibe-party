@@ -17,6 +17,11 @@ interface ApiMethods {
         route: string,
         body?: Record<string, unknown>,
     ) => Promise<ApiResponse<T>>
+    upload: <T = HttpResponse>(
+        method: string,
+        route: string,
+        formData: FormData,
+    ) => Promise<ApiResponse<T>>
     ws: <T = HttpResponse>(route: string, body?: Record<string, unknown>) => Promise<T | null>
 }
 
@@ -106,7 +111,58 @@ const api: ApiMethods = {
         }
     },
 
-    // setWebSocketClient метод удален - используется useWebSocketConnection
+    upload: async <T = HttpResponse>(
+        method: HttpMethod,
+        route: string,
+        formData: FormData,
+    ): Promise<ApiResponse<T>> => {
+        try {
+            const response = await fetch(`${BASE_URL}${route}`, {
+                method,
+                body: formData,
+            })
+
+            if (!response.ok && response.status === 422) {
+                const errorData = await response.json()
+                return {
+                    data: errorData,
+                    error: { code: 422, message: String(errorData.message || 'Validation Error') },
+                }
+            }
+
+            if (!response.ok) {
+                if (response.status === 401) {
+                    eventBus.emit('unauthorized')
+                    return {
+                        data: null,
+                        error: { code: 401, message: 'Unauthorized' },
+                    }
+                }
+                return {
+                    data: null,
+                    error: {
+                        code: response.status,
+                        message: `HTTP error! status: ${response.status}`,
+                    },
+                }
+            }
+
+            const data = await response.json()
+            return { data: data as T, error: null }
+        } catch (error: unknown) {
+            console.error('Upload error:', error)
+            return {
+                data: null,
+                error: {
+                    code: 0,
+                    message:
+                        error instanceof Error
+                            ? error.message
+                            : 'Upload failed. Please try again later.',
+                },
+            }
+        }
+    },
 
     ws: async <T = HttpResponse>(
         route: string,
