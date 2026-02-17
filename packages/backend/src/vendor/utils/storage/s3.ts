@@ -18,7 +18,7 @@ export async function uploadToS3(
 ): Promise<PutObjectCommand> {
   return  await s3Client.send(
     new PutObjectCommand({
-      Bucket: diskConfig.s3Prefix,
+      Bucket: diskConfig.s3Bucket,
       Key: key,
       Body: body,
       ContentType: contentType,
