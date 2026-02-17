@@ -65,6 +65,15 @@ interface FormDataResult {
     files: Map<string, UploadedFile>;
 }
 
+const parseUrlEncoded = (buffer: Buffer): Record<string, string> => {
+    const payload = Object.create(null) as Record<string, string>;
+    const params = new URLSearchParams(buffer.toString());
+    for (const [key, value] of params) {
+        payload[key] = value;
+    }
+    return payload;
+};
+
 const parseMultipart = (buffer: Buffer, contentType: string): FormDataResult => {
     const payload = Object.create(null) as Record<string, string>;
     const files = new Map<string, UploadedFile>();
@@ -89,7 +98,7 @@ const parseMultipart = (buffer: Buffer, contentType: string): FormDataResult => 
     return { payload, files };
 };
 
-const getData = async (res: HttpResponse, contentType: string): Promise<{ payload: Payload | null; files: Map<string, UploadedFile> | null }> => {
+const getData = async (res: HttpResponse, contentType: string, headers: Map<string, string>): Promise<{ payload: Payload | null; files: Map<string, UploadedFile> | null }> => {
     let payload: Payload | null = null;
     let files: Map<string, UploadedFile> | null = null;
     const buffer = await readData(res);
@@ -101,6 +110,22 @@ const getData = async (res: HttpResponse, contentType: string): Promise<{ payloa
             const result = parseMultipart(buffer, contentType);
             payload = result.payload;
             files = result.files.size > 0 ? result.files : null;
+        } else if (contentType === 'application/x-www-form-urlencoded') {
+            payload = parseUrlEncoded(buffer);
+        } else if (contentType === 'text/plain') {
+            payload = buffer.toString();
+        } else if (contentType === 'application/octet-stream') {
+            const disposition = headers.get('content-disposition') ?? '';
+            const filenameMatch = /filename="([^"]+)"/.exec(disposition);
+            const filename = filenameMatch?.[1] ?? headers.get('x-filename') ?? 'file';
+            files = new Map<string, UploadedFile>();
+
+            files.set(filename, {
+                name: filename,
+                filename,
+                type: 'application/octet-stream',
+                data: buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength) as ArrayBuffer,
+            });
         }
     }
 
