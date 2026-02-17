@@ -16,10 +16,10 @@ import type {
   UpdateNoteInput,
 } from "shared/schemas";
 import { randomUUID } from "node:crypto";
-import { writeFile, mkdir } from "node:fs/promises";
 import path from "node:path";
-
-const STORAGE_DIR = path.join(process.cwd(), "storage", "app");
+import { uploadToS3 } from "#vendor/utils/storage/s3.js";
+import diskConfig from "#config/disk.js";
+import * as console from "node:console";
 
 export default {
   async getNotes(context: HttpContext): Promise<GetNotesResponse> {
@@ -202,20 +202,19 @@ export default {
         };
       }
 
-      // Generate unique filename
+      // Generate unique S3 key
       const ext = path.extname(file.filename) || ".bin";
       const uniqueName = `${randomUUID()}${ext}`;
+      const prefix = diskConfig.s3DynamicDataPrefix ?? "uploads";
+      const s3Key = `${prefix}/${uniqueName}`;
 
-      // Ensure storage directory exists
-      await mkdir(STORAGE_DIR, { recursive: true });
-
-      // Write file to disk
-      const filePath = path.join(STORAGE_DIR, uniqueName);
-      await writeFile(filePath, Buffer.from(file.data));
+      // Upload to S3
+      const data = await uploadToS3(s3Key, Buffer.from(file.data), file.type);
+      console.log(data)
 
       const photo = await NotesPhoto.create({
         noteId: parseInt(noteId),
-        src: uniqueName,
+        src: s3Key,
         filename: file.filename,
         size: file.data.byteLength,
       });
