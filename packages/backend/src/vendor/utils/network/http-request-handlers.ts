@@ -2,9 +2,10 @@ import logger from '#vendor/utils/logger.js';
 import type { HttpRequest, HttpResponse } from '#vendor/start/server.js';
 import { validateHeader } from '#app/validate/checkers/header-checker.js';
 import { validateParameter } from '#app/validate/checkers/parameter-checker.js';
-import type { Payload } from '#vendor/types/types.js';
+import type { Payload, UploadedFile } from '#vendor/types/types.js';
 import { validateCookie } from '#app/validate/checkers/cookie-checker.js';
 import config from '#config/app.js';
+import { getParts } from 'uWebSockets.js';
 
 const getHeaders = (req: HttpRequest): Map<string, string> => {
     const headers: Map<string, string> = new Map<string, string>();
@@ -19,55 +20,6 @@ const getHeaders = (req: HttpRequest): Map<string, string> => {
     return headers;
 };
 
-const FORBIDDEN_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
-
-const parseFormDataStream = (body: string, boundary: string): Record<string, string> => {
-    const result = Object.create(null) as Record<string, string>;
-    let start = 0;
-    let fieldCount = 0;
-
-    while ((start = body.indexOf(boundary, start)) !== -1) {
-        const nameStart = body.indexOf('name="', start);
-        if (nameStart === -1) break;
-
-        const nameEnd = body.indexOf('"', nameStart + 6);
-        if (nameEnd === -1) break;
-
-        const fieldName = body.slice(nameStart + 6, nameEnd);
-
-        const headerEnd = body.indexOf('\r\n\r\n', nameEnd);
-        if (headerEnd === -1) break;
-
-        const valueStart = headerEnd + 4;
-        const valueEnd = body.indexOf('\r\n--', valueStart);
-        if (valueEnd === -1) break;
-
-        if (FORBIDDEN_KEYS.has(fieldName)) {
-            logger.warn(`Blocked dangerous form field name: ${fieldName}`);
-            start = valueEnd;
-            continue;
-        }
-
-        fieldCount++;
-        if (fieldCount > config.maxFormFields) {
-            logger.warn(`Form data exceeded max field count (${String(config.maxFormFields)})`);
-            break;
-        }
-
-        const rawValue = body.slice(valueStart, valueEnd);
-        if (rawValue.length > config.maxFieldValueLength) {
-            logger.warn(`Form field "${fieldName}" value exceeds max length, skipped`);
-            start = valueEnd;
-            continue;
-        }
-
-        result[fieldName] = rawValue.trim();
-        start = valueEnd;
-    }
-
-    return result;
-};
-
 const readData = (res: HttpResponse): Promise<Buffer | null> => {
     logger.info('readData');
     return new Promise((resolve: (value: Buffer | null) => void, reject: (reason?: unknown) => void) => {
@@ -75,7 +27,7 @@ const readData = (res: HttpResponse): Promise<Buffer | null> => {
         let totalSize = 0;
         res.onData((ab, isLast) => {
             try {
-                const chunk = Buffer.from(ab);
+                const chunk = Buffer.from(new Uint8Array(ab));
                 totalSize += chunk.length;
 
                 if (totalSize > config.maxBodySize) {
@@ -108,36 +60,51 @@ const readJson = (body: string): Record<string, unknown> => {
         throw new Error(`error parse json: ${String(e)}`);
     }
 };
-const parseContentType = (contentType: string): string => {
-    const boundaryIndex = contentType.indexOf('boundary=');
-    if (boundaryIndex === -1)
-        throw new Error('Boundary not found in Content-Type');
+interface FormDataResult {
+    payload: Record<string, string>;
+    files: Map<string, UploadedFile>;
+}
 
-    let boundary = contentType.slice(boundaryIndex + 9).trim();
+const parseMultipart = (buffer: Buffer, contentType: string): FormDataResult => {
+    const payload = Object.create(null) as Record<string, string>;
+    const files = new Map<string, UploadedFile>();
 
-    const semicolonIndex = boundary.indexOf(';');
-    if (semicolonIndex !== -1) boundary = boundary.slice(0, semicolonIndex).trim();
+    const parts = getParts(buffer, contentType);
+    if (parts === undefined) return { payload, files };
 
-    if (boundary.startsWith('"') && boundary.endsWith('"')) {
-        boundary = boundary.slice(1, -1);
+    for (const part of parts) {
+        if (part.filename !== undefined && part.filename !== '') {
+            files.set(part.name, {
+                name: part.name,
+                filename: part.filename,
+                type: part.type ?? 'application/octet-stream',
+                data: part.data,
+            });
+        } else {
+            const decoder = new TextDecoder();
+            payload[part.name] = decoder.decode(part.data);
+        }
     }
 
-    if (boundary === '') throw new Error('Empty boundary in Content-Type');
-
-    return `--${boundary}`;
+    return { payload, files };
 };
 
-const getData = async (res: HttpResponse, contentType: string): Promise<Payload | null> => {
-    let data: Payload | null = null;
+const getData = async (res: HttpResponse, contentType: string): Promise<{ payload: Payload | null; files: Map<string, UploadedFile> | null }> => {
+    let payload: Payload | null = null;
+    let files: Map<string, UploadedFile> | null = null;
     const buffer = await readData(res);
+
     if (buffer !== null) {
-        const body = buffer.toString();
-        if (contentType === 'application/json') data = readJson(body);
-        else if (contentType.startsWith('multipart/form-data'))
-            data = parseFormDataStream(body, parseContentType(contentType));
+        if (contentType === 'application/json') {
+            payload = readJson(buffer.toString());
+        } else if (contentType.startsWith('multipart/form-data')) {
+            const result = parseMultipart(buffer, contentType);
+            payload = result.payload;
+            files = result.files.size > 0 ? result.files : null;
+        }
     }
 
-    return data;
+    return { payload, files };
 };
 
 const normalizePath = (path: string): string => {
@@ -182,9 +149,9 @@ const parseCookies = (cookieHeader: string): Map<string, string> => {
           console.error(`Error decoding cookie value ${cookieHeader}":`, error);
         }
       };
-  
+
       let start = 0;
-  
+
       for (let i = 0; i <= cookieHeader.length; i++) {
         if (i === cookieHeader.length || cookieHeader[i] === ";") {
           handler(cookieHeader.slice(start, i).trim());
@@ -192,7 +159,7 @@ const parseCookies = (cookieHeader: string): Map<string, string> => {
         }
       }
     }
-  
+
     return list;
   };
 

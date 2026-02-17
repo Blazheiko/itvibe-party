@@ -149,6 +149,8 @@ const getStaticHttpData = (
     validator: undefined,
     path: url,
     referer: referer ?? undefined,
+    files: null,
+    hasFile: (): boolean => false,
   };
 };
 

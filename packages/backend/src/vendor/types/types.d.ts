@@ -107,6 +107,13 @@ export interface SessionInfo {
   // expiresAt: string;
 }
 
+export interface UploadedFile {
+  name: string;
+  filename: string;
+  type: string;
+  data: ArrayBuffer;
+}
+
 export interface HttpData<TPayload = unknown> {
   ip: string | null | undefined;
   params: Params;
@@ -117,6 +124,8 @@ export interface HttpData<TPayload = unknown> {
   cookies: Map<string, string>;
   isJson: boolean;
   validator: Type | undefined;
+  files: Map<string, UploadedFile> | null;
+  hasFile: (name: string) => boolean;
 }
 
 export interface ErrorResponse {

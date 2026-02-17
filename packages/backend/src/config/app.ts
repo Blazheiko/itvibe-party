@@ -51,7 +51,5 @@ const config = Object.freeze({
     maxUrlLength: 2048, // Reasonable limit for url length
     accessTokenLength: 16, // Reasonable limit for access token length
     maxBodySize: 10_485_760, // 10 MB
-    maxFormFields: 100,
-    maxFieldValueLength: 1_048_576, // 1 MB
 });
 export default config;

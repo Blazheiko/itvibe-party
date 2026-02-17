@@ -43,6 +43,7 @@ import type {
   RouteItem,
   Payload,
   CookieOptions,
+  UploadedFile,
 } from "#vendor/types/types.js";
 import contextHandler from "../utils/context/http-context.js";
 import {
@@ -211,23 +212,23 @@ const getHttpData = async (
   const contentType = headers.get("content-type");
   // const ip = headers.get('x-forwarded-for') || headers.get('x-real-ip') || 'unknown';
   const ip = getIP(req, res);
-  const isJson =
+  const isPayload =
     (route.method === "post" || route.method === "put") &&
     contentType?.trim().toLowerCase() === "application/json";
 
   let payload: Payload | null = null;
-  logger.info({validator: route.validator}, "getHttpData")
+  let files: Map<string, UploadedFile> | null = null;
+  // logger.info({validator: route.validator}, "getHttpData")
 
-  if (
-    isJson &&
-    route.validator !== undefined
-  ) {
-    logger.info('route.validator Get Http Data')
+  const hasBody = route.method === "post" || route.method === "put";
 
-    const httpPayload = await getData(res, contentType);
-    if (httpPayload !== null) {
+  if (hasBody && contentType !== undefined) {
+    const result = await getData(res, contentType);
+
+    if (isPayload && route.validator !== undefined && result.payload !== null) {
+      logger.info('route.validator Get Http Data')
       const validate = route.validator as unknown as (payload: Payload) => unknown;
-      const validatedInput = validate(httpPayload);
+      const validatedInput = validate(result.payload);
 
       if (validatedInput instanceof type.errors) {
         throw new ValidationError([(validatedInput as type.errors).summary]);
@@ -235,6 +236,8 @@ const getHttpData = async (
 
       payload = validatedInput as Payload;
     }
+
+    files = result.files;
   }
 
   return {
@@ -245,8 +248,10 @@ const getHttpData = async (
     headers,
     contentType,
     cookies,
-    isJson,
+    isJson: isPayload,
     validator: route.validator,
+    files,
+    hasFile: (name: string): boolean => files !== null && files.has(name),
   };
 };
 
