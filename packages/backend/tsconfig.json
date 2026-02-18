@@ -18,5 +18,7 @@
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"],
+  "skipLibCheck": true,
+  "exactOptionalPropertyTypes": true,
   "references": [{ "path": "../shared" }]
 }

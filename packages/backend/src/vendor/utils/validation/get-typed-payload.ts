@@ -1,13 +1,21 @@
 import type { HttpContext, WsContext } from "#vendor/types/types.js";
 
+type AnyContext = HttpContext<unknown> | WsContext<unknown>;
+type PayloadFromContext<TContext extends AnyContext> =
+  TContext extends HttpContext<infer TPayload>
+    ? TPayload
+    : TContext extends WsContext<infer TPayload>
+      ? TPayload
+      : never;
+
 /**
  * Извлекает типизированный payload из контекста.
  * Тип payload выводится автоматически из generic параметра контекста.
  * Предполагает что валидация уже выполнена в server.ts
  */
-export function getTypedPayload<TPayload>(
-  context: HttpContext<TPayload> | WsContext<TPayload>
-): TPayload {
+export function getTypedPayload<TContext extends AnyContext>(
+  context: TContext
+): PayloadFromContext<TContext> {
   const payload = "httpData" in context
     ? context.httpData.payload
     : context.wsData.payload;
@@ -17,7 +25,7 @@ export function getTypedPayload<TPayload>(
   }
 
   // Runtime validation happens before this helper is called.
-  return payload as TPayload;
+  return payload as PayloadFromContext<TContext>;
 }
 
 /**

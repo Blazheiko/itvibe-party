@@ -1,302 +1,224 @@
-import type { HttpContext } from "#vendor/types/types.js";
-import { getTypedPayload } from "#vendor/utils/validation/get-typed-payload.js";
-import Project from "#app/models/Project.js";
+import type { HttpContext } from '#vendor/types/types.js';
+import { getTypedPayload } from '#vendor/utils/validation/get-typed-payload.js';
+import { projectService } from '#app/services/project-service.js';
 import type {
-  GetProjectsResponse,
-  CreateProjectResponse,
-  GetProjectResponse,
-  UpdateProjectResponse,
-  DeleteProjectResponse,
-  GetProjectTasksResponse,
-  GetProjectStatisticsResponse,
-  ArchiveProjectResponse,
-} from "../types/ProjectController.js";
-import type { CreateProjectInput, UpdateProjectInput } from "shared/schemas";
+    GetProjectsResponse,
+    CreateProjectResponse,
+    GetProjectResponse,
+    UpdateProjectResponse,
+    DeleteProjectResponse,
+    GetProjectTasksResponse,
+    GetProjectStatisticsResponse,
+    ArchiveProjectResponse,
+} from '../types/ProjectController.js';
+import type { CreateProjectInput, UpdateProjectInput } from 'shared/schemas';
+
+function setServiceErrorStatus(
+    context: HttpContext,
+    code: 'BAD_REQUEST' | 'UNAUTHORIZED' | 'NOT_FOUND' | 'CONFLICT' | 'INTERNAL',
+): void {
+    if (code === 'BAD_REQUEST') {
+        context.responseData.status = 400;
+        return;
+    }
+    if (code === 'UNAUTHORIZED') {
+        context.responseData.status = 401;
+        return;
+    }
+    if (code === 'NOT_FOUND') {
+        context.responseData.status = 404;
+        return;
+    }
+    if (code === 'CONFLICT') {
+        context.responseData.status = 409;
+        return;
+    }
+    context.responseData.status = 500;
+}
+
+function resolveUserId(context: HttpContext): bigint | null {
+    if (!context.auth.check()) {
+        context.responseData.status = 401;
+        return null;
+    }
+
+    const userId = context.auth.getUserId();
+    if (userId === null) {
+        context.responseData.status = 401;
+        return null;
+    }
+
+    return BigInt(userId);
+}
 
 export default {
-  async getProjects(context: HttpContext): Promise<GetProjectsResponse> {
-    const { auth, logger, responseData } = context;
-    logger.info("getProjects handler");
+    async getProjects(context: HttpContext): Promise<GetProjectsResponse> {
+        context.logger.info('getProjects handler');
 
-    if (!auth.check()) {
-      responseData.status = 401;
-      return { status: "error", message: "Unauthorized" };
-    }
+        const userId = resolveUserId(context);
+        if (userId === null) {
+            return { status: 'error', message: 'Unauthorized' };
+        }
 
-    const userId = auth.getUserId();
-    if (userId === null) {
-      return { status: "error", message: "Unauthorized" };
-    }
+        const result = await projectService.getProjects(userId);
 
-    try {
-      const projects = await Project.findByUserId(BigInt(userId));
-      return { status: "success", projects };
-    } catch (error) {
-      logger.error({ err: error }, "Error getting projects:");
-      return { status: "error", message: "Failed to get projects" };
-    }
-  },
+        if (!result.ok) {
+            setServiceErrorStatus(context, result.code);
+            return { status: 'error', message: result.message };
+        }
 
-  async createProject(
-    context: HttpContext<CreateProjectInput>,
-  ): Promise<CreateProjectResponse> {
-    const { auth, logger, responseData } = context;
-    logger.info("createProject handler");
+        return { status: 'success', projects: result.data.projects as any };
+    },
 
-    if (!auth.check()) {
-      responseData.status = 401;
-      return { status: "error", message: "Unauthorized" };
-    }
+    async createProject(
+        context: HttpContext<CreateProjectInput>,
+    ): Promise<CreateProjectResponse> {
+        context.logger.info('createProject handler');
 
-    const userId = auth.getUserId();
-    if (userId === null) {
-      return { status: "error", message: "Unauthorized" };
-    }
+        const userId = resolveUserId(context);
+        if (userId === null) {
+            return { status: 'error', message: 'Unauthorized' };
+        }
 
-    const { title, description, color, startDate, endDate, dueDate } =
-      getTypedPayload(context);
+        const payload = getTypedPayload(context);
+        const result = await projectService.createProject({ ...payload, userId });
 
-    try {
-      const project = await Project.create({
-        title,
-        description,
-        color,
-        userId: BigInt(userId),
-        startDate,
-        endDate,
-        dueDate,
-      });
-      return { status: "success", project };
-    } catch (error) {
-      logger.error({ err: error }, "Error creating project:");
-      return {
-        status: "error",
-        message:
-          error instanceof Error ? error.message : "Failed to create project",
-      };
-    }
-  },
+        if (!result.ok) {
+            setServiceErrorStatus(context, result.code);
+            return { status: 'error', message: result.message };
+        }
 
-  async getProject(context: HttpContext): Promise<GetProjectResponse> {
-    const { httpData, auth, logger, responseData } = context;
-    logger.info("getProject handler");
+        return { status: 'success', project: result.data.project as any };
+    },
 
-    if (!auth.check()) {
-      responseData.status = 401;
-      return { status: "error", message: "Unauthorized" };
-    }
+    async getProject(context: HttpContext): Promise<GetProjectResponse> {
+        context.logger.info('getProject handler');
 
-    const userId = auth.getUserId();
-    if (userId === null) {
-      return { status: "error", message: "Unauthorized" };
-    }
+        const userId = resolveUserId(context);
+        if (userId === null) {
+            return { status: 'error', message: 'Unauthorized' };
+        }
 
-    const { projectId } = httpData.params as { projectId: string };
+        const { projectId } = context.httpData.params as { projectId: string };
+        const result = await projectService.getProject(BigInt(projectId), userId);
 
-    try {
-      const project = await Project.findById(
-        BigInt(projectId),
-        BigInt(userId),
-      );
-      return { status: "success", data: project };
-    } catch (error) {
-      logger.error({ err: error }, "Error getting project:");
-      return {
-        status: "error",
-        message:
-          error instanceof Error ? error.message : "Failed to get project",
-      };
-    }
-  },
+        if (!result.ok) {
+            setServiceErrorStatus(context, result.code);
+            return { status: 'error', message: result.message };
+        }
 
-  async updateProject(
-    context: HttpContext<UpdateProjectInput>,
-  ): Promise<UpdateProjectResponse> {
-    const { httpData, auth, logger, responseData } = context;
-    logger.info("updateProject handler");
+        return { status: 'success', data: result.data.project as any };
+    },
 
-    if (!auth.check()) {
-      responseData.status = 401;
-      return { status: "error", message: "Unauthorized" };
-    }
+    async updateProject(
+        context: HttpContext<UpdateProjectInput>,
+    ): Promise<UpdateProjectResponse> {
+        context.logger.info('updateProject handler');
 
-    const userId = auth.getUserId();
-    if (userId === null) {
-      return { status: "error", message: "Unauthorized" };
-    }
+        const userId = resolveUserId(context);
+        if (userId === null) {
+            return { status: 'error', message: 'Unauthorized' };
+        }
 
-    const { projectId } = httpData.params as { projectId: string };
-    const {
-      title,
-      description,
-      color,
-      startDate,
-      endDate,
-      dueDate,
-      isActive,
-      progress,
-    } = getTypedPayload(context);
+        const { projectId } = context.httpData.params as { projectId: string };
+        const payload = getTypedPayload(context);
+        const result = await projectService.updateProject({
+            ...payload,
+            userId,
+            projectId: BigInt(projectId),
+        });
 
-    try {
-      const project = await Project.update(
-        BigInt(projectId),
-        BigInt(userId),
-        {
-          title,
-          description,
-          color,
-          startDate,
-          endDate,
-          dueDate,
-          isActive,
-          progress,
-        },
-      );
+        if (!result.ok) {
+            setServiceErrorStatus(context, result.code);
+            return { status: 'error', message: result.message };
+        }
 
-      return { status: "success", project };
-    } catch (error) {
-      logger.error({ err: error }, "Error updating project:");
-      return {
-        status: "error",
-        message:
-          error instanceof Error ? error.message : "Failed to update project",
-      };
-    }
-  },
+        return { status: 'success', project: result.data.project as any };
+    },
 
-  async deleteProject(context: HttpContext): Promise<DeleteProjectResponse> {
-    const { httpData, auth, logger, responseData } = context;
-    logger.info("deleteProject handler");
+    async deleteProject(context: HttpContext): Promise<DeleteProjectResponse> {
+        context.logger.info('deleteProject handler');
 
-    if (!auth.check()) {
-      responseData.status = 401;
-      return { status: "error", message: "Unauthorized" };
-    }
+        const userId = resolveUserId(context);
+        if (userId === null) {
+            return { status: 'error', message: 'Unauthorized' };
+        }
 
-    const userId = auth.getUserId();
-    if (userId === null) {
-      return { status: "error", message: "Unauthorized" };
-    }
+        const { projectId } = context.httpData.params as { projectId: string };
+        const result = await projectService.deleteProject(BigInt(projectId), userId);
 
-    const { projectId } = httpData.params as { projectId: string };
+        if (!result.ok) {
+            setServiceErrorStatus(context, result.code);
+            return { status: 'error', message: result.message };
+        }
 
-    try {
-      await Project.delete(BigInt(projectId), BigInt(userId));
-      return {
-        status: "success",
-        message: "Project deleted successfully",
-      };
-    } catch (error) {
-      logger.error({ err: error }, "Error deleting project:");
-      return {
-        status: "error",
-        message:
-          error instanceof Error ? error.message : "Failed to delete project",
-      };
-    }
-  },
+        return { status: 'success', message: result.data.message };
+    },
 
-  async getProjectTasks(
-    context: HttpContext,
-  ): Promise<GetProjectTasksResponse> {
-    const { httpData, auth, logger, responseData } = context;
-    logger.info("getProjectTasks handler");
+    async getProjectTasks(
+        context: HttpContext,
+    ): Promise<GetProjectTasksResponse> {
+        context.logger.info('getProjectTasks handler');
 
-    if (!auth.check()) {
-      responseData.status = 401;
-      return { status: "error", message: "Unauthorized" };
-    }
+        const userId = resolveUserId(context);
+        if (userId === null) {
+            return { status: 'error', message: 'Unauthorized' };
+        }
 
-    const userId = auth.getUserId();
-    if (userId === null) {
-      return { status: "error", message: "Unauthorized" };
-    }
+        const { projectId } = context.httpData.params as { projectId: string };
+        const result = await projectService.getProjectTasks(BigInt(projectId), userId);
 
-    const { projectId } = httpData.params as { projectId: string };
+        if (!result.ok) {
+            setServiceErrorStatus(context, result.code);
+            return { status: 'error', message: result.message };
+        }
 
-    try {
-      const tasks = await Project.getProjectTasks(
-        BigInt(projectId),
-        BigInt(userId),
-      );
-      return { status: "success", data: tasks };
-    } catch (error) {
-      logger.error({ err: error }, "Error getting project tasks:");
-      return {
-        status: "error",
-        message:
-          error instanceof Error
-            ? error.message
-            : "Failed to get project tasks",
-      };
-    }
-  },
+        return { status: 'success', data: result.data.tasks as any };
+    },
 
-  async getProjectStatistics(
-    context: HttpContext,
-  ): Promise<GetProjectStatisticsResponse> {
-    const { httpData, auth, logger, responseData } = context;
-    logger.info("getProjectStatistics handler");
+    async getProjectStatistics(
+        context: HttpContext,
+    ): Promise<GetProjectStatisticsResponse> {
+        context.logger.info('getProjectStatistics handler');
 
-    if (!auth.check()) {
-      responseData.status = 401;
-      return { status: "error", message: "Unauthorized" };
-    }
+        const userId = resolveUserId(context);
+        if (userId === null) {
+            return { status: 'error', message: 'Unauthorized' };
+        }
 
-    const userId = auth.getUserId();
-    if (userId === null) {
-      return { status: "error", message: "Unauthorized" };
-    }
+        const { projectId } = context.httpData.params as { projectId: string };
+        const result = await projectService.getProjectStatistics(BigInt(projectId), userId);
 
-    const { projectId } = httpData.params as { projectId: string };
+        if (!result.ok) {
+            setServiceErrorStatus(context, result.code);
+            return { status: 'error', message: result.message };
+        }
 
-    try {
-      const data = await Project.getProjectStatistics(
-        BigInt(projectId),
-        BigInt(userId),
-      );
-      return { status: "success", data };
-    } catch (error) {
-      logger.error({ err: error }, "Error getting project statistics:");
-      return {
-        status: "error",
-        message:
-          error instanceof Error
-            ? error.message
-            : "Failed to get project statistics",
-      };
-    }
-  },
+        return {
+            status: 'success',
+            data: {
+                project: result.data.project,
+                statistics: result.data.statistics,
+            },
+        };
+    },
 
-  async archiveProject(context: HttpContext): Promise<ArchiveProjectResponse> {
-    const { httpData, auth, logger, responseData } = context;
-    logger.info("archiveProject handler");
+    async archiveProject(context: HttpContext): Promise<ArchiveProjectResponse> {
+        context.logger.info('archiveProject handler');
 
-    if (!auth.check()) {
-      responseData.status = 401;
-      return { status: "error", message: "Unauthorized" };
-    }
+        const userId = resolveUserId(context);
+        if (userId === null) {
+            return { status: 'error', message: 'Unauthorized' };
+        }
 
-    const userId = auth.getUserId();
-    if (userId === null) {
-      return { status: "error", message: "Unauthorized" };
-    }
+        const { projectId } = context.httpData.params as { projectId: string };
+        const result = await projectService.archiveProject(BigInt(projectId), userId);
 
-    const { projectId } = httpData.params as { projectId: string };
+        if (!result.ok) {
+            setServiceErrorStatus(context, result.code);
+            return { status: 'error', message: result.message };
+        }
 
-    try {
-      const archivedProject = await Project.archive(
-        BigInt(projectId),
-        BigInt(userId),
-      );
-      return { status: "success", data: archivedProject };
-    } catch (error) {
-      logger.error({ err: error }, "Error archiving project:");
-      return {
-        status: "error",
-        message:
-          error instanceof Error ? error.message : "Failed to archive project",
-      };
-    }
-  },
+        return { status: 'success', data: result.data.project as any };
+    },
 };

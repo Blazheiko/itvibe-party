@@ -1,270 +1,198 @@
-import type { HttpContext } from "#vendor/types/types.js";
-import { getTypedPayload } from "#vendor/utils/validation/get-typed-payload.js";
-import Notes from "#app/models/Notes.js";
-import NotesPhoto from "#app/models/notes-photo.js";
+import type { HttpContext } from '#vendor/types/types.js';
+import { getTypedPayload } from '#vendor/utils/validation/get-typed-payload.js';
+import { notesService } from '#app/services/notes-service.js';
 import type {
-  GetNotesResponse,
-  CreateNoteResponse,
-  GetNoteResponse,
-  UpdateNoteResponse,
-  DeleteNoteResponse,
-  AddPhotoResponse,
-  DeletePhotoResponse,
-} from "../types/NotesController.js";
-import type {
-  CreateNoteInput,
-  UpdateNoteInput,
-} from "shared/schemas";
-import { randomUUID } from "node:crypto";
-import path from "node:path";
-import { uploadToS3 } from "#vendor/utils/storage/s3.js";
-import diskConfig from "#config/disk.js";
-import * as console from "node:console";
+    GetNotesResponse,
+    CreateNoteResponse,
+    GetNoteResponse,
+    UpdateNoteResponse,
+    DeleteNoteResponse,
+    AddPhotoResponse,
+    DeletePhotoResponse,
+} from '../types/NotesController.js';
+import type { CreateNoteInput, UpdateNoteInput } from 'shared/schemas';
+
+function setServiceErrorStatus(
+    context: HttpContext,
+    code: 'BAD_REQUEST' | 'UNAUTHORIZED' | 'NOT_FOUND' | 'CONFLICT' | 'INTERNAL',
+): void {
+    if (code === 'BAD_REQUEST') {
+        context.responseData.status = 400;
+        return;
+    }
+    if (code === 'UNAUTHORIZED') {
+        context.responseData.status = 401;
+        return;
+    }
+    if (code === 'NOT_FOUND') {
+        context.responseData.status = 404;
+        return;
+    }
+    if (code === 'CONFLICT') {
+        context.responseData.status = 409;
+        return;
+    }
+    context.responseData.status = 500;
+}
+
+function resolveUserId(context: HttpContext): bigint | null {
+    if (!context.auth.check()) {
+        context.responseData.status = 401;
+        return null;
+    }
+
+    const userId = context.auth.getUserId();
+    if (userId === null) {
+        context.responseData.status = 401;
+        return null;
+    }
+
+    return BigInt(userId);
+}
 
 export default {
-  async getNotes(context: HttpContext): Promise<GetNotesResponse> {
-    const { auth, logger } = context;
-    logger.info("getNotes handler");
+    async getNotes(context: HttpContext): Promise<GetNotesResponse> {
+        context.logger.info('getNotes handler');
 
-    if (!auth?.check()) {
-      return { status: "error", message: "Unauthorized" };
-    }
+        const userId = resolveUserId(context);
+        if (userId === null) {
+            return { status: 'error', message: 'Unauthorized' };
+        }
 
-    const userId = auth.getUserId();
-    if (userId === null) {
-      return { status: "error", message: "Unauthorized" };
-    }
+        const result = await notesService.getNotes(userId);
+        if (!result.ok) {
+            setServiceErrorStatus(context, result.code);
+            return { status: 'error', message: result.message };
+        }
 
-    try {
-      const notes = await Notes.findByUserId(BigInt(userId));
-      return { status: "ok", data: notes };
-    } catch (error) {
-      logger.error({ err: error }, "Error getting notes:");
-      return {
-        status: "error",
-        message: error instanceof Error ? error.message : "Failed to get notes",
-      };
-    }
-  },
+        return { status: 'ok', data: result.data.data as any };
+    },
 
-  async createNote(
-    context: HttpContext<CreateNoteInput>,
-  ): Promise<CreateNoteResponse> {
-    const { auth, logger } = context;
-    logger.info("createNote handler");
+    async createNote(
+        context: HttpContext<CreateNoteInput>,
+    ): Promise<CreateNoteResponse> {
+        context.logger.info('createNote handler');
 
-    if (!auth?.check()) {
-      return { status: "error", message: "Unauthorized" };
-    }
+        const userId = resolveUserId(context);
+        if (userId === null) {
+            return { status: 'error', message: 'Unauthorized' };
+        }
 
-    const userId = auth.getUserId();
-    if (userId === null) {
-      return { status: "error", message: "Unauthorized" };
-    }
+        const payload = getTypedPayload(context);
+        const result = await notesService.createNote(userId, payload);
 
-    const { title, description } = getTypedPayload(context);
+        if (!result.ok) {
+            setServiceErrorStatus(context, result.code);
+            return { status: 'error', message: result.message };
+        }
 
-    try {
-      const note = await Notes.create({
-        title,
-        description,
-        userId: BigInt(userId),
-      });
-      return { status: "ok", data: note };
-    } catch (error) {
-      logger.error({ err: error }, "Error creating note:");
-      return {
-        status: "error",
-        message:
-          error instanceof Error ? error.message : "Failed to create note",
-      };
-    }
-  },
+        return { status: 'ok', data: result.data.data as any };
+    },
 
-  async getNote(context: HttpContext): Promise<GetNoteResponse> {
-    const { httpData, auth, logger } = context;
-    logger.info("getNote handler");
+    async getNote(context: HttpContext): Promise<GetNoteResponse> {
+        context.logger.info('getNote handler');
 
-    if (!auth?.check()) {
-      return { status: "error", message: "Unauthorized" };
-    }
+        const userId = resolveUserId(context);
+        if (userId === null) {
+            return { status: 'error', message: 'Unauthorized' };
+        }
 
-    const userId = auth.getUserId();
-    if (userId === null) {
-      return { status: "error", message: "Unauthorized" };
-    }
+        const { noteId } = context.httpData.params as { noteId: string };
+        const result = await notesService.getNote(userId, BigInt(noteId));
 
-    const { noteId } = httpData.params as { noteId: string };
+        if (!result.ok) {
+            setServiceErrorStatus(context, result.code);
+            return { status: 'error', message: result.message };
+        }
 
-    try {
-      const note = await Notes.findById(BigInt(noteId), BigInt(userId));
-      return { status: "ok", data: note };
-    } catch (error) {
-      logger.error({ err: error }, "Error getting note:");
-      return {
-        status: "error",
-        message: error instanceof Error ? error.message : "Failed to get note",
-      };
-    }
-  },
+        return { status: 'ok', data: result.data.data as any };
+    },
 
-  async updateNote(
-    context: HttpContext<UpdateNoteInput>,
-  ): Promise<UpdateNoteResponse> {
-    const { httpData, auth, logger } = context;
-    logger.info("updateNote handler");
+    async updateNote(
+        context: HttpContext<UpdateNoteInput>,
+    ): Promise<UpdateNoteResponse> {
+        context.logger.info('updateNote handler');
 
-    if (!auth.check()) {
-      return { status: "error", message: "Unauthorized" };
-    }
+        const userId = resolveUserId(context);
+        if (userId === null) {
+            return { status: 'error', message: 'Unauthorized' };
+        }
 
-    const userId = auth.getUserId();
-    if (userId === null) {
-      return { status: "error", message: "Unauthorized" };
-    }
+        const { noteId } = context.httpData.params as { noteId: string };
+        const payload = getTypedPayload(context);
+        const result = await notesService.updateNote(userId, BigInt(noteId), payload);
 
-    const { noteId } = httpData.params as { noteId: string };
-    const { title, description } = getTypedPayload(context);
+        if (!result.ok) {
+            setServiceErrorStatus(context, result.code);
+            return { status: 'error', message: result.message };
+        }
 
-    try {
-      const note = await Notes.update(BigInt(noteId), BigInt(userId), {
-        title,
-        description,
-      });
-      return { status: "ok", data: note };
-    } catch (error) {
-      logger.error({ err: error }, "Error updating note:");
-      return {
-        status: "error",
-        message:
-          error instanceof Error ? error.message : "Failed to update note",
-      };
-    }
-  },
+        return { status: 'ok', data: result.data.data as any };
+    },
 
-  async deleteNote(context: HttpContext): Promise<DeleteNoteResponse> {
-    const { httpData, auth, logger } = context;
-    logger.info("deleteNote handler");
+    async deleteNote(context: HttpContext): Promise<DeleteNoteResponse> {
+        context.logger.info('deleteNote handler');
 
-    if (!auth?.check()) {
-      return { status: "error", message: "Unauthorized" };
-    }
+        const userId = resolveUserId(context);
+        if (userId === null) {
+            return { status: 'error', message: 'Unauthorized' };
+        }
 
-    const userId = auth.getUserId();
-    if (userId === null) {
-      return { status: "error", message: "Unauthorized" };
-    }
+        const { noteId } = context.httpData.params as { noteId: string };
+        const result = await notesService.deleteNote(userId, BigInt(noteId));
 
-    const { noteId } = httpData.params as { noteId: string };
+        if (!result.ok) {
+            setServiceErrorStatus(context, result.code);
+            return { status: 'error', message: result.message };
+        }
 
-    try {
-      await Notes.delete(BigInt(noteId), BigInt(userId));
-      return { status: "ok", message: "Note deleted successfully" };
-    } catch (error) {
-      logger.error({ err: error }, "Error deleting note:");
-      return {
-        status: "error",
-        message:
-          error instanceof Error ? error.message : "Failed to delete note",
-      };
-    }
-  },
+        return { status: 'ok', message: result.data.message };
+    },
 
-  async addPhoto(
-    context: HttpContext,
-  ): Promise<AddPhotoResponse> {
-    const { httpData, auth, logger } = context;
-    logger.info("addPhoto handler");
+    async addPhoto(context: HttpContext): Promise<AddPhotoResponse> {
+        context.logger.info('addPhoto handler');
 
-    if (!auth?.check()) {
-      return { status: "error", message: "Unauthorized" };
-    }
+        const userId = resolveUserId(context);
+        if (userId === null) {
+            return { status: 'error', message: 'Unauthorized' };
+        }
 
-    const userId = auth.getUserId();
-    if (userId === null) {
-      return { status: "error", message: "Unauthorized" };
-    }
+        const { noteId } = context.httpData.params as { noteId: string };
+        const file = context.httpData.files?.get('photo');
+        const result = await notesService.addPhoto(userId, BigInt(noteId), file);
 
-    const { noteId } = httpData.params as { noteId: string };
+        if (!result.ok) {
+            setServiceErrorStatus(context, result.code);
+            return { status: 'error', message: result.message };
+        }
 
-    const file = httpData.files?.get("photo");
-    if (file === undefined) {
-      return { status: "error", message: "No file uploaded" };
-    }
+        return { status: 'ok', photo: result.data.photo as any };
+    },
 
-    try {
-      // Verify note belongs to user
-      const hasAccess = await Notes.verifyOwnership(BigInt(noteId), BigInt(userId));
-      if (!hasAccess) {
-        return {
-          status: "error",
-          message: "Note not found or access denied",
+    async deletePhoto(context: HttpContext): Promise<DeletePhotoResponse> {
+        context.logger.info('deletePhoto handler');
+
+        const userId = resolveUserId(context);
+        if (userId === null) {
+            return { status: 'error', message: 'Unauthorized' };
+        }
+
+        const { noteId, photoId } = context.httpData.params as {
+            noteId: string;
+            photoId: string;
         };
-      }
 
-      // Generate unique S3 key
-      const ext = path.extname(file.filename) || ".bin";
-      const uniqueName = `${randomUUID()}${ext}`;
-      const prefix = (diskConfig.s3DynamicDataPrefix ?? "uploads").replace(/^\/+/, "");
-      const s3Key = `${prefix}/${uniqueName}`;
+        const result = await notesService.deletePhoto(
+            userId,
+            BigInt(noteId),
+            BigInt(photoId),
+        );
 
-      // Upload to S3
-      const data = await uploadToS3(s3Key, Buffer.from(file.data), file.type);
-      console.log(data)
+        if (!result.ok) {
+            setServiceErrorStatus(context, result.code);
+            return { status: 'error', message: result.message };
+        }
 
-      const photo = await NotesPhoto.create({
-        noteId: parseInt(noteId),
-        src: s3Key,
-        filename: file.filename,
-        size: file.data.byteLength,
-      });
-      return { status: "ok", photo };
-    } catch (error) {
-      logger.error({ err: error }, "Error adding photo:");
-      return {
-        status: "error",
-        message: error instanceof Error ? error.message : "Failed to add photo",
-      };
-    }
-  },
-
-  async deletePhoto(context: HttpContext): Promise<DeletePhotoResponse> {
-    const { httpData, auth, logger } = context;
-    logger.info("deletePhoto handler");
-
-    if (!auth?.check()) {
-      return { status: "error", message: "Unauthorized" };
-    }
-
-    const userId = auth.getUserId();
-    if (userId === null) {
-      return { status: "error", message: "Unauthorized" };
-    }
-
-    const { noteId, photoId } = httpData.params as {
-      noteId: string;
-      photoId: string;
-    };
-
-    try {
-      // Verify note belongs to user
-      const hasAccess = await Notes.verifyOwnership(BigInt(noteId), BigInt(userId));
-      if (!hasAccess) {
-        return {
-          status: "error",
-          message: "Note not found or access denied",
-        };
-      }
-
-      await NotesPhoto.delete(BigInt(photoId), BigInt(noteId));
-      return { status: "ok", message: "Photo deleted successfully" };
-    } catch (error) {
-      logger.error({ err: error }, "Error deleting photo:");
-      return {
-        status: "error",
-        message:
-          error instanceof Error ? error.message : "Failed to delete photo",
-      };
-    }
-  },
+        return { status: 'ok', message: result.data.message };
+    },
 };

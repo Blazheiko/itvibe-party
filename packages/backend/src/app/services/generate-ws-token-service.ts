@@ -3,9 +3,13 @@ import redis from '#database/redis.js';
 import type { SessionInfo } from '#vendor/types/types.js';
 import configApp from '#config/app.js';
 
-export default async (sessionInfo: SessionInfo, userId: number | bigint): Promise<string> => {
+export async function generateWsToken(
+    sessionInfo: SessionInfo,
+    userId: number | bigint,
+): Promise<string> {
     let wsToken = '';
     const userIdNumber = Number(userId);
+
     if (sessionInfo && userIdNumber) {
         wsToken = generateKey(configApp.characters, 16);
         await redis.setex(
@@ -13,10 +17,10 @@ export default async (sessionInfo: SessionInfo, userId: number | bigint): Promis
             60,
             JSON.stringify({
                 sessionId: sessionInfo.id,
-                userId: `${ userIdNumber }`,
+                userId: `${userIdNumber}`,
             }),
         );
     }
 
     return wsToken;
-};
+}

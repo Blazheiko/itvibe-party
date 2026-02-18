@@ -17,13 +17,13 @@ export interface WebsocketPayload {
 
 export interface WebsocketMessage {
     event: string
-    status: number
+    status: number | string
     timestamp: number
     payload: WebsocketPayload
 }
 
 interface ApiError {
-    status?: number
+    status?: number | string
     message?: string
     messages?: string[]
 }
@@ -181,6 +181,12 @@ class WebsocketBase {
                 typeof message.event === 'string' &&
                 (!message.payload || typeof message.payload === 'object'),
         )
+    }
+
+    private isSuccessStatus(status: number | string): boolean {
+        const code =
+            typeof status === 'string' ? Number.parseInt(status, 10) : status
+        return Number.isFinite(code) && code >= 200 && code < 300
     }
 
     /**
@@ -476,7 +482,7 @@ class WebsocketBase {
         if (!cb) return
         window.clearTimeout(cb.timeout)
         delete this.apiResolve[data.event]
-        if (data.status === 200 && cb.resolve) cb.resolve(data)
+        if (this.isSuccessStatus(data.status) && cb.resolve) cb.resolve(data)
         else if (cb.reject)
             cb.reject({
                 status: data?.status,

@@ -28,12 +28,12 @@ export interface GetEventsByRangeInput {
 export interface CalendarEvent {
     id: bigint;
     title: string;
-    description?: string;
-    startTime: Date;
-    endTime: Date;
+    description?: string | null;
+    startTime: string | null;
+    endTime: string | null;
     userId: bigint;
-    createdAt: Date;
-    updatedAt: Date;
+    created_at: string | null;
+    updated_at: string | null;
 }
 
 export interface GetEventsResponse {

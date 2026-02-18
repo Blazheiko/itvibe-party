@@ -1,135 +1,117 @@
-import type { HttpContext } from "#vendor/types/types.js";
-import { getTypedPayload } from "#vendor/utils/validation/get-typed-payload.js";
-import { getOnlineUser } from "#vendor/utils/network/ws-handlers.js";
-import ContactList from "#app/models/contact-list.js";
-import User from "#app/models/User.js";
+import type { HttpContext } from '#vendor/types/types.js';
+import { getTypedPayload } from '#vendor/utils/validation/get-typed-payload.js';
+import { chatListService } from '#app/services/chat-list-service.js';
 import type {
-  GetContactListResponse,
-  CreateChatResponse,
-  DeleteChatResponse,
-} from "../types/ChatListController.js";
+    GetContactListResponse,
+    CreateChatResponse,
+    DeleteChatResponse,
+} from '../types/ChatListController.js';
 import type {
-  CreateChatInput,
-  DeleteChatInput,
-  GetContactListInput,
-} from "shared/schemas";
+    CreateChatInput,
+    DeleteChatInput,
+    GetContactListInput,
+} from 'shared/schemas';
+
+function setServiceErrorStatus(
+    context: HttpContext,
+    code: 'BAD_REQUEST' | 'UNAUTHORIZED' | 'NOT_FOUND' | 'CONFLICT' | 'INTERNAL',
+): void {
+    if (code === 'BAD_REQUEST') {
+        context.responseData.status = 400;
+        return;
+    }
+    if (code === 'UNAUTHORIZED') {
+        context.responseData.status = 401;
+        return;
+    }
+    if (code === 'NOT_FOUND') {
+        context.responseData.status = 404;
+        return;
+    }
+    if (code === 'CONFLICT') {
+        context.responseData.status = 409;
+        return;
+    }
+    context.responseData.status = 500;
+}
 
 export default {
-  async getContactList(
-    context: HttpContext<GetContactListInput>,
-  ): Promise<GetContactListResponse> {
-    const { session, logger } = context;
-    logger.info("getChatList");
-    const sessionInfo = session.sessionInfo;
-    if (!sessionInfo) return { status: "error", message: "Session not found" };
+    async getContactList(
+        context: HttpContext<GetContactListInput>,
+    ): Promise<GetContactListResponse> {
+        context.logger.info('getChatList');
 
-    const sessionUserId = sessionInfo.data?.userId;
-    const { userId } = getTypedPayload(context);
-    if (!userId || !sessionUserId)
-      return { status: "unauthorized", message: "Session expired" };
+        const sessionInfo = context.session.sessionInfo;
+        if (!sessionInfo) {
+            return { status: 'error', message: 'Session not found' };
+        }
 
-    if (Number(userId) !== Number(sessionUserId)) {
-      logger.error("User used the wrong session");
-      return {
-        status: "unauthorized",
-        message: "Session expired",
-      };
-    }
+        const { userId } = getTypedPayload(context);
+        const result = await chatListService.getContactList(userId, sessionInfo.data?.userId);
 
-    // Get chat list with contacts
-    const contactListData = await ContactList.findByUserIdWithDetails(
-      BigInt(userId),
-    );
+        if (!result.ok) {
+            setServiceErrorStatus(context, result.code);
+            return {
+                status: result.code === 'UNAUTHORIZED' ? 'unauthorized' : 'error',
+                message: result.message,
+            };
+        }
 
-    const onlineUsers = getOnlineUser(
-      contactListData.map((contact: any) => String(contact.contactId)),
-    );
+        return {
+            status: 'ok',
+            contactList: result.data.contactList as any,
+            onlineUsers: result.data.onlineUsers,
+        };
+    },
 
-    return {
-      status: "ok",
-      contactList: contactListData as any,
-      onlineUsers,
-    };
-  },
+    async createChat(
+        context: HttpContext<CreateChatInput>,
+    ): Promise<CreateChatResponse> {
+        context.logger.info('createChat');
 
-  async createChat(
-    context: HttpContext<CreateChatInput>,
-  ): Promise<CreateChatResponse> {
-    const { session, logger } = context;
-    logger.info("createChat");
-    const sessionInfo = session?.sessionInfo;
-    if (!sessionInfo) {
-      return { status: "error", message: "Session not found" };
-    }
-    const userId = sessionInfo.data?.userId;
-    if (!userId) {
-      return { status: "unauthorized", message: "Session expired" };
-    }
+        const sessionInfo = context.session.sessionInfo;
+        if (!sessionInfo) {
+            return { status: 'error', message: 'Session not found' };
+        }
 
-    const { participantId } = getTypedPayload(context);
-    if (!participantId) {
-      return { status: "error", message: "Participant ID is required" };
-    }
+        const { participantId } = getTypedPayload(context);
+        const result = await chatListService.createChat(
+            sessionInfo.data?.userId,
+            participantId,
+        );
 
-    // Check if participant exists
-    try {
-      await User.findById(BigInt(participantId));
-    } catch (error) {
-      return { status: "error", message: "Participant not found" };
-    }
+        if (!result.ok) {
+            setServiceErrorStatus(context, result.code);
+            return {
+                status: result.code === 'UNAUTHORIZED' ? 'unauthorized' : 'error',
+                message: result.message,
+            };
+        }
 
-    // Check if chat already exists
-    const existingChat = await ContactList.findExistingChat(
-      BigInt(userId),
-      BigInt(participantId),
-    );
+        return { status: 'ok', chat: result.data.chat as any };
+    },
 
-    if (existingChat) {
-      return { status: "ok", chat: existingChat as any };
-    }
+    async deleteChat(
+        context: HttpContext<DeleteChatInput>,
+    ): Promise<DeleteChatResponse> {
+        context.logger.info('deleteChat');
 
-    const createdChat = await ContactList.createWithUserInfo(
-      BigInt(userId),
-      BigInt(participantId),
-      "accepted",
-    );
+        const sessionInfo = context.session.sessionInfo;
+        if (!sessionInfo) {
+            return { status: 'error', message: 'Session not found' };
+        }
 
-    return { status: "ok", chat: createdChat as any };
-  },
+        const { chatId } = getTypedPayload(context);
+        const result = await chatListService.deleteChat(sessionInfo.data?.userId, chatId);
 
-  async deleteChat(
-    context: HttpContext<DeleteChatInput>,
-  ): Promise<DeleteChatResponse> {
-    const { session, logger } = context;
-    logger.info("deleteChat");
-    const sessionInfo = session?.sessionInfo;
-    if (!sessionInfo) {
-      return { status: "error", message: "Session not found" };
-    }
-    const userId = sessionInfo.data?.userId;
-    if (!userId) {
-      return { status: "unauthorized", message: "Session expired" };
-    }
+        if (!result.ok) {
+            setServiceErrorStatus(context, result.code);
+            return {
+                status: result.code === 'UNAUTHORIZED' ? 'unauthorized' : 'error',
+                message: result.message,
+            };
+        }
 
-    const { chatId } = getTypedPayload(context);
-    if (!chatId) {
-      return { status: "error", message: "Chat ID is required" };
-    }
-
-    const chat = await ContactList.findByIdAndUserId(
-      BigInt(chatId),
-      BigInt(userId),
-    );
-
-    if (!chat) {
-      return {
-        status: "error",
-        message: "Chat not found or access denied",
-      };
-    }
-
-    await ContactList.delete(BigInt(chatId));
-
-    return { status: "ok", message: "Chat deleted successfully" };
-  },
+        return { status: 'ok', message: result.data.message };
+    },
 };

@@ -2,38 +2,42 @@ import { db } from '#database/db.js';
 import { invitations, contactList } from '#database/schema.js';
 import { eq, and } from 'drizzle-orm';
 
-export default async (token: string, userId: number): Promise<void> => {
-    console.log('inventionAccept');
+export async function acceptInvitation(token: string, userId: number): Promise<void> {
     if (!token || !userId) return;
 
-    const invention = await db.select()
+    const invitation = await db
+        .select()
         .from(invitations)
         .where(and(eq(invitations.token, token), eq(invitations.isUsed, false)))
         .limit(1);
 
-    const inventionItem = invention.at(0);
-    if (!inventionItem || Number(inventionItem.invitedId) === userId) return;
+    const invitationItem = invitation.at(0);
+    if (!invitationItem || Number(invitationItem.invitedId) === userId) return;
 
-    await db.update(invitations)
+    await db
+        .update(invitations)
         .set({
             isUsed: true,
             invitedId: BigInt(userId),
         })
-        .where(eq(invitations.id, inventionItem.id));
+        .where(eq(invitations.id, invitationItem.id));
 
-    const contact = await db.select({ id: contactList.id })
+    const contact = await db
+        .select({ id: contactList.id })
         .from(contactList)
-        .where(and(
-            eq(contactList.userId, BigInt(userId)),
-            eq(contactList.contactId, inventionItem.userId),
-        ))
+        .where(
+            and(
+                eq(contactList.userId, BigInt(userId)),
+                eq(contactList.contactId, invitationItem.userId),
+            ),
+        )
         .limit(1);
 
     const now = new Date();
     if (contact.length === 0) {
         await db.insert(contactList).values({
             userId: BigInt(userId),
-            contactId: inventionItem.userId,
+            contactId: invitationItem.userId,
             status: 'accepted',
             rename: null,
             createdAt: now,
@@ -41,22 +45,25 @@ export default async (token: string, userId: number): Promise<void> => {
         });
     }
 
-    const contactOwner = await db.select({ id: contactList.id })
+    const contactOwner = await db
+        .select({ id: contactList.id })
         .from(contactList)
-        .where(and(
-            eq(contactList.userId, inventionItem.userId),
-            eq(contactList.contactId, BigInt(userId)),
-        ))
+        .where(
+            and(
+                eq(contactList.userId, invitationItem.userId),
+                eq(contactList.contactId, BigInt(userId)),
+            ),
+        )
         .limit(1);
 
     if (contactOwner.length === 0) {
         await db.insert(contactList).values({
-            userId: inventionItem.userId,
+            userId: invitationItem.userId,
             contactId: BigInt(userId),
             status: 'accepted',
-            rename: inventionItem.name,
+            rename: invitationItem.name,
             createdAt: now,
             updatedAt: now,
         });
     }
-};
+}

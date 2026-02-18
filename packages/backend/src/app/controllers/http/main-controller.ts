@@ -1,233 +1,103 @@
-import userModel from "#app/models/User.js";
-import type { HttpContext } from "#vendor/types/types.js";
-import { getTypedPayload } from "#vendor/utils/validation/get-typed-payload.js";
-import generateWsToken from "#app/servises/generate-ws-token.js";
+import type { HttpContext } from '#vendor/types/types.js';
+import { getTypedPayload } from '#vendor/utils/validation/get-typed-payload.js';
+import { mainService } from '#app/services/main-service.js';
 import type {
-  PingResponse,
-  TestRouteResponse,
-  InitResponse,
-  TestHeadersResponse,
-  GetSetCookiesResponse,
-  TestSessionResponse,
-  SaveUserResponse,
-  TestMiddlewareResponse,
-  UpdateWsTokenResponse,
-} from "../types/MainController.js";
-// import middlewares from '#app/middlewares/kernel.js';
-import getWsUrl from "#app/servises/getWsUrl.js";
-import type { SaveUserInput } from "shared/schemas";
+    PingResponse,
+    TestRouteResponse,
+    InitResponse,
+    TestHeadersResponse,
+    GetSetCookiesResponse,
+    TestSessionResponse,
+    SaveUserResponse,
+    TestMiddlewareResponse,
+    UpdateWsTokenResponse,
+} from '../types/MainController.js';
+import type { SaveUserInput } from 'shared/schemas';
 
 export default {
-  // async joinСhat({ httpData, logger }: HttpContext): Promise<any> {
-  //     logger.info('MainController.joinСhat');
-  //     const { token } = httpData.params as { token: string };
-  //     logger.info(token);
-  //     const invitation = await prisma.invitation.findUnique({ where: { token } });
-  //     console.log(invitation);
+    async ping(): Promise<PingResponse> {
+        return mainService.ping().data;
+    },
 
-  //     return { status: 'ok' };
-  // },
+    async testRoute(): Promise<TestRouteResponse> {
+        return mainService.testRoute().data;
+    },
 
-  async ping(): Promise<PingResponse> {
-    return { status: "ok" };
-  },
+    async testHeaders({ httpData, logger }: HttpContext): Promise<TestHeadersResponse> {
+        logger.info('testHeaders');
+        return mainService.testHeaders(httpData).data as TestHeadersResponse;
+    },
 
-  async testRoute(): Promise<TestRouteResponse> {
-    return { status: "ok" };
-  },
+    async getSetCookies({ httpData, logger }: HttpContext): Promise<GetSetCookiesResponse> {
+        logger.info('testCookies');
+        return mainService.getSetCookies(httpData).data as GetSetCookiesResponse;
+    },
 
-  async testHeaders({
-    httpData,
-    logger,
-  }: HttpContext): Promise<TestHeadersResponse> {
-    logger.info("testHeaders");
-    logger.info(httpData.params);
-    const headers: Array<{ key: string; value: string }> = [];
-    const params: any[] = Object.entries(httpData.params);
-    httpData.headers.forEach((value, key) => {
-      headers.push({ key, value });
-    });
-    return { status: "ok", headers, params };
-  },
+    async testSession({ session, httpData, logger }: HttpContext): Promise<TestSessionResponse> {
+        logger.info('testSession');
+        return mainService.testSession(httpData, session?.sessionInfo ?? null)
+            .data as TestSessionResponse;
+    },
 
-  async getSetCookies({
-    httpData,
-    logger,
-  }: HttpContext): Promise<GetSetCookiesResponse> {
-    logger.info("testCookies");
-    const cookies: Array<{ key: string; value: string }> = [];
-    httpData.cookies.forEach((value, key) => {
-      cookies.push({ key, value });
-    });
+    async testApiSession({ session, httpData, logger }: HttpContext): Promise<any> {
+        logger.info('testApiSession');
+        return mainService.testApiSession(httpData, session?.sessionInfo ?? null).data;
+    },
 
-    return { status: "ok", cookies };
-  },
-  async testSession({
-    session,
-    httpData,
-    logger,
-  }: HttpContext): Promise<TestSessionResponse> {
-    logger.info("testSession");
-    logger.info(session);
-    const cookies: Array<{ key: string; value: string }> = [];
-    httpData.cookies.forEach((value, key) => {
-      cookies.push({ key, value });
-    });
-    const sessionInfo = session?.sessionInfo;
+    async index({ httpData, responseData }: HttpContext): Promise<any> {
+        return mainService.index(httpData, responseData).data;
+    },
 
-    return { status: "ok", cookies, sessionInfo };
-  },
-  async testApiSession({
-    session,
-    httpData,
-    logger,
-  }: HttpContext): Promise<any> {
-    logger.info("testApiSession");
-    const headers: any[] = [];
-    httpData.headers.forEach((value, key) => {
-      headers.push({ key, value });
-    });
+    async testParams({ httpData }: HttpContext): Promise<any> {
+        return mainService.testParams(httpData).data;
+    },
 
-    const sessionInfo = session?.sessionInfo;
+    async updateWsToken({ responseData, session, logger }: HttpContext): Promise<UpdateWsTokenResponse> {
+        logger.info('updateWsToken');
 
-    return { status: "ok", headers, sessionInfo };
-  },
+        const result = await mainService.updateWsToken(session?.sessionInfo ?? null);
+        if (result.data.status === 'unauthorized') {
+            responseData.status = 401;
+        }
 
-  async index({ httpData, responseData }: HttpContext): Promise<any> {
-    const payload = httpData;
-    // eslint-disable-next-line no-undef
-    console.log(responseData);
-    return { payload, responseData };
-  },
-  async testParams({ httpData }: HttpContext): Promise<any> {
-    const params = httpData.params;
-    const query = httpData.query.getAll("test");
-    console.log("testParams");
-    return { params, query, status: "ok" };
-  },
+        return result.data as UpdateWsTokenResponse;
+    },
 
-  async updateWsToken({
-    responseData,
-    session,
-    logger,
-  }: HttpContext): Promise<UpdateWsTokenResponse> {
-    logger.info("updateWsToken");
-    const sessionInfo = session?.sessionInfo;
-    if (!sessionInfo) {
-      responseData.status = 401;
-      return {
-        status: "unauthorized",
-        message: "Session not found",
-        wsUrl: "",
-      };
-    }
-    const userId = sessionInfo.data?.userId;
-    if (!userId) {
-      responseData.status = 401;
-      return { status: "unauthorized", message: "Session expired", wsUrl: "" };
-    }
+    async init({ responseData, session, logger }: HttpContext): Promise<InitResponse> {
+        logger.info('init');
 
-    let wsToken = "";
-    if (sessionInfo)
-      wsToken = await generateWsToken(sessionInfo, Number(userId));
-    return { status: "ok", wsUrl: wsToken ? getWsUrl(wsToken) : "" };
-  },
-  async init({
-    responseData,
-    session,
-    logger,
-  }: HttpContext): Promise<InitResponse> {
-    logger.info("init");
-    const sessionInfo = session?.sessionInfo;
-    if (!sessionInfo) {
-      return { status: "error", message: "Session not found" };
-    }
-    const userId = sessionInfo.data?.userId;
-    if (!userId) {
-      responseData.status = 401;
-      return { status: "unauthorized", message: "Session expired" };
-    }
-    const user = await userModel.findById(BigInt(userId));
-    if (!user) {
-      return { status: "unauthorized", message: "Session expired" };
-    }
-    let wsToken = "";
-    if (sessionInfo)
-      wsToken = await generateWsToken(sessionInfo, Number(user.id));
-    // const token = generateKey(configApp.characters, 16);
-    // await redis.setex(
-    //     `auth:ws:${token}`,
-    //     60,
-    //     JSON.stringify({ sessionId: sessionInfo.id, userId: user.id }),
-    // );
+        const result = await mainService.init(session?.sessionInfo ?? null);
+        if (result.data.status === 'unauthorized') {
+            responseData.status = 401;
+        }
 
-    return {
-      status: "ok",
-      user: userModel.serialize(user),
-      wsUrl: wsToken ? getWsUrl(wsToken) : "",
-    };
-  },
+        return result.data as InitResponse;
+    },
 
-  async setHeaderAndCookie({
-    responseData,
-    logger,
-  }: HttpContext): Promise<any> {
-    logger.info("set-header-and-cookie");
-    responseData.headers.push({ name: "test-header", value: "test" });
-    responseData.setCookie({
-      name: "cookieTest1",
-      value: "test",
-      path: "/",
-      httpOnly: true,
-      secure: false,
-      maxAge: 3600,
-      expires: undefined,
-      sameSite: undefined,
-    });
-    responseData.setCookie("cookieTest2", "test");
-    return { status: "ok" };
-  },
-  async testMiddleware({
-    responseData,
-    logger,
-  }: HttpContext): Promise<TestMiddlewareResponse> {
-    logger.info("testMiddleware controller");
-    return {
-      middlewares: responseData.middlewareData as unknown as string[],
-      status: "ok",
-    };
-  },
-  async testMiddleware2({
-    responseData,
-    logger,
-  }: HttpContext): Promise<TestMiddlewareResponse> {
-    logger.info("testMiddleware2 controller");
-    return {
-      middlewares: responseData.middlewareData as unknown as string[],
-      status: "ok",
-    };
-  },
-  async testMiddleware3({
-    responseData,
-    logger,
-  }: HttpContext): Promise<TestMiddlewareResponse> {
-    logger.info("testMiddleware3 controller");
-    return {
-      middlewares: responseData.middlewareData as unknown as string[],
-      status: "ok",
-    };
-  },
-  async saveUser(
-    context: HttpContext<SaveUserInput>,
-  ): Promise<SaveUserResponse> {
-    const { logger } = context;
-    logger.info("saveUser");
-    const payload = getTypedPayload(context);
-    const user = await userModel.create({
-      name: payload.name,
-      email: payload.email,
-      password: payload.password,
-    });
-    return { status: "ok", user };
-  },
+    async setHeaderAndCookie({ responseData, logger }: HttpContext): Promise<any> {
+        logger.info('set-header-and-cookie');
+        return mainService.setHeaderAndCookie(responseData).data;
+    },
+
+    async testMiddleware({ responseData, logger }: HttpContext): Promise<TestMiddlewareResponse> {
+        logger.info('testMiddleware controller');
+        return mainService.testMiddleware(responseData).data as TestMiddlewareResponse;
+    },
+
+    async testMiddleware2({ responseData, logger }: HttpContext): Promise<TestMiddlewareResponse> {
+        logger.info('testMiddleware2 controller');
+        return mainService.testMiddleware(responseData).data as TestMiddlewareResponse;
+    },
+
+    async testMiddleware3({ responseData, logger }: HttpContext): Promise<TestMiddlewareResponse> {
+        logger.info('testMiddleware3 controller');
+        return mainService.testMiddleware(responseData).data as TestMiddlewareResponse;
+    },
+
+    async saveUser(context: HttpContext<SaveUserInput>): Promise<SaveUserResponse> {
+        context.logger.info('saveUser');
+        const payload = getTypedPayload(context);
+        const result = await mainService.saveUser(payload);
+        return result.data as SaveUserResponse;
+    },
 };

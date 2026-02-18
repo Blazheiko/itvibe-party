@@ -1,14 +1,15 @@
-import logger from "#logger";
-import { broadcastToChannel } from "#vendor/start/server.js";
-import { makeBroadcastJson } from "#vendor/utils/helpers/json-handlers.js";
-import { getUserConnections } from "#vendor/utils/network/ws-handlers.js";
-import type { Payload } from "#vendor/types/types.js";
+import logger from '#logger';
+import { broadcastToChannel } from '#vendor/start/server.js';
+import { makeBroadcastJson } from '#vendor/utils/helpers/json-handlers.js';
+import { getUserConnections } from '#vendor/utils/network/ws-handlers.js';
+import type { Payload } from '#vendor/types/types.js';
 
-export default {
+export const broadcastService = {
     broadcastMessageToUser(userId: string, event: string, payload: Payload): number {
         logger.info(`broadcastMessageToUser: ${userId} ${event}`);
         let counter = 0;
         const userConnections = getUserConnections(String(userId));
+
         if (userConnections) {
             for (const userConnection of userConnections.connections.values()) {
                 try {
@@ -21,12 +22,15 @@ export default {
         } else {
             logger.error(`No user connections found for user ${userId}`);
         }
+
         return counter;
     },
+
     broadcastMessageToChannel(channel: string, event: string, payload: Payload): void {
         logger.info(`broadcastMessageToChannel: ${channel} ${event}`);
         broadcastToChannel(channel, event, payload);
     },
+
     broadcastOnline(userId: string, status: string): void {
         logger.info(`broadcastOnline: ${userId} ${status}`);
         broadcastToChannel('change_online', 'change_online', { userId, status });

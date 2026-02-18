@@ -1,206 +1,177 @@
-import type { HttpContext } from "#vendor/types/types.js";
-import { getTypedPayload } from "#vendor/utils/validation/get-typed-payload.js";
-import sendMessage from "#app/servises/chat/send-message.js";
-import getChatMessages from "#app/servises/chat/get-chat-messages.js";
-import Message from "#app/models/Message.js";
+import type { HttpContext } from '#vendor/types/types.js';
+import { getTypedPayload } from '#vendor/utils/validation/get-typed-payload.js';
+import { messageService } from '#app/services/message-service.js';
 import type {
-  GetMessagesResponse,
-  SendMessageResponse,
-  DeleteMessageResponse,
-  EditMessageResponse,
-  MarkAsReadResponse,
-} from "../types/ChatListController.js";
+    GetMessagesResponse,
+    SendMessageResponse,
+    DeleteMessageResponse,
+    EditMessageResponse,
+    MarkAsReadResponse,
+} from '../types/ChatListController.js';
 import type {
-  EditMessageInput,
-  GetMessagesInput,
-  MarkMessageAsReadInput,
-  SendMessageInput,
-} from "shared/schemas";
+    EditMessageInput,
+    GetMessagesInput,
+    MarkMessageAsReadInput,
+    SendMessageInput,
+} from 'shared/schemas';
+
+function setServiceErrorStatus(
+    context: HttpContext,
+    code: 'BAD_REQUEST' | 'UNAUTHORIZED' | 'NOT_FOUND' | 'CONFLICT' | 'INTERNAL',
+): void {
+    if (code === 'BAD_REQUEST') {
+        context.responseData.status = 400;
+        return;
+    }
+    if (code === 'UNAUTHORIZED') {
+        context.responseData.status = 401;
+        return;
+    }
+    if (code === 'NOT_FOUND') {
+        context.responseData.status = 404;
+        return;
+    }
+    if (code === 'CONFLICT') {
+        context.responseData.status = 409;
+        return;
+    }
+    context.responseData.status = 500;
+}
+
+function mapStatus(code: 'BAD_REQUEST' | 'UNAUTHORIZED' | 'NOT_FOUND' | 'CONFLICT' | 'INTERNAL') {
+    return code === 'UNAUTHORIZED' ? 'unauthorized' : 'error';
+}
 
 export default {
-  async getMessages(
-    context: HttpContext<GetMessagesInput>,
-  ): Promise<GetMessagesResponse> {
-    const { session, logger } = context;
-    logger.info("getMessages");
-    const sessionInfo = session?.sessionInfo;
-    if (!sessionInfo) {
-      return { status: "error", message: "Session not found" };
-    }
-    const { contactId, userId } = getTypedPayload(context);
-    const sessionUserId = sessionInfo.data?.userId;
-    if (!userId || !sessionUserId || Number(userId) !== Number(sessionUserId)) {
-      return { status: "unauthorized", message: "Session expired" };
-    }
+    async getMessages(
+        context: HttpContext<GetMessagesInput>,
+    ): Promise<GetMessagesResponse> {
+        context.logger.info('getMessages');
 
-    if (!contactId) {
-      return { status: "error", message: "Contact ID is required" };
-    }
+        const sessionInfo = context.session.sessionInfo;
+        if (!sessionInfo) {
+            return { status: 'error', message: 'Session not found' };
+        }
 
-    const data = await getChatMessages(BigInt(userId), BigInt(contactId));
-    if (!data) {
-      return { status: "error", message: "Messages not found" };
-    }
+        const { contactId, userId } = getTypedPayload(context);
+        const result = await messageService.getMessages(
+            userId,
+            contactId,
+            sessionInfo.data?.userId,
+        );
 
-    return { status: "ok", ...data };
-  },
+        if (!result.ok) {
+            setServiceErrorStatus(context, result.code);
+            return { status: mapStatus(result.code), message: result.message };
+        }
 
-  async sendChatMessage(
-    context: HttpContext<SendMessageInput>,
-  ): Promise<SendMessageResponse> {
-    const { session, logger } = context;
-    logger.info("sendChatMessage");
-    const sessionInfo = session?.sessionInfo;
-    if (!sessionInfo) {
-      return { status: "error", message: "Session not found" };
-    }
-    const sessionUserId = sessionInfo.data?.userId;
-    if (!sessionUserId) {
-      return { status: "unauthorized", message: "Session expired" };
-    }
+        return {
+            status: 'ok',
+            messages: result.data.messages as any,
+            contact: result.data.contact,
+            onlineUsers: result.data.onlineUsers,
+        };
+    },
 
-    const payload = getTypedPayload(context);
-    const { contactId, content, userId } = payload;
-    logger.info(payload);
-    logger.info({ userId });
-    if (
-      !contactId ||
-      !content ||
-      !userId ||
-      Number(userId) !== Number(sessionUserId)
-    ) {
-      return {
-        status: "error",
-        message: "Contact ID, content and user ID are required",
-      };
-    }
+    async sendChatMessage(
+        context: HttpContext<SendMessageInput>,
+    ): Promise<SendMessageResponse> {
+        context.logger.info('sendChatMessage');
 
-    const message = await sendMessage(content, String(userId), String(contactId));
-    if (!message) {
-      return { status: "error", message: "Failed to send message" };
-    }
+        const sessionInfo = context.session.sessionInfo;
+        if (!sessionInfo) {
+            return { status: 'error', message: 'Session not found' };
+        }
 
-    return { status: "ok", message };
-  },
+        const { contactId, content, userId } = getTypedPayload(context);
+        const result = await messageService.sendChatMessage(
+            userId,
+            contactId,
+            content,
+            sessionInfo.data?.userId,
+        );
 
-  async deleteMessage({
-    session,
-    httpData,
-    logger,
-  }: HttpContext): Promise<DeleteMessageResponse> {
-    logger.info("deleteMessage");
-    const sessionInfo = session?.sessionInfo;
-    if (!sessionInfo) {
-      return { status: "error", message: "Session not found" };
-    }
-    const userId = sessionInfo.data?.userId;
-    if (!userId) {
-      return { status: "unauthorized", message: "Session expired" };
-    }
+        if (!result.ok) {
+            setServiceErrorStatus(context, result.code);
+            return { status: mapStatus(result.code), message: result.message };
+        }
 
-    const { messageId } = httpData.params;
-    if (!messageId) {
-      return { status: "error", message: "Message ID is required" };
-    }
+        return { status: 'ok', message: result.data.message as any };
+    },
 
-    const messageBigIntId = BigInt(messageId);
-    const sessionUserBigInt = BigInt(userId);
-    const message = await Message.findByIdAndUserId(
-      messageBigIntId,
-      sessionUserBigInt,
-      "sender",
-    );
-    if (!message) {
-      return {
-        status: "error",
-        message: "Message not found or access denied",
-      };
-    }
+    async deleteMessage(context: HttpContext): Promise<DeleteMessageResponse> {
+        context.logger.info('deleteMessage');
 
-    await Message.deleteById(messageBigIntId);
+        const sessionInfo = context.session.sessionInfo;
+        if (!sessionInfo) {
+            return { status: 'error', message: 'Session not found' };
+        }
 
-    return { status: "ok", message: "Message deleted successfully" };
-  },
+        const { messageId } = context.httpData.params;
+        if (!messageId) {
+            return { status: 'error', message: 'Message ID is required' };
+        }
 
-  async editMessage(
-    context: HttpContext<EditMessageInput>,
-  ): Promise<EditMessageResponse> {
-    const { session, logger } = context;
-    logger.info("editMessage");
-    const sessionInfo = session?.sessionInfo;
-    if (!sessionInfo) {
-      return { status: "error", message: "Session not found" };
-    }
-    const { messageId, content, userId } = getTypedPayload(context);
-    const sessionUserId = sessionInfo.data?.userId;
-    if (!userId || !sessionUserId || Number(userId) !== Number(sessionUserId)) {
-      return { status: "unauthorized", message: "Session expired" };
-    }
+        const result = await messageService.deleteMessage(
+            messageId,
+            sessionInfo.data?.userId,
+        );
 
-    if (!messageId || !content) {
-      return {
-        status: "error",
-        message: "Message ID and content are required",
-      };
-    }
+        if (!result.ok) {
+            setServiceErrorStatus(context, result.code);
+            return { status: mapStatus(result.code), message: result.message };
+        }
 
-    // const message = await Message.findByIdAndUserId(messageId, userId, 'sender');
-    // if (!message) {
-    //     return { status: 'error', message: 'Message not found or access denied' };
-    // }
+        return { status: 'ok', message: result.data.message };
+    },
 
-    const updatedMessage = await Message.updateContent(
-      BigInt(userId),
-      BigInt(messageId),
-      content,
-    );
+    async editMessage(
+        context: HttpContext<EditMessageInput>,
+    ): Promise<EditMessageResponse> {
+        context.logger.info('editMessage');
 
-    return {
-      status: updatedMessage ? "ok" : "error",
-      message: updatedMessage,
-    };
-  },
+        const sessionInfo = context.session.sessionInfo;
+        if (!sessionInfo) {
+            return { status: 'error', message: 'Session not found' };
+        }
 
-  async markAsRead(
-    context: HttpContext<MarkMessageAsReadInput>,
-  ): Promise<MarkAsReadResponse> {
-    const { session, logger } = context;
-    logger.info("markAsRead");
-    const sessionInfo = session?.sessionInfo;
-    if (!sessionInfo) {
-      return { status: "error", message: "Session not found" };
-    }
-    const userId = sessionInfo.data?.userId;
-    if (!userId) {
-      return { status: "unauthorized", message: "Session expired" };
-    }
+        const { messageId, content, userId } = getTypedPayload(context);
+        const result = await messageService.editMessage(
+            userId,
+            messageId,
+            content,
+            sessionInfo.data?.userId,
+        );
 
-    const { messageId } = getTypedPayload(context);
-    if (!messageId) {
-      return { status: "error", message: "Message ID is required" };
-    }
+        if (!result.ok) {
+            setServiceErrorStatus(context, result.code);
+            return { status: mapStatus(result.code), message: result.message };
+        }
 
-    const message = await Message.findByIdAndUserId(
-      BigInt(messageId),
-      BigInt(userId),
-      "receiver",
-    );
-    if (!message) {
-      return {
-        status: "error",
-        message: "Message not found or access denied",
-      };
-    }
+        return { status: 'ok', message: result.data.message as any };
+    },
 
-    try {
-      const result = await Message.markAsRead(BigInt(messageId), BigInt(userId));
-      return { status: "ok", message: result };
-    } catch (error) {
-      logger.error({ err: error }, "Error marking message as read:");
-      return {
-        status: "error",
-        message: "Failed to mark message as read",
-      };
-    }
-  },
+    async markAsRead(
+        context: HttpContext<MarkMessageAsReadInput>,
+    ): Promise<MarkAsReadResponse> {
+        context.logger.info('markAsRead');
+
+        const sessionInfo = context.session.sessionInfo;
+        if (!sessionInfo) {
+            return { status: 'error', message: 'Session not found' };
+        }
+
+        const { messageId } = getTypedPayload(context);
+        const result = await messageService.markAsRead(
+            messageId,
+            sessionInfo.data?.userId,
+        );
+
+        if (!result.ok) {
+            setServiceErrorStatus(context, result.code);
+            return { status: mapStatus(result.code), message: result.message };
+        }
+
+        return { status: 'ok', message: result.data.message as any };
+    },
 };

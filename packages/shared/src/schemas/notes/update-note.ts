@@ -1,8 +1,8 @@
 import { type } from "@arktype/type";
 
 export const UpdateNoteInputSchema = type({
-  "title?": "string >= 1 & string <= 255",
-  "description?": "string",
+  title: "string >= 1 & string <= 255?",
+  description: "string?",
   "+": "reject",
 });
 

@@ -4,25 +4,28 @@ import { eq, and, desc, sql } from 'drizzle-orm';
 import { DateTime } from 'luxon';
 import { serializeModel } from '#vendor/utils/serialization/serialize-model.js';
 import logger from '#logger';
+import type { CreateNoteInput, UpdateNoteInput } from 'shared/schemas';
+import type { Note } from '#app/controllers/types/NotesController.js';
+
 
 const schema = {
-    created_at: (value: Date) => DateTime.fromJSDate(value).toISO(),
-    updated_at: (value: Date) => DateTime.fromJSDate(value).toISO(),
+    created_at: (value: Date): string | null => DateTime.fromJSDate(value).toISO(),
+    updated_at: (value: Date): string | null => DateTime.fromJSDate(value).toISO(),
 };
 
 const required = ['title', 'userId'];
 const hidden: string[] = [];
 
 export default {
-    async create(payload: any) {
+    async create(payload: CreateNoteInput, userId: bigint): Promise<Note> {
         logger.info('create note');
 
-        if (!payload || typeof payload !== 'object') {
+        if (typeof payload !== 'object') {
             throw new Error('Payload must be object');
         }
 
         const keys = Object.keys(payload);
-        for (let field of required) {
+        for (const field of required) {
             if (!keys.includes(field)) {
                 throw new Error(`Field ${field} required`);
             }
@@ -31,8 +34,8 @@ export default {
         const now = new Date();
         const [note] = await db.insert(notes).values({
             title: payload.title,
-            description: payload.description || '',
-            userId: BigInt(payload.userId),
+            description: payload.description,
+            userId: userId,
             createdAt: now,
             updatedAt: now,
         });
@@ -86,16 +89,14 @@ export default {
         return this.serializeArray(notesWithPhotos);
     },
 
-    async update(id: bigint, userId: bigint, payload: any) {
-        logger.info(`update note id: ${id} for user: ${userId}`);
+    async update(id: bigint, userId: bigint, payload: UpdateNoteInput) {
+        logger.info(`update note id: ${String(id)} for user: ${String(userId)}`);
 
-        const updateData: any = {
+        const updateData = {
+            ...payload,
             updatedAt: new Date(),
         };
-
-        if (payload.title !== undefined) updateData.title = payload.title;
-        if (payload.description !== undefined) updateData.description = payload.description;
-
+        
         await db.update(notes)
             .set(updateData)
             .where(and(eq(notes.id, id), eq(notes.userId, userId)));

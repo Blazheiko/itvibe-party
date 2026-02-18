@@ -1,368 +1,267 @@
-import Project from "#app/models/Project.js";
-import type { HttpContext } from "#vendor/types/types.js";
-import { getTypedPayload } from "#vendor/utils/validation/get-typed-payload.js";
-import taskModel from "#app/models/Task.js";
+import type { HttpContext } from '#vendor/types/types.js';
+import { getTypedPayload } from '#vendor/utils/validation/get-typed-payload.js';
+import { taskService } from '#app/services/task-service.js';
 import type {
-  GetTasksResponse,
-  CreateTaskResponse,
-  GetTaskResponse,
-  UpdateTaskResponse,
-  DeleteTaskResponse,
-  UpdateTaskStatusResponse,
-  UpdateTaskProgressResponse,
-  GetTasksByProjectResponse,
-  GetSubTasksResponse,
-  TestTasksResponse,
-} from "../types/TaskController.js";
+    GetTasksResponse,
+    CreateTaskResponse,
+    GetTaskResponse,
+    UpdateTaskResponse,
+    DeleteTaskResponse,
+    UpdateTaskStatusResponse,
+    UpdateTaskProgressResponse,
+    GetTasksByProjectResponse,
+    GetSubTasksResponse,
+    TestTasksResponse,
+} from '../types/TaskController.js';
 import type {
-  CreateTaskInput,
-  UpdateTaskInput,
-  UpdateTaskProgressInput,
-  UpdateTaskStatusInput,
-} from "shared/schemas";
+    CreateTaskInput,
+    UpdateTaskInput,
+    UpdateTaskProgressInput,
+    UpdateTaskStatusInput,
+} from 'shared/schemas';
+
+function setServiceErrorStatus(
+    context: HttpContext,
+    code: 'BAD_REQUEST' | 'UNAUTHORIZED' | 'NOT_FOUND' | 'CONFLICT' | 'INTERNAL',
+): void {
+    if (code === 'BAD_REQUEST') {
+        context.responseData.status = 400;
+        return;
+    }
+    if (code === 'UNAUTHORIZED') {
+        context.responseData.status = 401;
+        return;
+    }
+    if (code === 'NOT_FOUND') {
+        context.responseData.status = 404;
+        return;
+    }
+    if (code === 'CONFLICT') {
+        context.responseData.status = 409;
+        return;
+    }
+    context.responseData.status = 500;
+}
+
+function resolveUserId(context: HttpContext): bigint | null {
+    if (!context.auth.check()) {
+        context.responseData.status = 401;
+        return null;
+    }
+
+    const userId = context.auth.getUserId();
+    if (userId === null) {
+        context.responseData.status = 401;
+        return null;
+    }
+
+    return BigInt(userId);
+}
 
 export default {
-  async testTasks(_context: HttpContext): Promise<TestTasksResponse> {
-    const allTasks = await taskModel.query();
-    return { status: "ok", tasks: allTasks };
-  },
-  async getTasks(context: HttpContext): Promise<GetTasksResponse> {
-    const { auth, logger } = context;
-    logger.info("getTasks handler");
+    async testTasks(_context: HttpContext): Promise<TestTasksResponse> {
+        const result = await taskService.testTasks();
+        if (!result.ok) {
+            return { status: 'error' };
+        }
+        return { status: 'ok', tasks: result.data.tasks };
+    },
 
-    if (!auth.check()) {
-      return { status: "error", message: "Unauthorized" };
-    }
+    async getTasks(context: HttpContext): Promise<GetTasksResponse> {
+        context.logger.info('getTasks handler');
 
-    const userId = auth.getUserId();
-    if (userId === null) {
-      return { status: "error", message: "Unauthorized" };
-    }
+        const userId = resolveUserId(context);
+        if (userId === null) {
+            return { status: 'error', message: 'Unauthorized' };
+        }
 
-    try {
-      const tasks = await taskModel.findByUserId(BigInt(userId));
-      const projects = await Project.getShortProjects(BigInt(userId));
-      return { status: "success", tasks, projects };
-    } catch (error) {
-      logger.error({ err: error }, "Error getting tasks:");
-      return {
-        status: "error",
-        message: error instanceof Error ? error.message : "Failed to get tasks",
-      };
-    }
-  },
+        const result = await taskService.getTasks(userId);
+        if (!result.ok) {
+            setServiceErrorStatus(context, result.code);
+            return { status: 'error', message: result.message };
+        }
 
-  async createTask(
-    context: HttpContext<CreateTaskInput>,
-  ): Promise<CreateTaskResponse> {
-    const { auth, logger } = context;
-    logger.info("createTask handler");
+        return {
+            status: 'success',
+            tasks: result.data.tasks as any,
+            projects: result.data.projects as any,
+        };
+    },
 
-    if (!auth.check()) {
-      return { status: "error", message: "Unauthorized" };
-    }
+    async createTask(
+        context: HttpContext<CreateTaskInput>,
+    ): Promise<CreateTaskResponse> {
+        context.logger.info('createTask handler');
 
-    const userId = auth.getUserId();
-    if (userId === null) {
-      return { status: "error", message: "Unauthorized" };
-    }
+        const userId = resolveUserId(context);
+        if (userId === null) {
+            return { status: 'error', message: 'Unauthorized' };
+        }
 
-    const {
-      title,
-      description,
-      projectId,
-      status,
-      priority,
-      tags,
-      dueDate,
-      startDate,
-      estimatedHours,
-      parentTaskId,
-    } = getTypedPayload(context);
+        const payload = getTypedPayload(context);
+        const result = await taskService.createTask({ ...payload, userId });
 
-    try {
-      const task = await taskModel.create({
-        title,
-        description,
-        userId: BigInt(userId),
-        projectId,
-        status,
-        priority,
-        tags,
-        dueDate,
-        startDate,
-        estimatedHours,
-        parentTaskId,
-      });
-      return { status: "success", task };
-    } catch (error) {
-      logger.error({ err: error }, "Error creating task:");
-      return {
-        status: "error",
-        message:
-          error instanceof Error ? error.message : "Failed to create task",
-      };
-    }
-  },
+        if (!result.ok) {
+            setServiceErrorStatus(context, result.code);
+            return { status: 'error', message: result.message };
+        }
 
-  async getTask(context: HttpContext): Promise<GetTaskResponse> {
-    const { httpData, auth, logger } = context;
-    logger.info("getTask handler");
+        return { status: 'success', task: result.data.task as any };
+    },
 
-    if (!auth.check()) {
-      return { status: "error", message: "Unauthorized" };
-    }
+    async getTask(context: HttpContext): Promise<GetTaskResponse> {
+        context.logger.info('getTask handler');
 
-    const userId = auth.getUserId();
-    if (userId === null) {
-      return { status: "error", message: "Unauthorized" };
-    }
+        const userId = resolveUserId(context);
+        if (userId === null) {
+            return { status: 'error', message: 'Unauthorized' };
+        }
 
-    const { taskId } = httpData.params as { taskId: string };
+        const { taskId } = context.httpData.params as { taskId: string };
+        const result = await taskService.getTask(BigInt(taskId), userId);
 
-    try {
-      const task = await taskModel.findById(BigInt(taskId), BigInt(userId));
-      return { status: "success", task };
-    } catch (error) {
-      logger.error({ err: error }, "Error getting task:");
-      return {
-        status: "error",
-        message: error instanceof Error ? error.message : "Failed to get task",
-      };
-    }
-  },
+        if (!result.ok) {
+            setServiceErrorStatus(context, result.code);
+            return { status: 'error', message: result.message };
+        }
 
-  async updateTask(
-    context: HttpContext<UpdateTaskInput>,
-  ): Promise<UpdateTaskResponse> {
-    const { httpData, auth, logger } = context;
-    logger.info("updateTask handler");
+        return { status: 'success', task: result.data.task as any };
+    },
 
-    if (!auth.check()) {
-      return { status: "error", message: "Unauthorized" };
-    }
+    async updateTask(
+        context: HttpContext<UpdateTaskInput>,
+    ): Promise<UpdateTaskResponse> {
+        context.logger.info('updateTask handler');
 
-    const userId = auth.getUserId();
-    if (userId === null) {
-      return { status: "error", message: "Unauthorized" };
-    }
+        const userId = resolveUserId(context);
+        if (userId === null) {
+            return { status: 'error', message: 'Unauthorized' };
+        }
 
-    const { taskId } = httpData.params as { taskId: string };
-    const {
-      title,
-      description,
-      projectId,
-      status,
-      priority,
-      progress,
-      tags,
-      dueDate,
-      startDate,
-      estimatedHours,
-      actualHours,
-    } = getTypedPayload(context);
+        const { taskId } = context.httpData.params as { taskId: string };
+        const payload = getTypedPayload(context);
+        const result = await taskService.updateTask({
+            ...payload,
+            userId,
+            taskId: BigInt(taskId),
+        });
 
-    try {
-      const task = await taskModel.update(BigInt(taskId), BigInt(userId), {
-        title,
-        description,
-        projectId,
-        status,
-        priority,
-        progress,
-        tags,
-        dueDate,
-        startDate,
-        estimatedHours,
-        actualHours,
-      });
+        if (!result.ok) {
+            setServiceErrorStatus(context, result.code);
+            return { status: 'error', message: result.message };
+        }
 
-      return { status: "success", task };
-    } catch (error) {
-      logger.error({ err: error }, "Error updating task:");
-      return {
-        status: "error",
-        message:
-          error instanceof Error ? error.message : "Failed to update task",
-      };
-    }
-  },
+        return { status: 'success', task: result.data.task as any };
+    },
 
-  async deleteTask(context: HttpContext): Promise<DeleteTaskResponse> {
-    const { httpData, auth, logger } = context;
-    logger.info("deleteTask handler");
+    async deleteTask(context: HttpContext): Promise<DeleteTaskResponse> {
+        context.logger.info('deleteTask handler');
 
-    if (!auth.check()) {
-      return { status: "error", message: "Unauthorized" };
-    }
+        const userId = resolveUserId(context);
+        if (userId === null) {
+            return { status: 'error', message: 'Unauthorized' };
+        }
 
-    const userId = auth.getUserId();
-    if (userId === null) {
-      return { status: "error", message: "Unauthorized" };
-    }
+        const { taskId } = context.httpData.params as { taskId: string };
+        const result = await taskService.deleteTask(BigInt(taskId), userId);
 
-    const { taskId } = httpData.params as { taskId: string };
+        if (!result.ok) {
+            setServiceErrorStatus(context, result.code);
+            return { status: 'error', message: result.message };
+        }
 
-    try {
-      await taskModel.delete(BigInt(taskId), BigInt(userId));
-      return { status: "success", message: "Task deleted successfully" };
-    } catch (error) {
-      logger.error({ err: error }, "Error deleting task:");
-      return {
-        status: "error",
-        message:
-          error instanceof Error ? error.message : "Failed to delete task",
-      };
-    }
-  },
+        return { status: 'success', message: result.data.message };
+    },
 
-  async updateTaskStatus(
-    context: HttpContext<UpdateTaskStatusInput>,
-  ): Promise<UpdateTaskStatusResponse> {
-    const { httpData, auth, logger } = context;
-    logger.info("updateTaskStatus handler");
+    async updateTaskStatus(
+        context: HttpContext<UpdateTaskStatusInput>,
+    ): Promise<UpdateTaskStatusResponse> {
+        context.logger.info('updateTaskStatus handler');
 
-    if (!auth.check()) {
-      return { status: "error", message: "Unauthorized" };
-    }
+        const userId = resolveUserId(context);
+        if (userId === null) {
+            return { status: 'error', message: 'Unauthorized' };
+        }
 
-    const userId = auth.getUserId();
-    if (userId === null) {
-      return { status: "error", message: "Unauthorized" };
-    }
+        const { taskId } = context.httpData.params as { taskId: string };
+        const { status } = getTypedPayload(context);
+        const result = await taskService.updateTaskStatus({
+            userId,
+            taskId: BigInt(taskId),
+            status,
+        });
 
-    const { taskId } = httpData.params as { taskId: string };
-    const { status } = getTypedPayload(context);
-    const allowedStatuses = [
-      "TODO",
-      "IN_PROGRESS",
-      "ON_HOLD",
-      "COMPLETED",
-      "CANCELLED",
-    ] as const;
-    if (!allowedStatuses.includes(status as (typeof allowedStatuses)[number])) {
-      return { status: "error", message: "Invalid task status" };
-    }
+        if (!result.ok) {
+            setServiceErrorStatus(context, result.code);
+            return { status: 'error', message: result.message };
+        }
 
-    try {
-      const task = await taskModel.updateStatus(
-        BigInt(taskId),
-        BigInt(userId),
-        status as (typeof allowedStatuses)[number],
-      );
-      return { status: "success", task };
-    } catch (error) {
-      logger.error({ err: error }, "Error updating task status:");
-      return {
-        status: "error",
-        message:
-          error instanceof Error
-            ? error.message
-            : "Failed to update task status",
-      };
-    }
-  },
+        return { status: 'success', task: result.data.task as any };
+    },
 
-  async updateTaskProgress(
-    context: HttpContext<UpdateTaskProgressInput>,
-  ): Promise<UpdateTaskProgressResponse> {
-    const { httpData, auth, logger } = context;
-    logger.info("updateTaskProgress handler");
+    async updateTaskProgress(
+        context: HttpContext<UpdateTaskProgressInput>,
+    ): Promise<UpdateTaskProgressResponse> {
+        context.logger.info('updateTaskProgress handler');
 
-    if (!auth.check()) {
-      return { status: "error", message: "Unauthorized" };
-    }
+        const userId = resolveUserId(context);
+        if (userId === null) {
+            return { status: 'error', message: 'Unauthorized' };
+        }
 
-    const userId = auth.getUserId();
-    if (userId === null) {
-      return { status: "error", message: "Unauthorized" };
-    }
+        const { taskId } = context.httpData.params as { taskId: string };
+        const payload = getTypedPayload(context);
+        const result = await taskService.updateTaskProgress({
+            ...payload,
+            userId,
+            taskId: BigInt(taskId),
+        });
 
-    const { taskId } = httpData.params as { taskId: string };
-    const { progress } = getTypedPayload(context);
+        if (!result.ok) {
+            setServiceErrorStatus(context, result.code);
+            return { status: 'error', message: result.message };
+        }
 
-    try {
-      const task = await taskModel.updateProgress(
-        BigInt(taskId),
-        BigInt(userId),
-        parseInt(progress),
-      );
-      return { status: "success", task };
-    } catch (error) {
-      logger.error({ err: error }, "Error updating task progress:");
-      return {
-        status: "error",
-        message:
-          error instanceof Error
-            ? error.message
-            : "Failed to update task progress",
-      };
-    }
-  },
+        return { status: 'success', task: result.data.task as any };
+    },
 
-  async getTasksByProject(
-    context: HttpContext,
-  ): Promise<GetTasksByProjectResponse> {
-    const { httpData, auth, logger } = context;
-    logger.info("getTasksByProject handler");
+    async getTasksByProject(
+        context: HttpContext,
+    ): Promise<GetTasksByProjectResponse> {
+        context.logger.info('getTasksByProject handler');
 
-    if (!auth.check()) {
-      return { status: "error", message: "Unauthorized" };
-    }
+        const userId = resolveUserId(context);
+        if (userId === null) {
+            return { status: 'error', message: 'Unauthorized' };
+        }
 
-    const userId = auth.getUserId();
-    if (userId === null) {
-      return { status: "error", message: "Unauthorized" };
-    }
+        const { projectId } = context.httpData.params as { projectId: string };
+        const result = await taskService.getTasksByProject(BigInt(projectId), userId);
 
-    const { projectId } = httpData.params as { projectId: string };
+        if (!result.ok) {
+            setServiceErrorStatus(context, result.code);
+            return { status: 'error', message: result.message };
+        }
 
-    try {
-      const tasks = await taskModel.findByProjectId(
-        BigInt(projectId),
-        BigInt(userId),
-      );
-      return { status: "success", tasks };
-    } catch (error) {
-      logger.error({ err: error }, "Error getting tasks by project:");
-      return {
-        status: "error",
-        message:
-          error instanceof Error
-            ? error.message
-            : "Failed to get tasks by project",
-      };
-    }
-  },
+        return { status: 'success', tasks: result.data.tasks as any };
+    },
 
-  async getSubTasks(context: HttpContext): Promise<GetSubTasksResponse> {
-    const { httpData, auth, logger } = context;
-    logger.info("getSubTasks handler");
+    async getSubTasks(context: HttpContext): Promise<GetSubTasksResponse> {
+        context.logger.info('getSubTasks handler');
 
-    if (!auth.check()) {
-      return { status: "error", message: "Unauthorized" };
-    }
+        const userId = resolveUserId(context);
+        if (userId === null) {
+            return { status: 'error', message: 'Unauthorized' };
+        }
 
-    const userId = auth.getUserId();
-    if (userId === null) {
-      return { status: "error", message: "Unauthorized" };
-    }
+        const { parentTaskId } = context.httpData.params as { parentTaskId: string };
+        const result = await taskService.getSubTasks(BigInt(parentTaskId), userId);
 
-    const { parentTaskId } = httpData.params as { parentTaskId: string };
+        if (!result.ok) {
+            setServiceErrorStatus(context, result.code);
+            return { status: 'error', message: result.message };
+        }
 
-    try {
-      const subTasks = await taskModel.findSubTasks(
-        BigInt(parentTaskId),
-        BigInt(userId),
-      );
-      return { status: "success", tasks: subTasks };
-    } catch (error) {
-      logger.error({ err: error }, "Error getting subtasks:");
-      return {
-        status: "error",
-        message:
-          error instanceof Error ? error.message : "Failed to get subtasks",
-      };
-    }
-  },
+        return { status: 'success', tasks: result.data.tasks as any };
+    },
 };

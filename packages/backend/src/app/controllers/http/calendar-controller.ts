@@ -1,224 +1,195 @@
-import type { HttpContext } from "#vendor/types/types.js";
-import { getTypedPayload } from "#vendor/utils/validation/get-typed-payload.js";
-import calendarModel from "#app/models/Calendar.js";
+import type { HttpContext } from '#vendor/types/types.js';
+import { getTypedPayload } from '#vendor/utils/validation/get-typed-payload.js';
+import { calendarService } from '#app/services/calendar-service.js';
 import type {
-  GetEventsResponse,
-  CreateEventResponse,
-  GetEventResponse,
-  UpdateEventResponse,
-  DeleteEventResponse,
-  GetEventsByDateResponse,
-  GetEventsByRangeResponse,
-} from "../types/CalendarController.js";
-import type {
-  CreateEventInput,
-  GetEventsByRangeInput,
-  UpdateEventInput,
-} from "shared/schemas";
+    GetEventsResponse,
+    CreateEventResponse,
+    GetEventResponse,
+    UpdateEventResponse,
+    DeleteEventResponse,
+    GetEventsByDateResponse,
+    GetEventsByRangeResponse,
+    CreateEventInput,
+    UpdateEventInput,
+    GetEventsByRangeInput,
+} from '../types/CalendarController.js';
+
+function setServiceErrorStatus(
+    context: HttpContext,
+    code: 'BAD_REQUEST' | 'UNAUTHORIZED' | 'NOT_FOUND' | 'CONFLICT' | 'INTERNAL',
+): void {
+    if (code === 'BAD_REQUEST') {
+        context.responseData.status = 400;
+        return;
+    }
+    if (code === 'UNAUTHORIZED') {
+        context.responseData.status = 401;
+        return;
+    }
+    if (code === 'NOT_FOUND') {
+        context.responseData.status = 404;
+        return;
+    }
+    if (code === 'CONFLICT') {
+        context.responseData.status = 409;
+        return;
+    }
+    context.responseData.status = 500;
+}
+
+function resolveUserId(context: HttpContext): bigint | null {
+    if (!context.auth.check()) {
+        context.responseData.status = 401;
+        return null;
+    }
+
+    const userId = context.auth.getUserId();
+    if (userId === null) {
+        context.responseData.status = 401;
+        return null;
+    }
+
+    return BigInt(userId);
+}
 
 export default {
-  async getEvents(context: HttpContext): Promise<GetEventsResponse> {
-    const { auth, logger } = context;
-    logger.info("getEvents handler");
+    async getEvents(context: HttpContext): Promise<GetEventsResponse> {
+        context.logger.info('getEvents handler');
 
-    if (!auth.check()) {
-      return { status: "error", message: "Unauthorized" };
-    }
+        const userId = resolveUserId(context);
+        if (userId === null) {
+            return { status: 'error', message: 'Unauthorized' };
+        }
 
-    const userId = auth.getUserId();
-    if (userId === null) {
-      return { status: "error", message: "Unauthorized" };
-    }
+        const result = await calendarService.getEvents(userId);
+        if (!result.ok) {
+            setServiceErrorStatus(context, result.code);
+            return { status: 'error', message: result.message };
+        }
 
-    try {
-      const events = await calendarModel.findByUserId(BigInt(userId));
-      return { status: "success", data: events };
-    } catch (error) {
-      logger.error({ err: error }, "Error getting events:");
-      return { status: "error", message: "Failed to get events" };
-    }
-  },
+        return { status: 'success', data: result.data.data as any };
+    },
 
-  async createEvent(
-    context: HttpContext<CreateEventInput>,
-  ): Promise<CreateEventResponse> {
-    const { auth, logger } = context;
-    logger.info("createEvent handler");
+    async createEvent(
+        context: HttpContext<CreateEventInput>,
+    ): Promise<CreateEventResponse> {
+        context.logger.info('createEvent handler');
 
-    if (!auth.check()) {
-      return { status: "error", message: "Unauthorized" };
-    }
+        const userId = resolveUserId(context);
+        if (userId === null) {
+            return { status: 'error', message: 'Unauthorized' };
+        }
 
-    const userId = auth.getUserId();
-    if (userId === null) {
-      return { status: "error", message: "Unauthorized" };
-    }
+        const payload = getTypedPayload(context);
+        const result = await calendarService.createEvent(userId, payload);
 
-    // const { title, description, startTime, endTime } = getTypedPayload(context);
-    const payload = getTypedPayload(context);
+        if (!result.ok) {
+            setServiceErrorStatus(context, result.code);
+            return { status: 'error', message: result.message };
+        }
 
-    const { title, description, startTime, endTime } = payload;
+        return { status: 'success', data: result.data.data as any };
+    },
 
-    try {
-      const createdEvent = await calendarModel.create({
-        title,
-        description,
-        startTime,
-        endTime,
-        userId: BigInt(userId),
-      });
+    async getEvent(context: HttpContext): Promise<GetEventResponse> {
+        context.logger.info('getEvent handler');
 
-      return { status: "success", data: createdEvent };
-    } catch (error) {
-      logger.error({ err: error }, "Error creating event:");
-      return { status: "error", message: "Failed to create event" };
-    }
-  },
+        const userId = resolveUserId(context);
+        if (userId === null) {
+            return { status: 'error', message: 'Unauthorized' };
+        }
 
-  async getEvent(context: HttpContext): Promise<GetEventResponse> {
-    const { httpData, auth, logger } = context;
-    logger.info("getEvent handler");
+        const { eventId } = context.httpData.params as { eventId: string };
+        const result = await calendarService.getEvent(userId, BigInt(eventId));
 
-    if (!auth.check()) {
-      return { status: "error", message: "Unauthorized" };
-    }
+        if (!result.ok) {
+            setServiceErrorStatus(context, result.code);
+            return { status: 'error', message: result.message };
+        }
 
-    const userId = auth.getUserId();
-    if (userId === null) {
-      return { status: "error", message: "Unauthorized" };
-    }
+        return { status: 'success', data: result.data.data as any };
+    },
 
-    const { eventId } = httpData.params as { eventId: string };
+    async updateEvent(
+        context: HttpContext<UpdateEventInput>,
+    ): Promise<UpdateEventResponse> {
+        context.logger.info('updateEvent handler');
 
-    try {
-      const event = await calendarModel.findById(BigInt(eventId), BigInt(userId));
-      return { status: "success", data: event };
-    } catch (error) {
-      logger.error({ err: error }, "Error getting event:");
-      return { status: "error", message: "Failed to get event" };
-    }
-  },
+        const userId = resolveUserId(context);
+        if (userId === null) {
+            return { status: 'error', message: 'Unauthorized' };
+        }
 
-  async updateEvent(
-    context: HttpContext<UpdateEventInput>,
-  ): Promise<UpdateEventResponse> {
-    const { httpData, auth, logger } = context;
-    logger.info("updateEvent handler");
+        const { eventId } = context.httpData.params as { eventId: string };
+        const payload = getTypedPayload(context);
+        const result = await calendarService.updateEvent(userId, BigInt(eventId), payload);
 
-    if (!auth.check()) {
-      return { status: "error", message: "Unauthorized" };
-    }
+        if (!result.ok) {
+            setServiceErrorStatus(context, result.code);
+            return { status: 'error', message: result.message };
+        }
 
-    const userId = auth.getUserId();
-    if (userId === null) {
-      return { status: "error", message: "Unauthorized" };
-    }
+        return { status: 'success', data: result.data.data as any };
+    },
 
-    const { eventId } = httpData.params as { eventId: string };
-    const { title, description, startTime, endTime } = getTypedPayload(context);
+    async deleteEvent(context: HttpContext): Promise<DeleteEventResponse> {
+        context.logger.info('deleteEvent handler');
 
-    try {
-      const updatedEvent = await calendarModel.update(
-        BigInt(eventId),
-        BigInt(userId),
-        {
-          title,
-          description,
-          startTime,
-          endTime,
-        },
-      );
+        const userId = resolveUserId(context);
+        if (userId === null) {
+            return { status: 'error', message: 'Unauthorized' };
+        }
 
-      return { status: "success", data: updatedEvent };
-    } catch (error) {
-      logger.error({ err: error }, "Error updating event:");
-      return { status: "error", message: "Failed to update event" };
-    }
-  },
+        const { eventId } = context.httpData.params as { eventId: string };
+        const result = await calendarService.deleteEvent(userId, BigInt(eventId));
 
-  async deleteEvent(context: HttpContext): Promise<DeleteEventResponse> {
-    const { httpData, auth, logger } = context;
-    logger.info("deleteEvent handler");
+        if (!result.ok) {
+            setServiceErrorStatus(context, result.code);
+            return { status: 'error', message: result.message };
+        }
 
-    if (!auth.check()) {
-      return { status: "error", message: "Unauthorized" };
-    }
+        return { status: 'success', message: result.data.message };
+    },
 
-    const userId = auth.getUserId();
-    if (userId === null) {
-      return { status: "error", message: "Unauthorized" };
-    }
+    async getEventsByDate(
+        context: HttpContext,
+    ): Promise<GetEventsByDateResponse> {
+        context.logger.info('getEventsByDate handler');
 
-    const { eventId } = httpData.params as { eventId: string };
+        const userId = resolveUserId(context);
+        if (userId === null) {
+            return { status: 'error', message: 'Unauthorized' };
+        }
 
-    try {
-      await calendarModel.delete(BigInt(eventId), BigInt(userId));
-      return { status: "success", message: "Event deleted successfully" };
-    } catch (error) {
-      logger.error({ err: error }, "Error deleting event:");
-      return { status: "error", message: "Failed to delete event" };
-    }
-  },
+        const { date } = context.httpData.params as { date: string };
+        const result = await calendarService.getEventsByDate(userId, date);
 
-  async getEventsByDate(
-    context: HttpContext,
-  ): Promise<GetEventsByDateResponse> {
-    const { httpData, auth, logger } = context;
-    logger.info("getEventsByDate handler");
+        if (!result.ok) {
+            setServiceErrorStatus(context, result.code);
+            return { status: 'error', message: result.message };
+        }
 
-    if (!auth.check()) {
-      return { status: "error", message: "Unauthorized" };
-    }
+        return { status: 'success', data: result.data.data as any };
+    },
 
-    const userId = auth.getUserId();
-    if (userId === null) {
-      return { status: "error", message: "Unauthorized" };
-    }
+    async getEventsByRange(
+        context: HttpContext<GetEventsByRangeInput>,
+    ): Promise<GetEventsByRangeResponse> {
+        context.logger.info('getEventsByRange handler');
 
-    const { date } = httpData.params as { date: string };
+        const userId = resolveUserId(context);
+        if (userId === null) {
+            return { status: 'error', message: 'Unauthorized' };
+        }
 
-    try {
-      const events = await calendarModel.findByDate(
-        BigInt(userId),
-        new Date(date),
-      );
-      return { status: "success", data: events };
-    } catch (error) {
-      logger.error({ err: error }, "Error getting events by date:");
-      return { status: "error", message: "Failed to get events by date" };
-    }
-  },
+        const payload = getTypedPayload(context);
+        const result = await calendarService.getEventsByRange(userId, payload);
 
-  async getEventsByRange(
-    context: HttpContext<GetEventsByRangeInput>,
-  ): Promise<GetEventsByRangeResponse> {
-    const { auth, logger } = context;
-    logger.info("getEventsByRange handler");
+        if (!result.ok) {
+            setServiceErrorStatus(context, result.code);
+            return { status: 'error', message: result.message };
+        }
 
-    if (!auth.check()) {
-      return { status: "error", message: "Unauthorized" };
-    }
-
-    const userId = auth.getUserId();
-    if (userId === null) {
-      return { status: "error", message: "Unauthorized" };
-    }
-
-    const { startDate, endDate } = getTypedPayload(context);
-
-    try {
-      const events = await calendarModel.findByRange(
-        BigInt(userId),
-        new Date(startDate),
-        new Date(endDate),
-      );
-      return { status: "success", data: events };
-    } catch (error) {
-      logger.error({ err: error }, "Error getting events by range:");
-      return {
-        status: "error",
-        message: "Failed to get events by range",
-      };
-    }
-  },
+        return { status: 'success', data: result.data.data as any };
+    },
 };

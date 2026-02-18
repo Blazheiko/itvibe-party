@@ -14,7 +14,7 @@ interface ApiResolveItem {
 }
 
 interface ApiError {
-    status?: number
+    status?: number | string
     message?: string
     messages?: string[]
 }
@@ -194,7 +194,12 @@ const messageHandler = (data: WebsocketMessage): void => {
     window.clearTimeout(cb.timeout)
     delete apiResolve.value[data.event]
 
-    if (data.status === 200 && cb.resolve) {
+    const statusCode =
+        typeof data.status === 'string'
+            ? Number.parseInt(data.status, 10)
+            : data.status
+
+    if (Number.isFinite(statusCode) && statusCode >= 200 && statusCode < 300 && cb.resolve) {
         cb.resolve(data)
     } else if (cb.reject) {
         cb.reject({
