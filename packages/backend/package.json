@@ -25,7 +25,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@arktype/type": "^2.1.29",
+    "@arktype/type": "2.1.29",
     "dotenv": "^16.6.1",
     "drizzle-orm": "^0.44.7",
     "ioredis": "^5.3.2",
