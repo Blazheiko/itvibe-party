@@ -65,7 +65,7 @@ export default {
             return { status: 'error', message: result.message };
         }
 
-        return { status: 'ok', data: result.data.data as any };
+        return { status: 'ok', data: result.data.data };
     },
 
     async createNote(
@@ -86,7 +86,7 @@ export default {
             return { status: 'error', message: result.message };
         }
 
-        return { status: 'ok', data: result.data.data as any };
+        return { status: 'ok', data: result.data.data };
     },
 
     async getNote(context: HttpContext): Promise<GetNoteResponse> {
@@ -105,7 +105,7 @@ export default {
             return { status: 'error', message: result.message };
         }
 
-        return { status: 'ok', data: result.data.data as any };
+        return { status: 'ok', data: result.data.data };
     },
 
     async updateNote(
@@ -127,7 +127,7 @@ export default {
             return { status: 'error', message: result.message };
         }
 
-        return { status: 'ok', data: result.data.data as any };
+        return { status: 'ok', data: result.data.data };
     },
 
     async deleteNote(context: HttpContext): Promise<DeleteNoteResponse> {
@@ -166,7 +166,7 @@ export default {
             return { status: 'error', message: result.message };
         }
 
-        return { status: 'ok', photo: result.data.photo as any };
+        return { status: 'ok', photo: result.data.photo };
     },
 
     async deletePhoto(context: HttpContext): Promise<DeletePhotoResponse> {

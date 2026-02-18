@@ -9,10 +9,12 @@ import type {
   DeleteEventResponse,
   GetEventsByDateResponse,
   GetEventsByRangeResponse,
-  CreateEventInput,
-  UpdateEventInput,
-  GetEventsByRangeInput,
 } from "shared";
+import type {
+    CreateEventInput,
+    UpdateEventInput,
+    GetEventsByRangeInput,
+  } from "shared/schemas";
 
 function setServiceErrorStatus(
   context: HttpContext,

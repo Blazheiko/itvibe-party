@@ -51,11 +51,13 @@ export const GetEventsByDateResponseSchema = type({
   "message?": "string",
   "data?": "unknown[]",
 });
-export type GetEventsByDateResponse = typeof GetEventsByDateResponseSchema.infer;
+export type GetEventsByDateResponse =
+  typeof GetEventsByDateResponseSchema.infer;
 
 export const GetEventsByRangeResponseSchema = type({
   status: "'success' | 'error'",
   "message?": "string",
   "data?": "unknown[]",
 });
-export type GetEventsByRangeResponse = typeof GetEventsByRangeResponseSchema.infer;
+export type GetEventsByRangeResponse =
+  typeof GetEventsByRangeResponseSchema.infer;

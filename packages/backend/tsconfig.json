@@ -5,6 +5,7 @@
     "rootDir": "./src",
     "composite": true,
     "tsBuildInfoFile": "./dist/.tsbuildinfo",
+    "disableSourceOfProjectReferenceRedirect": true,
     "types": ["node"],
     "baseUrl": ".",
     "paths": {
@@ -13,16 +14,10 @@
       "#vendor/*": ["src/vendor/*"],
       "#database/*": ["src/database/*"],
       "#logger": ["src/vendor/utils/logger"],
-      "#drizzle/*": ["src/drizzle/*"],
-      "#shared/*": ["../shared/src/*"],
-      "shared": ["../shared/src/index.ts"],
-      "shared/responses": ["../shared/src/responses/index.ts"],
-      "shared/*": ["../shared/src/*"]
+      "#drizzle/*": ["src/drizzle/*"]
     }
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"],
-  "skipLibCheck": true,
-  "exactOptionalPropertyTypes": true,
   "references": [{ "path": "../shared" }]
 }

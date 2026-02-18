@@ -66,21 +66,24 @@ export const UpdateTaskStatusResponseSchema = type({
   "message?": "string",
   "task?": "unknown",
 });
-export type UpdateTaskStatusResponse = typeof UpdateTaskStatusResponseSchema.infer;
+export type UpdateTaskStatusResponse =
+  typeof UpdateTaskStatusResponseSchema.infer;
 
 export const UpdateTaskProgressResponseSchema = type({
   status: "'success' | 'error'",
   "message?": "string",
   "task?": "unknown",
 });
-export type UpdateTaskProgressResponse = typeof UpdateTaskProgressResponseSchema.infer;
+export type UpdateTaskProgressResponse =
+  typeof UpdateTaskProgressResponseSchema.infer;
 
 export const GetTasksByProjectResponseSchema = type({
   status: "'success' | 'error'",
   "message?": "string",
   "tasks?": "unknown[]",
 });
-export type GetTasksByProjectResponse = typeof GetTasksByProjectResponseSchema.infer;
+export type GetTasksByProjectResponse =
+  typeof GetTasksByProjectResponseSchema.infer;
 
 export const GetSubTasksResponseSchema = type({
   status: "'success' | 'error'",

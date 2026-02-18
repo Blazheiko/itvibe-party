@@ -56,7 +56,8 @@ export const GetProjectTasksResponseSchema = type({
   "message?": "string",
   "data?": "unknown[]",
 });
-export type GetProjectTasksResponse = typeof GetProjectTasksResponseSchema.infer;
+export type GetProjectTasksResponse =
+  typeof GetProjectTasksResponseSchema.infer;
 
 export const GetProjectStatisticsResponseSchema = type({
   status: "'success' | 'error'",

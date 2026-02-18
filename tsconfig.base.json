@@ -30,6 +30,6 @@
     "skipLibCheck": true,
     "isolatedModules": true,
     "verbatimModuleSyntax": true,
-    "preserveSymlinks": true,
-  },
+    "preserveSymlinks": true
+  }
 }

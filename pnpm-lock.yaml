@@ -100,7 +100,7 @@ importers:
   packages/backend:
     dependencies:
       '@arktype/type':
-        specifier: ^2.1.29
+        specifier: 2.1.29
         version: 2.1.29
       dotenv:
         specifier: ^16.6.1
@@ -252,17 +252,17 @@ importers:
   packages/shared:
     dependencies:
       '@ark/schema':
-        specifier: ^0.56.0
+        specifier: 0.56.0
         version: 0.56.0
       '@ark/util':
-        specifier: ^0.56.0
+        specifier: 0.56.0
         version: 0.56.0
       '@arktype/type':
-        specifier: ^2.1.29
+        specifier: 2.1.29
         version: 2.1.29
       ts-pattern:
-        specifier: ^5.6.0
-        version: 5.9.0
+        specifier: 5.6.0
+        version: 5.6.0
 
 packages:
 
@@ -3526,6 +3526,9 @@ packages:
 
   ts-interface-checker@0.1.13:
     resolution: {integrity: sha512-Y/arvbn+rrz3JCKl9C4kVNfTfSm2/mEp5FSz5EsZSANGPSlQrpRI5M4PKF+mJnE52jOO90PnPSc3Ur3bTQw0gA==}
+
+  ts-pattern@5.6.0:
+    resolution: {integrity: sha512-SL8u60X5+LoEy9tmQHWCdPc2hhb2pKI6I1tU5Jue3v8+iRqZdcT3mWPwKKJy1fMfky6uha82c8ByHAE8PMhKHw==}
 
   ts-pattern@5.9.0:
     resolution: {integrity: sha512-6s5V71mX8qBUmlgbrfL33xDUwO0fq48rxAu2LBE11WBeGdpCPOsXksQbZJHvHwhrd3QjUusd3mAOM5Gg0mFBLg==}
@@ -7086,6 +7089,8 @@ snapshots:
       typescript: 5.9.3
 
   ts-interface-checker@0.1.13: {}
+
+  ts-pattern@5.6.0: {}
 
   ts-pattern@5.9.0: {}
 

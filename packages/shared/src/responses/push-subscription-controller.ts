@@ -51,7 +51,8 @@ export const GetSubscriptionsResponseSchema = type({
   "message?": "string",
   "subscriptions?": "unknown[]",
 });
-export type GetSubscriptionsResponse = typeof GetSubscriptionsResponseSchema.infer;
+export type GetSubscriptionsResponse =
+  typeof GetSubscriptionsResponseSchema.infer;
 
 export const CreateSubscriptionResponseSchema = type({
   status: "'success' | 'error'",
@@ -66,7 +67,8 @@ export const GetSubscriptionResponseSchema = type({
   "message?": "string",
   "data?": "unknown | null",
 });
-export type GetSubscriptionResponse = typeof GetSubscriptionResponseSchema.infer;
+export type GetSubscriptionResponse =
+  typeof GetSubscriptionResponseSchema.infer;
 
 export const UpdateSubscriptionResponseSchema = type({
   status: "'success' | 'error'",

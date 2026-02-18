@@ -77,7 +77,8 @@ export type TestParamsResponse = typeof TestParamsResponseSchema.infer;
 export const SetHeaderAndCookieResponseSchema = type({
   status: "string",
 });
-export type SetHeaderAndCookieResponse = typeof SetHeaderAndCookieResponseSchema.infer;
+export type SetHeaderAndCookieResponse =
+  typeof SetHeaderAndCookieResponseSchema.infer;
 
 export const TestMiddlewareResponseSchema = type({
   middlewares: "string[]",

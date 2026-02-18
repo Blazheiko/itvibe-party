@@ -26,10 +26,6 @@
       "types": "./dist/enums/index.d.ts",
       "import": "./dist/enums/index.js"
     },
-    "./events": {
-      "types": "./dist/events/index.d.ts",
-      "import": "./dist/events/index.js"
-    },
     "./utils": {
       "types": "./dist/utils/index.d.ts",
       "import": "./dist/utils/index.js"

@@ -33,13 +33,15 @@ export const WebrtcCallOfferResponseSchema = type({
   status: "'ok' | 'error'",
   message: "string",
 });
-export type WebrtcCallOfferResponse = typeof WebrtcCallOfferResponseSchema.infer;
+export type WebrtcCallOfferResponse =
+  typeof WebrtcCallOfferResponseSchema.infer;
 
 export const WebrtcCallAnswerResponseSchema = type({
   status: "'ok' | 'error'",
   message: "string",
 });
-export type WebrtcCallAnswerResponse = typeof WebrtcCallAnswerResponseSchema.infer;
+export type WebrtcCallAnswerResponse =
+  typeof WebrtcCallAnswerResponseSchema.infer;
 
 export const WebrtcIceCandidateResponseSchema = type({
   status: "'ok' | 'error'",
@@ -52,7 +54,8 @@ export const WebrtcStartCallResponseSchema = type({
   status: "'ok' | 'error'",
   message: "string",
 });
-export type WebrtcStartCallResponse = typeof WebrtcStartCallResponseSchema.infer;
+export type WebrtcStartCallResponse =
+  typeof WebrtcStartCallResponseSchema.infer;
 
 export const WebrtcCancelCallResponseSchema = type({
   status: "'ok' | 'error'",

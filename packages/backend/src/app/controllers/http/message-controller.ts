@@ -38,7 +38,7 @@ function setServiceErrorStatus(
     context.responseData.status = 500;
 }
 
-function mapStatus(code: 'BAD_REQUEST' | 'UNAUTHORIZED' | 'NOT_FOUND' | 'CONFLICT' | 'INTERNAL') {
+function mapStatus(code: 'BAD_REQUEST' | 'UNAUTHORIZED' | 'NOT_FOUND' | 'CONFLICT' | 'INTERNAL'): 'ok' | 'error' | 'unauthorized' {
     return code === 'UNAUTHORIZED' ? 'unauthorized' : 'error';
 }
 
@@ -49,7 +49,7 @@ export default {
         context.logger.info('getMessages');
 
         const sessionInfo = context.session.sessionInfo;
-        if (!sessionInfo) {
+        if (sessionInfo === null) {
             return { status: 'error', message: 'Session not found' };
         }
 
@@ -57,7 +57,7 @@ export default {
         const result = await messageService.getMessages(
             userId,
             contactId,
-            sessionInfo.data?.userId,
+            sessionInfo.data.userId,
         );
 
         if (!result.ok) {
@@ -67,7 +67,7 @@ export default {
 
         return {
             status: 'ok',
-            messages: result.data.messages as any,
+            messages: result.data.messages,
             contact: result.data.contact,
             onlineUsers: result.data.onlineUsers,
         };
@@ -79,7 +79,7 @@ export default {
         context.logger.info('sendChatMessage');
 
         const sessionInfo = context.session.sessionInfo;
-        if (!sessionInfo) {
+        if (sessionInfo === null) {
             return { status: 'error', message: 'Session not found' };
         }
 
@@ -88,7 +88,7 @@ export default {
             userId,
             contactId,
             content,
-            sessionInfo.data?.userId,
+            sessionInfo.data.userId,
         );
 
         if (!result.ok) {
@@ -96,25 +96,25 @@ export default {
             return { status: mapStatus(result.code), message: result.message };
         }
 
-        return { status: 'ok', message: result.data.message as any };
+        return { status: 'ok', message: result.data.message };
     },
 
     async deleteMessage(context: HttpContext): Promise<DeleteMessageResponse> {
         context.logger.info('deleteMessage');
 
         const sessionInfo = context.session.sessionInfo;
-        if (!sessionInfo) {
+        if (sessionInfo === null) {
             return { status: 'error', message: 'Session not found' };
         }
 
         const { messageId } = context.httpData.params;
-        if (!messageId) {
+        if (messageId === undefined) {
             return { status: 'error', message: 'Message ID is required' };
         }
 
         const result = await messageService.deleteMessage(
             messageId,
-            sessionInfo.data?.userId,
+            sessionInfo.data.userId,
         );
 
         if (!result.ok) {
@@ -131,7 +131,7 @@ export default {
         context.logger.info('editMessage');
 
         const sessionInfo = context.session.sessionInfo;
-        if (!sessionInfo) {
+        if (sessionInfo === null) {
             return { status: 'error', message: 'Session not found' };
         }
 
@@ -140,7 +140,7 @@ export default {
             userId,
             messageId,
             content,
-            sessionInfo.data?.userId,
+            sessionInfo.data.userId,
         );
 
         if (!result.ok) {
@@ -148,7 +148,7 @@ export default {
             return { status: mapStatus(result.code), message: result.message };
         }
 
-        return { status: 'ok', message: result.data.message as any };
+        return { status: 'ok', message: result.data.message };
     },
 
     async markAsRead(
@@ -157,14 +157,14 @@ export default {
         context.logger.info('markAsRead');
 
         const sessionInfo = context.session.sessionInfo;
-        if (!sessionInfo) {
+        if (sessionInfo === null) {
             return { status: 'error', message: 'Session not found' };
         }
 
         const { messageId } = getTypedPayload(context);
         const result = await messageService.markAsRead(
             messageId,
-            sessionInfo.data?.userId,
+            sessionInfo.data.userId,
         );
 
         if (!result.ok) {
@@ -172,6 +172,6 @@ export default {
             return { status: mapStatus(result.code), message: result.message };
         }
 
-        return { status: 'ok', message: result.data.message as any };
+        return { status: 'ok', message: result.data.message };
     },
 };

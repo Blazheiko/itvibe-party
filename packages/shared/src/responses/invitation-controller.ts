@@ -5,7 +5,8 @@ export const CreateInvitationResponseSchema = type({
   "message?": "string",
   "token?": "string",
 });
-export type CreateInvitationResponse = typeof CreateInvitationResponseSchema.infer;
+export type CreateInvitationResponse =
+  typeof CreateInvitationResponseSchema.infer;
 
 export const GetUserInvitationsResponseSchema = type({
   status: "'success' | 'error'",
