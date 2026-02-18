@@ -48,6 +48,7 @@ export default [
                 method: 'get',
                 handler: MainController.testRoute,
                 typeResponse: 'MainController.TestRouteResponse',
+                ResponseSchema: 'MainController.TestRouteResponse',
                 description: 'Test route',
             }),
             defineRoute({
@@ -55,6 +56,7 @@ export default [
                 method: 'get',
                 handler: TaskController.testTasks,
                 typeResponse: 'TaskController.TestTasksResponse',
+                ResponseSchema: 'TaskController.TestTasksResponse',
                 description: 'Get all tasks 4',
             }),
         ],
@@ -69,6 +71,7 @@ export default [
                 handler: AuthController.register,
                 validator: RegisterInputSchema,
                 typeResponse: 'AuthController.RegisterResponse',
+                ResponseSchema: 'AuthController.RegisterResponse',
                 description: 'Register a new user',
             }),
             defineRoute({
@@ -77,6 +80,7 @@ export default [
                 handler: AuthController.login,
                 validator: LoginInputSchema,
                 typeResponse: 'AuthController.LoginResponse',
+                ResponseSchema: 'AuthController.LoginResponse',
                 description: 'Login a user',
             }),
             defineRoute({
@@ -84,6 +88,7 @@ export default [
                 method: 'post',
                 handler: AuthController.logout,
                 typeResponse: 'AuthController.LogoutResponse',
+                ResponseSchema: 'AuthController.LogoutResponse',
                 description: 'Logout a user',
                 middlewares: ['auth_guard'],
             }),
@@ -92,6 +97,7 @@ export default [
                 method: 'post',
                 handler: AuthController.logoutAll,
                 typeResponse: 'AuthController.LogoutAllResponse',
+                ResponseSchema: 'AuthController.LogoutAllResponse',
                 description: 'Logout all devices',
                 middlewares: ['auth_guard'],
             }),
@@ -112,6 +118,7 @@ export default [
                 handler: ChatListController.getContactList,
                 validator: GetContactListInputSchema,
                 typeResponse: 'ChatListController.GetContactListResponse',
+                ResponseSchema: 'ChatListController.GetContactListResponse',
                 description: 'Get contact list',
             }),
             defineRoute({
@@ -120,6 +127,7 @@ export default [
                 handler: ChatListController.createChat,
                 validator: CreateChatInputSchema,
                 typeResponse: 'ChatListController.CreateChatResponse',
+                ResponseSchema: 'ChatListController.CreateChatResponse',
                 description: 'Create a new chat',
             }),
             defineRoute({
@@ -128,6 +136,7 @@ export default [
                 handler: ChatListController.deleteChat,
                 validator: DeleteChatInputSchema,
                 typeResponse: 'ChatListController.DeleteChatResponse',
+                ResponseSchema: 'ChatListController.DeleteChatResponse',
                 description: 'Delete a chat',
             }),
             defineRoute({
@@ -136,6 +145,7 @@ export default [
                 handler: MessageController.getMessages,
                 validator: GetMessagesInputSchema,
                 typeResponse: 'ChatListController.GetMessagesResponse',
+                ResponseSchema: 'ChatListController.GetMessagesResponse',
                 description: 'Get messages',
             }),
             defineRoute({
@@ -144,6 +154,7 @@ export default [
                 handler: MessageController.sendChatMessage,
                 validator: SendMessageInputSchema,
                 typeResponse: 'ChatListController.SendMessageResponse',
+                ResponseSchema: 'ChatListController.SendMessageResponse',
                 description: 'Send a message',
             }),
             defineRoute({
@@ -152,6 +163,7 @@ export default [
                 handler: MessageController.deleteMessage,
                 validator: DeleteMessageInputSchema,
                 typeResponse: 'ChatListController.DeleteMessageResponse',
+                ResponseSchema: 'ChatListController.DeleteMessageResponse',
                 description: 'Delete a message',
             }),
             defineRoute({
@@ -160,6 +172,7 @@ export default [
                 handler: MessageController.editMessage,
                 validator: EditMessageInputSchema,
                 typeResponse: 'ChatListController.EditMessageResponse',
+                ResponseSchema: 'ChatListController.EditMessageResponse',
                 description: 'Edit a message',
             }),
             defineRoute({
@@ -168,6 +181,7 @@ export default [
                 handler: MessageController.markAsRead,
                 validator: MarkMessageAsReadInputSchema,
                 typeResponse: 'ChatListController.MarkMessageAsReadResponse',
+                ResponseSchema: 'ChatListController.MarkMessageAsReadResponse',
                 description: 'Mark a message as read',
             }),
             // Invitation Routes
@@ -177,6 +191,7 @@ export default [
                 handler: InvitationController.createInvitation,
                 validator: CreateInvitationInputSchema,
                 typeResponse: 'InvitationController.CreateInvitationResponse',
+                ResponseSchema: 'InvitationController.CreateInvitationResponse',
                 description: 'Create an invitation',
             }),
             defineRoute({
@@ -185,6 +200,7 @@ export default [
                 handler: InvitationController.getUserInvitations,
                 validator: GetUserInvitationsInputSchema,
                 typeResponse: 'InvitationController.GetUserInvitationsResponse',
+                ResponseSchema: 'InvitationController.GetUserInvitationsResponse',
                 description: 'Get user invitations',
             }),
         ],
@@ -199,6 +215,7 @@ export default [
                 method: 'get',
                 handler: MainController.init,
                 typeResponse: 'MainController.InitResponse',
+                ResponseSchema: 'MainController.InitResponse',
                 description: 'Initialize the main controller',
                 middlewares: ['auth_guard'],
             }),
@@ -207,6 +224,7 @@ export default [
                 method: 'get',
                 handler: MainController.updateWsToken,
                 typeResponse: 'MainController.UpdateWsTokenResponse',
+                ResponseSchema: 'MainController.UpdateWsTokenResponse',
                 description: 'Update the WebSocket token',
                 middlewares: ['auth_guard'],
             }),
@@ -216,6 +234,7 @@ export default [
                 handler: InvitationController.useInvitation,
                 validator: UseInvitationInputSchema,
                 typeResponse: 'InvitationController.UseInvitationResponse',
+                ResponseSchema: 'InvitationController.UseInvitationResponse',
                 description: 'Use an invitation',
             }),
             defineRoute({
@@ -223,6 +242,7 @@ export default [
                 method: 'get',
                 handler: MainController.testHeaders,
                 typeResponse: 'MainController.TestHeadersResponse',
+                ResponseSchema: 'MainController.TestHeadersResponse',
                 description: 'Test headers',
             }),
             defineRoute({
@@ -230,6 +250,7 @@ export default [
                 method: 'get',
                 handler: MainController.getSetCookies,
                 typeResponse: 'MainController.GetSetCookiesResponse',
+                ResponseSchema: 'MainController.GetSetCookiesResponse',
                 description: 'Test cookies',
             }),
             defineRoute({
@@ -237,6 +258,7 @@ export default [
                 method: 'get',
                 handler: MainController.testSession,
                 typeResponse: 'MainController.TestSessionResponse',
+                ResponseSchema: 'MainController.TestSessionResponse',
                 description: 'Test session',
             }),
             defineRoute({
@@ -245,6 +267,7 @@ export default [
                 handler: MainController.saveUser,
                 validator: SaveUserInputSchema,
                 typeResponse: 'MainController.SaveUserResponse',
+                ResponseSchema: 'MainController.SaveUserResponse',
                 description: 'Save a user',
             }),
             defineRoute({
@@ -252,6 +275,7 @@ export default [
                 method: 'get',
                 handler: MainController.setHeaderAndCookie,
                 typeResponse: 'MainController.SetHeaderAndCookieResponse',
+                ResponseSchema: 'MainController.SetHeaderAndCookieResponse',
                 description: 'Set header and cookie',
             }),
             defineRoute({
@@ -260,6 +284,7 @@ export default [
                 handler: MainController.testMiddleware,
                 middlewares: ['test1'],
                 typeResponse: 'MainController.TestMiddlewareResponse',
+                ResponseSchema: 'MainController.TestMiddlewareResponse',
                 description: 'Test middleware',
             }),
             {
@@ -269,6 +294,8 @@ export default [
                         method: 'get',
                         handler: MainController.testMiddleware2,
                         middlewares: ['test2'],
+                        typeResponse: 'MainController.TestMiddlewareResponse',
+                        ResponseSchema: 'MainController.TestMiddlewareResponse',
                     }),
                     {
                         group: [
@@ -277,6 +304,8 @@ export default [
                                 method: 'get',
                                 handler: MainController.testMiddleware3,
                                 middlewares: ['test4'],
+                                typeResponse: 'MainController.TestMiddlewareResponse',
+                                ResponseSchema: 'MainController.TestMiddlewareResponse',
                             }),
                         ],
                         middlewares: ['test3'],
@@ -299,6 +328,7 @@ export default [
                 method: 'get',
                 handler: NotesController.getNotes,
                 typeResponse: 'NotesController.GetNotesResponse',
+                ResponseSchema: 'NotesController.GetNotesResponse',
                 description: 'Get all notes',
             }),
             defineRoute({
@@ -307,6 +337,7 @@ export default [
                 handler: NotesController.createNote,
                 validator: CreateNoteInputSchema,
                 typeResponse: 'NotesController.CreateNoteResponse',
+                ResponseSchema: 'NotesController.CreateNoteResponse',
                 description: 'Create a new note',
             }),
             defineRoute({
@@ -315,6 +346,7 @@ export default [
                 handler: NotesController.getNote,
                 validator: 'getNote',
                 typeResponse: 'NotesController.GetNoteResponse',
+                ResponseSchema: 'NotesController.GetNoteResponse',
                 description: 'Get a note by id',
             }),
             defineRoute({
@@ -323,6 +355,7 @@ export default [
                 handler: NotesController.updateNote,
                 validator: UpdateNoteInputSchema,
                 typeResponse: 'NotesController.UpdateNoteResponse',
+                ResponseSchema: 'NotesController.UpdateNoteResponse',
                 description: 'Update a note by id',
             }),
             defineRoute({
@@ -331,6 +364,7 @@ export default [
                 handler: NotesController.deleteNote,
                 validator: 'deleteNote',
                 typeResponse: 'NotesController.DeleteNoteResponse',
+                ResponseSchema: 'NotesController.DeleteNoteResponse',
                 description: 'Delete a note by id',
             }),
             // Notes Photo Routes
@@ -339,6 +373,7 @@ export default [
                 method: 'post',
                 handler: NotesController.addPhoto,
                 typeResponse: 'NotesController.AddNotePhotoResponse',
+                ResponseSchema: 'NotesController.AddNotePhotoResponse',
                 description: 'Add a photo to a note',
             }),
             defineRoute({
@@ -347,6 +382,7 @@ export default [
                 handler: NotesController.deletePhoto,
                 validator: 'deleteNotePhoto',
                 typeResponse: 'NotesController.DeleteNotePhotoResponse',
+                ResponseSchema: 'NotesController.DeleteNotePhotoResponse',
                 description: 'Delete a photo from a note',
             }),
         ],
@@ -362,6 +398,7 @@ export default [
                 method: 'get',
                 handler: CalendarController.getEvents,
                 typeResponse: 'CalendarController.GetEventsResponse',
+                ResponseSchema: 'CalendarController.GetEventsResponse',
                 description: 'Get all events',
             }),
             defineRoute({
@@ -370,6 +407,7 @@ export default [
                 handler: CalendarController.createEvent,
                 validator: CreateEventInputSchema,
                 typeResponse: 'CalendarController.CreateEventResponse',
+                ResponseSchema: 'CalendarController.CreateEventResponse',
                 description: 'Create a new event',
             }),
             defineRoute({
@@ -378,6 +416,7 @@ export default [
                 handler: CalendarController.getEvent,
                 validator: 'getEvent',
                 typeResponse: 'CalendarController.GetEventResponse',
+                ResponseSchema: 'CalendarController.GetEventResponse',
                 description: 'Get an event by id',
             }),
             defineRoute({
@@ -386,6 +425,7 @@ export default [
                 handler: CalendarController.updateEvent,
                 validator: UpdateEventInputSchema,
                 typeResponse: 'CalendarController.UpdateEventResponse',
+                ResponseSchema: 'CalendarController.UpdateEventResponse',
                 description: 'Update an event by id',
             }),
             defineRoute({
@@ -394,6 +434,7 @@ export default [
                 handler: CalendarController.deleteEvent,
                 validator: 'deleteEvent',
                 typeResponse: 'CalendarController.DeleteEventResponse',
+                ResponseSchema: 'CalendarController.DeleteEventResponse',
                 description: 'Delete an event by id',
             }),
             // Calendar specific routes
@@ -403,6 +444,7 @@ export default [
                 handler: CalendarController.getEventsByDate,
                 validator: 'getEventsByDate',
                 typeResponse: 'CalendarController.GetEventsByDateResponse',
+                ResponseSchema: 'CalendarController.GetEventsByDateResponse',
                 description: 'Get all events for a date',
             }),
             defineRoute({
@@ -411,6 +453,7 @@ export default [
                 handler: CalendarController.getEventsByRange,
                 validator: GetEventsByRangeInputSchema,
                 typeResponse: 'CalendarController.GetEventsByRangeResponse',
+                ResponseSchema: 'CalendarController.GetEventsByRangeResponse',
                 description: 'Get all events for a range of dates',
             }),
         ],
@@ -426,6 +469,7 @@ export default [
                 method: 'get',
                 handler: TaskController.getTasks,
                 typeResponse: 'TaskController.GetTasksResponse',
+                ResponseSchema: 'TaskController.GetTasksResponse',
                 description: 'Get all tasks',
             }),
             defineRoute({
@@ -434,6 +478,7 @@ export default [
                 handler: TaskController.createTask,
                 validator: CreateTaskInputSchema,
                 typeResponse: 'TaskController.CreateTaskResponse',
+                ResponseSchema: 'TaskController.CreateTaskResponse',
                 description: 'Create a new task',
             }),
             defineRoute({
@@ -442,6 +487,7 @@ export default [
                 handler: TaskController.getTask,
                 validator: 'getTask',
                 typeResponse: 'TaskController.GetTaskResponse',
+                ResponseSchema: 'TaskController.GetTaskResponse',
                 description: 'Get a task by id',
             }),
             defineRoute({
@@ -450,6 +496,7 @@ export default [
                 handler: TaskController.updateTask,
                 validator: UpdateTaskInputSchema,
                 typeResponse: 'TaskController.UpdateTaskResponse',
+                ResponseSchema: 'TaskController.UpdateTaskResponse',
                 description: 'Update a task by id',
             }),
             defineRoute({
@@ -457,6 +504,8 @@ export default [
                 method: 'delete',
                 handler: TaskController.deleteTask,
                 validator: 'deleteTask',
+                typeResponse: 'TaskController.DeleteTaskResponse',
+                ResponseSchema: 'TaskController.DeleteTaskResponse',
                 description: 'Delete a task by id',
             }),
             // Task specific routes
@@ -465,6 +514,7 @@ export default [
                 method: 'put',
                 handler: TaskController.updateTaskStatus,
                 typeResponse: 'TaskController.UpdateTaskStatusResponse',
+                ResponseSchema: 'TaskController.UpdateTaskStatusResponse',
                 validator: UpdateTaskStatusInputSchema,
                 description: 'Update a task status by id',
             }),
@@ -473,6 +523,7 @@ export default [
                 method: 'put',
                 handler: TaskController.updateTaskProgress,
                 typeResponse: 'TaskController.UpdateTaskProgressResponse',
+                ResponseSchema: 'TaskController.UpdateTaskProgressResponse',
                 validator: UpdateTaskProgressInputSchema,
                 description: 'Update a task progress by id',
             }),
@@ -481,6 +532,7 @@ export default [
                 method: 'get',
                 handler: TaskController.getTasksByProject,
                 typeResponse: 'TaskController.GetTasksByProjectResponse',
+                ResponseSchema: 'TaskController.GetTasksByProjectResponse',
                 validator: 'getTasksByProject',
                 description: 'Get all tasks for a project',
             }),
@@ -489,6 +541,7 @@ export default [
                 method: 'get',
                 handler: TaskController.getSubTasks,
                 typeResponse: 'TaskController.GetSubTasksResponse',
+                ResponseSchema: 'TaskController.GetSubTasksResponse',
                 validator: 'getSubTasks',
                 description: 'Get all subtasks for a task',
             }),
@@ -505,6 +558,7 @@ export default [
                 method: 'get',
                 handler: ProjectController.getProjects,
                 typeResponse: 'ProjectController.GetProjectsResponse',
+                ResponseSchema: 'ProjectController.GetProjectsResponse',
                 description: 'Get all projects',
             }),
             defineRoute({
@@ -513,6 +567,7 @@ export default [
                 handler: ProjectController.createProject,
                 validator: CreateProjectInputSchema,
                 typeResponse: 'ProjectController.CreateProjectResponse',
+                ResponseSchema: 'ProjectController.CreateProjectResponse',
                 description: 'Create a new project',
             }),
             defineRoute({
@@ -521,6 +576,7 @@ export default [
                 handler: ProjectController.getProject,
                 validator: 'getProject',
                 typeResponse: 'ProjectController.GetProjectResponse',
+                ResponseSchema: 'ProjectController.GetProjectResponse',
                 description: 'Get a project by id',
             }),
             defineRoute({
@@ -529,6 +585,7 @@ export default [
                 handler: ProjectController.updateProject,
                 validator: UpdateProjectInputSchema,
                 typeResponse: 'ProjectController.UpdateProjectResponse',
+                ResponseSchema: 'ProjectController.UpdateProjectResponse',
                 description: 'Update a project by id',
             }),
             defineRoute({
@@ -537,6 +594,7 @@ export default [
                 handler: ProjectController.deleteProject,
                 validator: 'deleteProject',
                 typeResponse: 'ProjectController.DeleteProjectResponse',
+                ResponseSchema: 'ProjectController.DeleteProjectResponse',
                 description: 'Delete a project by id',
             }),
             // Project specific routes
@@ -546,6 +604,7 @@ export default [
                 handler: ProjectController.getProjectTasks,
                 validator: 'getProjectTasks',
                 typeResponse: 'ProjectController.GetProjectTasksResponse',
+                ResponseSchema: 'ProjectController.GetProjectTasksResponse',
                 description: 'Get all tasks for a project',
             }),
             defineRoute({
@@ -554,6 +613,7 @@ export default [
                 handler: ProjectController.getProjectStatistics,
                 validator: 'getProjectStatistics',
                 typeResponse: 'ProjectController.GetProjectStatisticsResponse',
+                ResponseSchema: 'ProjectController.GetProjectStatisticsResponse',
                 description: 'Get statistics for a project',
             }),
             defineRoute({
@@ -562,6 +622,7 @@ export default [
                 handler: ProjectController.archiveProject,
                 validator: 'archiveProject',
                 typeResponse: 'ProjectController.ArchiveProjectResponse',
+                ResponseSchema: 'ProjectController.ArchiveProjectResponse',
                 description: 'Archive a project by id',
             }),
         ],
@@ -577,6 +638,7 @@ export default [
                 method: 'get',
                 handler: PushSubscriptionController.getSubscriptions,
                 typeResponse: 'PushSubscriptionController.GetSubscriptionsResponse',
+                ResponseSchema: 'PushSubscriptionController.GetSubscriptionsResponse',
             }),
             defineRoute({
                 url: '/',
@@ -584,6 +646,7 @@ export default [
                 handler: PushSubscriptionController.createSubscription,
                 validator: CreateSubscriptionInputSchema,
                 typeResponse: 'PushSubscriptionController.CreateSubscriptionResponse',
+                ResponseSchema: 'PushSubscriptionController.CreateSubscriptionResponse',
             }),
             defineRoute({
                 url: '/:subscriptionId',
@@ -591,6 +654,7 @@ export default [
                 handler: PushSubscriptionController.getSubscription,
                 validator: 'getPushSubscription',
                 typeResponse: 'PushSubscriptionController.GetSubscriptionResponse',
+                ResponseSchema: 'PushSubscriptionController.GetSubscriptionResponse',
             }),
             defineRoute({
                 url: '/:subscriptionId',
@@ -598,6 +662,7 @@ export default [
                 handler: PushSubscriptionController.updateSubscription,
                 validator: UpdateSubscriptionInputSchema,
                 typeResponse: 'PushSubscriptionController.UpdateSubscriptionResponse',
+                ResponseSchema: 'PushSubscriptionController.UpdateSubscriptionResponse',
             }),
             defineRoute({
                 url: '/:subscriptionId',
@@ -605,6 +670,7 @@ export default [
                 handler: PushSubscriptionController.deleteSubscription,
                 validator: 'deletePushSubscription',
                 typeResponse: 'PushSubscriptionController.DeleteSubscriptionResponse',
+                ResponseSchema: 'PushSubscriptionController.DeleteSubscriptionResponse',
             }),
             // Push Subscription specific routes
             defineRoute({
@@ -613,6 +679,7 @@ export default [
                 handler: PushSubscriptionController.getSubscriptionLogs,
                 validator: 'getPushSubscriptionLogs',
                 typeResponse: 'PushSubscriptionController.GetSubscriptionLogsResponse',
+                ResponseSchema: 'PushSubscriptionController.GetSubscriptionLogsResponse',
             }),
             defineRoute({
                 url: '/:subscriptionId/statistics',
@@ -620,6 +687,7 @@ export default [
                 handler: PushSubscriptionController.getSubscriptionStatistics,
                 validator: 'getPushSubscriptionStatistics',
                 typeResponse: 'PushSubscriptionController.GetSubscriptionStatisticsResponse',
+                ResponseSchema: 'PushSubscriptionController.GetSubscriptionStatisticsResponse',
             }),
             defineRoute({
                 url: '/:subscriptionId/deactivate',
@@ -627,6 +695,7 @@ export default [
                 handler: PushSubscriptionController.deactivateSubscription,
                 validator: 'deactivatePushSubscription',
                 typeResponse: 'PushSubscriptionController.DeactivateSubscriptionResponse',
+                ResponseSchema: 'PushSubscriptionController.DeactivateSubscriptionResponse',
             }),
         ],
         description: 'Push Subscription routes',

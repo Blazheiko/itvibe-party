@@ -10,7 +10,7 @@ import type {
     GetSubscriptionLogsResponse,
     GetSubscriptionStatisticsResponse,
     DeactivateSubscriptionResponse,
-} from '../types/PushSubscriptionController.js';
+} from 'shared';
 import type {
     CreateSubscriptionInput,
     UpdateSubscriptionInput,

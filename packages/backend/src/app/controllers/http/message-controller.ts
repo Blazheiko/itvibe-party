@@ -7,7 +7,7 @@ import type {
     DeleteMessageResponse,
     EditMessageResponse,
     MarkAsReadResponse,
-} from '../types/ChatListController.js';
+} from 'shared';
 import type {
     EditMessageInput,
     GetMessagesInput,

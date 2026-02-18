@@ -5,7 +5,7 @@ import type {
     CreateInvitationResponse,
     GetUserInvitationsResponse,
     UseInvitationResponse,
-} from '../types/InvitationController.js';
+} from 'shared';
 import type {
     CreateInvitationInput,
     GetUserInvitationsInput,

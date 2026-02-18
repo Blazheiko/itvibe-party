@@ -12,7 +12,7 @@ import type {
     CreateEventInput,
     UpdateEventInput,
     GetEventsByRangeInput,
-} from '../types/CalendarController.js';
+} from 'shared';
 
 function setServiceErrorStatus(
     context: HttpContext,

@@ -9,9 +9,13 @@ import type {
     GetSetCookiesResponse,
     TestSessionResponse,
     SaveUserResponse,
+    TestApiSessionResponse,
+    IndexResponse,
+    TestParamsResponse,
+    SetHeaderAndCookieResponse,
     TestMiddlewareResponse,
     UpdateWsTokenResponse,
-} from '../types/MainController.js';
+} from 'shared';
 import type { SaveUserInput } from 'shared/schemas';
 
 export default {
@@ -39,16 +43,16 @@ export default {
             .data as TestSessionResponse;
     },
 
-    async testApiSession({ session, httpData, logger }: HttpContext): Promise<any> {
+    async testApiSession({ session, httpData, logger }: HttpContext): Promise<TestApiSessionResponse> {
         logger.info('testApiSession');
         return mainService.testApiSession(httpData, session?.sessionInfo ?? null).data;
     },
 
-    async index({ httpData, responseData }: HttpContext): Promise<any> {
+    async index({ httpData, responseData }: HttpContext): Promise<IndexResponse> {
         return mainService.index(httpData, responseData).data;
     },
 
-    async testParams({ httpData }: HttpContext): Promise<any> {
+    async testParams({ httpData }: HttpContext): Promise<TestParamsResponse> {
         return mainService.testParams(httpData).data;
     },
 
@@ -74,7 +78,7 @@ export default {
         return result.data as InitResponse;
     },
 
-    async setHeaderAndCookie({ responseData, logger }: HttpContext): Promise<any> {
+    async setHeaderAndCookie({ responseData, logger }: HttpContext): Promise<SetHeaderAndCookieResponse> {
         logger.info('set-header-and-cookie');
         return mainService.setHeaderAndCookie(responseData).data;
     },

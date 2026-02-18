@@ -13,7 +13,11 @@
       "#vendor/*": ["src/vendor/*"],
       "#database/*": ["src/database/*"],
       "#logger": ["src/vendor/utils/logger"],
-      "#drizzle/*": ["src/drizzle/*"]
+      "#drizzle/*": ["src/drizzle/*"],
+      "#shared/*": ["../shared/src/*"],
+      "shared": ["../shared/src/index.ts"],
+      "shared/responses": ["../shared/src/responses/index.ts"],
+      "shared/*": ["../shared/src/*"]
     }
   },
   "include": ["src/**/*"],

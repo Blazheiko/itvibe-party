@@ -43,6 +43,7 @@ export interface ApiRoute {
   rateLimit?: RateLimit
   groupRateLimit?: RateLimit
   typeResponse?: string
+  ResponseSchema?: string
   requestBody?: {
     description?: string
     schema?: ValidationSchema
@@ -137,7 +138,9 @@ export const useApiStore = defineStore('api', () => {
               }
             : undefined,
           responseSchema: {
-            schema: route.typeResponse ? responseTypes.value[route.typeResponse]?.fields || '' : '',
+            schema: (route.ResponseSchema ?? route.typeResponse)
+              ? responseTypes.value[route.ResponseSchema ?? route.typeResponse ?? '']?.fields || ''
+              : '',
           },
           fullUrl: `${pathPrefix.value}/${normalizePath(route.url)}`,
           isSelected: false,

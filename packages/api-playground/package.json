@@ -15,6 +15,7 @@
     "preview": "vite preview",
     "build-only": "vite build",
     "type-check": "vue-tsc --build",
+    "typecheck": "pnpm run type-check",
     "lint": "eslint . --fix",
     "format": "prettier --write src/"
   },

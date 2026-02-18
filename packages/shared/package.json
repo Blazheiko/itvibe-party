@@ -18,6 +18,10 @@
       "types": "./dist/schemas/index.d.ts",
       "import": "./dist/schemas/index.js"
     },
+    "./responses": {
+      "types": "./dist/responses/index.d.ts",
+      "import": "./dist/responses/index.js"
+    },
     "./enums": {
       "types": "./dist/enums/index.d.ts",
       "import": "./dist/enums/index.js"

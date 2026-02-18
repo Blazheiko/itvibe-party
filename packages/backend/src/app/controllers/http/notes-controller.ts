@@ -9,7 +9,7 @@ import type {
     DeleteNoteResponse,
     AddPhotoResponse,
     DeletePhotoResponse,
-} from '../types/NotesController.js';
+} from 'shared';
 import type { CreateNoteInput, UpdateNoteInput } from 'shared/schemas';
 
 function setServiceErrorStatus(

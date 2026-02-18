@@ -10,7 +10,7 @@ import type {
     GetProjectTasksResponse,
     GetProjectStatisticsResponse,
     ArchiveProjectResponse,
-} from '../types/ProjectController.js';
+} from 'shared';
 import type { CreateProjectInput, UpdateProjectInput } from 'shared/schemas';
 
 function setServiceErrorStatus(

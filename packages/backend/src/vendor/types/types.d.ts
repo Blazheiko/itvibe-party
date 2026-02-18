@@ -1,6 +1,7 @@
 import type { WebSocket } from "uWebSockets.js";
 import type { Logger } from "pino";
 import type { Type } from "@arktype/type";
+import type { ControllerResponseSchemaKey } from "shared";
 // import type { UserData } from '#vendor/start/server.js';
 
 export type Payload =
@@ -220,6 +221,7 @@ export interface RouteConfig<TValidator extends Type | string | undefined = unde
   groupRateLimit?: RateLimit | undefined;
   parametersKey?: string[];
   response?: ResponseSchema;
+  ResponseSchema?: ControllerResponseSchemaKey;
   requestBody?: RequestSchema;
   typeResponse?: string | undefined;
 }

@@ -12,7 +12,7 @@ import type {
     GetTasksByProjectResponse,
     GetSubTasksResponse,
     TestTasksResponse,
-} from '../types/TaskController.js';
+} from 'shared';
 import type {
     CreateTaskInput,
     UpdateTaskInput,
