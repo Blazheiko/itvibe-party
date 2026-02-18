@@ -1,51 +1,61 @@
-export interface CalendarEvent {
-  id: bigint;
-  title: string;
-  description?: string | null;
-  startTime: string | null;
-  endTime: string | null;
-  userId: bigint;
-  created_at: string | null;
-  updated_at: string | null;
-}
+import { type } from "@arktype/type";
 
-export interface GetEventsResponse {
-  status: 'success' | 'error';
-  message?: string;
-  data?: CalendarEvent[];
-}
+export const CalendarEventSchema = type({
+  id: "bigint",
+  title: "string",
+  "description?": "string | null",
+  startTime: "string | null",
+  endTime: "string | null",
+  userId: "bigint",
+  created_at: "string | null",
+  updated_at: "string | null",
+});
+export type CalendarEvent = typeof CalendarEventSchema.infer;
 
-export interface CreateEventResponse {
-  status: 'success' | 'error';
-  message?: string;
-  data?: CalendarEvent;
-}
+export const GetEventsResponseSchema = type({
+  status: "'success' | 'error'",
+  "message?": "string",
+  "data?": "unknown[]",
+});
+export type GetEventsResponse = typeof GetEventsResponseSchema.infer;
 
-export interface GetEventResponse {
-  status: 'success' | 'error';
-  message?: string;
-  data?: CalendarEvent | null;
-}
+export const CreateEventResponseSchema = type({
+  status: "'success' | 'error'",
+  "message?": "string",
+  "data?": "unknown",
+});
+export type CreateEventResponse = typeof CreateEventResponseSchema.infer;
 
-export interface UpdateEventResponse {
-  status: 'success' | 'error';
-  message?: string;
-  data?: CalendarEvent | null;
-}
+export const GetEventResponseSchema = type({
+  status: "'success' | 'error'",
+  "message?": "string",
+  "data?": "unknown | null",
+});
+export type GetEventResponse = typeof GetEventResponseSchema.infer;
 
-export interface DeleteEventResponse {
-  status: 'success' | 'error';
-  message?: string;
-}
+export const UpdateEventResponseSchema = type({
+  status: "'success' | 'error'",
+  "message?": "string",
+  "data?": "unknown | null",
+});
+export type UpdateEventResponse = typeof UpdateEventResponseSchema.infer;
 
-export interface GetEventsByDateResponse {
-  status: 'success' | 'error';
-  message?: string;
-  data?: CalendarEvent[];
-}
+export const DeleteEventResponseSchema = type({
+  status: "'success' | 'error'",
+  "message?": "string",
+});
+export type DeleteEventResponse = typeof DeleteEventResponseSchema.infer;
 
-export interface GetEventsByRangeResponse {
-  status: 'success' | 'error';
-  message?: string;
-  data?: CalendarEvent[];
-}
+export const GetEventsByDateResponseSchema = type({
+  status: "'success' | 'error'",
+  "message?": "string",
+  "data?": "unknown[]",
+});
+export type GetEventsByDateResponse = typeof GetEventsByDateResponseSchema.infer;
+
+export const GetEventsByRangeResponseSchema = type({
+  status: "'success' | 'error'",
+  "message?": "string",
+  "data?": "unknown[]",
+});
+export type GetEventsByRangeResponse = typeof GetEventsByRangeResponseSchema.infer;

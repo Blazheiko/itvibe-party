@@ -1,60 +1,71 @@
-export interface Note {
-  id: number;
-  title: string;
-  description: string;
-  userId: number;
-  createdAt: string;
-  updatedAt: string;
-}
+import { type } from "@arktype/type";
 
-export interface NotePhoto {
-  id: number;
-  noteId: number;
-  src: string;
-  filename: string;
-  size: number;
-  createdAt: string;
-}
+export const NoteSchema = type({
+  id: "number",
+  title: "string",
+  description: "string",
+  userId: "number",
+  createdAt: "string",
+  updatedAt: "string",
+});
+export type Note = typeof NoteSchema.infer;
 
-export interface GetNotesResponse {
-  status: 'ok' | 'error';
-  message?: string;
-  data?: Note[];
-}
+export const NotePhotoSchema = type({
+  id: "number",
+  noteId: "number",
+  src: "string",
+  filename: "string",
+  size: "number",
+  createdAt: "string",
+});
+export type NotePhoto = typeof NotePhotoSchema.infer;
 
-export interface CreateNoteResponse {
-  status: 'ok' | 'error';
-  message?: string;
-  data?: Note;
-}
+export const GetNotesResponseSchema = type({
+  status: "'ok' | 'error'",
+  "message?": "string",
+  "data?": "unknown[]",
+});
+export type GetNotesResponse = typeof GetNotesResponseSchema.infer;
 
-export interface GetNoteResponse {
-  status: 'ok' | 'error';
-  message?: string;
-  data?: Note;
-}
+export const CreateNoteResponseSchema = type({
+  status: "'ok' | 'error'",
+  "message?": "string",
+  "data?": "unknown",
+});
+export type CreateNoteResponse = typeof CreateNoteResponseSchema.infer;
 
-export interface UpdateNoteResponse {
-  status: 'ok' | 'error';
-  message?: string;
-  data?: Note;
-}
+export const GetNoteResponseSchema = type({
+  status: "'ok' | 'error'",
+  "message?": "string",
+  "data?": "unknown",
+});
+export type GetNoteResponse = typeof GetNoteResponseSchema.infer;
 
-export interface DeleteNoteResponse {
-  status: 'ok' | 'error';
-  message?: string;
-}
+export const UpdateNoteResponseSchema = type({
+  status: "'ok' | 'error'",
+  "message?": "string",
+  "data?": "unknown",
+});
+export type UpdateNoteResponse = typeof UpdateNoteResponseSchema.infer;
 
-export interface AddPhotoResponse {
-  status: 'ok' | 'error';
-  message?: string;
-  photo?: NotePhoto;
-}
+export const DeleteNoteResponseSchema = type({
+  status: "'ok' | 'error'",
+  "message?": "string",
+});
+export type DeleteNoteResponse = typeof DeleteNoteResponseSchema.infer;
 
-export interface DeletePhotoResponse {
-  status: 'ok' | 'error';
-  message?: string;
-}
+export const AddPhotoResponseSchema = type({
+  status: "'ok' | 'error'",
+  "message?": "string",
+  "photo?": "unknown",
+});
+export type AddPhotoResponse = typeof AddPhotoResponseSchema.infer;
+
+export const DeletePhotoResponseSchema = type({
+  status: "'ok' | 'error'",
+  "message?": "string",
+});
+export type DeletePhotoResponse = typeof DeletePhotoResponseSchema.infer;
 
 export type AddNotePhotoResponse = AddPhotoResponse;
 export type DeleteNotePhotoResponse = DeletePhotoResponse;

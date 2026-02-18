@@ -83,7 +83,7 @@ export const chatListService = {
   async deleteChat(
     userIdValue: string | number | bigint | undefined,
     chatIdValue: number,
-  ): Promise<ServiceFailure | ServiceSuccess> {
+  ) {
     if (userIdValue === undefined) {
       return failure("UNAUTHORIZED", "Session expired");
     }

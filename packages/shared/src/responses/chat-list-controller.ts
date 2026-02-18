@@ -1,115 +1,129 @@
-export interface User {
-  id: bigint;
-  name: string;
-  email: string;
-  password: string;
-  phone: string | null;
-  isAdmin: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-}
+import { type } from "@arktype/type";
 
-export interface Message {
-  id: bigint;
-  content: string;
-  senderId: bigint;
-  receiverId: bigint;
-  created_at: string | null;
-  updated_at: string | null;
-  isRead: boolean;
-  type: unknown;
-  src: string | null;
-  calendarId: bigint | null;
-  taskId: bigint | null;
-}
+export const UserSchema = type({
+  id: "bigint",
+  name: "string",
+  email: "string",
+  password: "string",
+  phone: "string | null",
+  isAdmin: "boolean",
+  createdAt: "Date",
+  updatedAt: "Date",
+});
+export type User = typeof UserSchema.infer;
 
-export interface Contact {
-  id: bigint;
-  userId: bigint;
-  contactId: bigint;
-  status: string;
-  unreadCount: number;
-  rename: string | null;
-  lastMessageId: bigint | null;
-  created_at: string | null;
-  updated_at: string | null;
-  last_message_at: string | null;
+export const MessageSchema = type({
+  id: "bigint",
+  content: "string",
+  senderId: "bigint",
+  receiverId: "bigint",
+  created_at: "string | null",
+  updated_at: "string | null",
+  isRead: "boolean",
+  type: "unknown",
+  src: "string | null",
+  calendarId: "bigint | null",
+  taskId: "bigint | null",
+});
+export type Message = typeof MessageSchema.infer;
+
+export const ContactSchema = type({
+  id: "bigint",
+  userId: "bigint",
+  contactId: "bigint",
+  status: "string",
+  unreadCount: "number",
+  rename: "string | null",
+  lastMessageId: "bigint | null",
+  created_at: "string | null",
+  updated_at: "string | null",
+  last_message_at: "string | null",
   contact: {
-    id: bigint | null;
-    name: string | null;
-  } | null;
-  lastMessage?: {
-    id: bigint;
-    content: string;
-    senderId: bigint;
-    receiverId: bigint;
-    createdAt: Date;
-    updatedAt: Date;
-    type: unknown;
-    src: string | null;
-    isRead: boolean;
-    calendarId: bigint | null;
-    taskId: bigint | null;
-  } | null;
-}
+    id: "bigint | null",
+    name: "string | null",
+  },
+  "lastMessage?": {
+    id: "bigint",
+    content: "string",
+    senderId: "bigint",
+    receiverId: "bigint",
+    createdAt: "Date",
+    updatedAt: "Date",
+    type: "unknown",
+    src: "string | null",
+    isRead: "boolean",
+    calendarId: "bigint | null",
+    taskId: "bigint | null",
+  },
+});
+export type Contact = typeof ContactSchema.infer;
 
-export interface ContactList {
-  id: bigint;
-  userId: bigint;
-  contactId: bigint;
-  status: string;
-  unreadCount: number;
-  rename: string | null;
-  lastMessageId: bigint | null;
-  created_at: string | null;
-  updated_at: string | null;
-  last_message_at: string | null;
-}
+export const ContactListSchema = type({
+  id: "bigint",
+  userId: "bigint",
+  contactId: "bigint",
+  status: "string",
+  unreadCount: "number",
+  rename: "string | null",
+  lastMessageId: "bigint | null",
+  created_at: "string | null",
+  updated_at: "string | null",
+  last_message_at: "string | null",
+});
+export type ContactList = typeof ContactListSchema.infer;
 
-export interface GetContactListResponse {
-  status: 'ok' | 'error' | 'unauthorized';
-  message?: Message | string | null;
-  contactList?: Contact[] | null;
-  onlineUsers?: string[];
-}
+export const GetContactListResponseSchema = type({
+  status: "'ok' | 'error' | 'unauthorized'",
+  "message?": "unknown",
+  "contactList?": "unknown[] | null",
+  "onlineUsers?": "string[]",
+});
+export type GetContactListResponse = typeof GetContactListResponseSchema.infer;
 
-export interface CreateChatResponse {
-  status: 'ok' | 'error' | 'unauthorized';
-  message?: Message | string | null;
-  chat?: ContactList | null;
-}
+export const CreateChatResponseSchema = type({
+  status: "'ok' | 'error' | 'unauthorized'",
+  "message?": "unknown",
+  "chat?": "unknown | null",
+});
+export type CreateChatResponse = typeof CreateChatResponseSchema.infer;
 
-export interface DeleteChatResponse {
-  status: 'ok' | 'error' | 'unauthorized';
-  message?: Message | string | null;
-}
+export const DeleteChatResponseSchema = type({
+  status: "'ok' | 'error' | 'unauthorized'",
+  "message?": "unknown",
+});
+export type DeleteChatResponse = typeof DeleteChatResponseSchema.infer;
 
-export interface GetMessagesResponse {
-  status: 'ok' | 'error' | 'unauthorized';
-  message?: string;
-  messages?: Message[];
-  contact?: unknown;
-  onlineUsers?: string[];
-}
+export const GetMessagesResponseSchema = type({
+  status: "'ok' | 'error' | 'unauthorized'",
+  "message?": "string",
+  "messages?": "unknown[]",
+  "contact?": "unknown",
+  "onlineUsers?": "string[]",
+});
+export type GetMessagesResponse = typeof GetMessagesResponseSchema.infer;
 
-export interface SendMessageResponse {
-  status: 'ok' | 'error' | 'unauthorized';
-  message?: Message | null | string;
-}
+export const SendMessageResponseSchema = type({
+  status: "'ok' | 'error' | 'unauthorized'",
+  "message?": "unknown",
+});
+export type SendMessageResponse = typeof SendMessageResponseSchema.infer;
 
-export interface DeleteMessageResponse {
-  status: 'ok' | 'error' | 'unauthorized';
-  message?: Message | string | null;
-}
+export const DeleteMessageResponseSchema = type({
+  status: "'ok' | 'error' | 'unauthorized'",
+  "message?": "unknown",
+});
+export type DeleteMessageResponse = typeof DeleteMessageResponseSchema.infer;
 
-export interface EditMessageResponse {
-  status: 'ok' | 'error' | 'unauthorized';
-  message?: Message | null | string;
-}
+export const EditMessageResponseSchema = type({
+  status: "'ok' | 'error' | 'unauthorized'",
+  "message?": "unknown",
+});
+export type EditMessageResponse = typeof EditMessageResponseSchema.infer;
 
-export interface MarkAsReadResponse {
-  status: 'ok' | 'error' | 'unauthorized';
-  message?: Message | string | null;
-}
+export const MarkAsReadResponseSchema = type({
+  status: "'ok' | 'error' | 'unauthorized'",
+  "message?": "unknown",
+});
+export type MarkAsReadResponse = typeof MarkAsReadResponseSchema.infer;
 
 export type MarkMessageAsReadResponse = MarkAsReadResponse;

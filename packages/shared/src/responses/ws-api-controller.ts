@@ -1,73 +1,91 @@
-export interface EventTypingResponse {
-  status: 'ok' | 'error';
-}
+import { type } from "@arktype/type";
 
-export interface ReadMessageResponse {
-  status: 'ok' | 'error';
-  message: string;
-}
+export const EventTypingResponseSchema = type({
+  status: "'ok' | 'error'",
+});
+export type EventTypingResponse = typeof EventTypingResponseSchema.infer;
 
-export interface IncomingCallResponse {
-  status: 'ok' | 'error';
-  message: string;
-}
+export const ReadMessageResponseSchema = type({
+  status: "'ok' | 'error'",
+  message: "string",
+});
+export type ReadMessageResponse = typeof ReadMessageResponseSchema.infer;
 
-export interface AcceptCallResponse {
-  status: 'ok' | 'error';
-  message: string;
-}
+export const IncomingCallResponseSchema = type({
+  status: "'ok' | 'error'",
+  message: "string",
+});
+export type IncomingCallResponse = typeof IncomingCallResponseSchema.infer;
 
-export interface DeclineCallResponse {
-  status: 'ok' | 'error';
-  message: string;
-}
+export const AcceptCallResponseSchema = type({
+  status: "'ok' | 'error'",
+  message: "string",
+});
+export type AcceptCallResponse = typeof AcceptCallResponseSchema.infer;
 
-export interface WebrtcCallOfferResponse {
-  status: 'ok' | 'error';
-  message: string;
-}
+export const DeclineCallResponseSchema = type({
+  status: "'ok' | 'error'",
+  message: "string",
+});
+export type DeclineCallResponse = typeof DeclineCallResponseSchema.infer;
 
-export interface WebrtcCallAnswerResponse {
-  status: 'ok' | 'error';
-  message: string;
-}
+export const WebrtcCallOfferResponseSchema = type({
+  status: "'ok' | 'error'",
+  message: "string",
+});
+export type WebrtcCallOfferResponse = typeof WebrtcCallOfferResponseSchema.infer;
 
-export interface WebrtcIceCandidateResponse {
-  status: 'ok' | 'error';
-  message: string;
-}
+export const WebrtcCallAnswerResponseSchema = type({
+  status: "'ok' | 'error'",
+  message: "string",
+});
+export type WebrtcCallAnswerResponse = typeof WebrtcCallAnswerResponseSchema.infer;
 
-export interface WebrtcStartCallResponse {
-  status: 'ok' | 'error';
-  message: string;
-}
+export const WebrtcIceCandidateResponseSchema = type({
+  status: "'ok' | 'error'",
+  message: "string",
+});
+export type WebrtcIceCandidateResponse =
+  typeof WebrtcIceCandidateResponseSchema.infer;
 
-export interface WebrtcCancelCallResponse {
-  status: 'ok' | 'error';
-  message: string;
-}
+export const WebrtcStartCallResponseSchema = type({
+  status: "'ok' | 'error'",
+  message: "string",
+});
+export type WebrtcStartCallResponse = typeof WebrtcStartCallResponseSchema.infer;
 
-export interface WebrtcCallEndResponse {
-  status: 'ok' | 'error';
-  message: string;
-}
+export const WebrtcCancelCallResponseSchema = type({
+  status: "'ok' | 'error'",
+  message: "string",
+});
+export type WebrtcCancelCallResponse =
+  typeof WebrtcCancelCallResponseSchema.infer;
 
-export interface WSErrorResponse {
-  status: 'error';
-  message?: string;
-}
+export const WebrtcCallEndResponseSchema = type({
+  status: "'ok' | 'error'",
+  message: "string",
+});
+export type WebrtcCallEndResponse = typeof WebrtcCallEndResponseSchema.infer;
 
-export interface TestWsResponse {
-  status: 'ok';
-  message: string;
-}
+export const WSErrorResponseSchema = type({
+  status: "'error'",
+  "message?": "string",
+});
+export type WSErrorResponse = typeof WSErrorResponseSchema.infer;
 
-export interface WSSaveUserResponse {
-  status: 'ok';
+export const TestWsResponseSchema = type({
+  status: "'ok'",
+  message: "string",
+});
+export type TestWsResponse = typeof TestWsResponseSchema.infer;
+
+export const WSSaveUserResponseSchema = type({
+  status: "'ok'",
   user: {
-    id: number;
-    name: string;
-    email: string;
-    password?: string;
-  };
-}
+    id: "number",
+    name: "string",
+    email: "string",
+    "password?": "string",
+  },
+});
+export type WSSaveUserResponse = typeof WSSaveUserResponseSchema.infer;

@@ -1,78 +1,93 @@
-export interface PingResponse {
-  status: string;
-}
+import { type } from "@arktype/type";
 
-export interface TestRouteResponse {
-  status: string;
-}
+export const PingResponseSchema = type({
+  status: "string",
+});
+export type PingResponse = typeof PingResponseSchema.infer;
 
-export interface InitResponse {
-  status: 'ok' | 'error' | 'unauthorized';
-  message?: string;
-  user?: {
-    id: number;
-    name: string;
-    email: string;
-    createdAt: string;
-    updatedAt: string;
-  };
-  wsUrl?: string;
-}
+export const TestRouteResponseSchema = type({
+  status: "string",
+});
+export type TestRouteResponse = typeof TestRouteResponseSchema.infer;
 
-export interface TestHeadersResponse {
-  status: string;
-  headers: Array<{ key: string; value: string }>;
-  params: unknown[];
-}
+export const InitResponseSchema = type({
+  status: "'ok' | 'error' | 'unauthorized'",
+  "message?": "string",
+  "user?": {
+    id: "number",
+    name: "string",
+    email: "string",
+    createdAt: "string",
+    updatedAt: "string",
+  },
+  "wsUrl?": "string",
+});
+export type InitResponse = typeof InitResponseSchema.infer;
 
-export interface GetSetCookiesResponse {
-  status: string;
-  cookies: Array<{ key: string; value: string }>;
-}
+export const TestHeadersResponseSchema = type({
+  status: "string",
+  headers: "unknown[]",
+  params: "unknown[]",
+});
+export type TestHeadersResponse = typeof TestHeadersResponseSchema.infer;
 
-export interface TestSessionResponse {
-  status: string;
-  cookies: Array<{ key: string; value: string }>;
-  sessionInfo: unknown;
-}
+export const GetSetCookiesResponseSchema = type({
+  status: "string",
+  cookies: "unknown[]",
+});
+export type GetSetCookiesResponse = typeof GetSetCookiesResponseSchema.infer;
 
-export interface SaveUserResponse {
-  status: string;
+export const TestSessionResponseSchema = type({
+  status: "string",
+  cookies: "unknown[]",
+  sessionInfo: "unknown",
+});
+export type TestSessionResponse = typeof TestSessionResponseSchema.infer;
+
+export const SaveUserResponseSchema = type({
+  status: "string",
   user: {
-    id: number;
-    name: string;
-    email: string;
-  };
-}
+    id: "number",
+    name: "string",
+    email: "string",
+  },
+});
+export type SaveUserResponse = typeof SaveUserResponseSchema.infer;
 
-export interface TestApiSessionResponse {
-  status: string;
-  headers: Array<{ key: string; value: string }>;
-  sessionInfo: unknown;
-}
+export const TestApiSessionResponseSchema = type({
+  status: "string",
+  headers: "unknown[]",
+  sessionInfo: "unknown",
+});
+export type TestApiSessionResponse = typeof TestApiSessionResponseSchema.infer;
 
-export interface IndexResponse {
-  payload: unknown;
-  responseData: unknown;
-}
+export const IndexResponseSchema = type({
+  payload: "unknown",
+  responseData: "unknown",
+});
+export type IndexResponse = typeof IndexResponseSchema.infer;
 
-export interface TestParamsResponse {
-  params: unknown;
-  query: string[];
-  status: string;
-}
+export const TestParamsResponseSchema = type({
+  params: "unknown",
+  query: "string[]",
+  status: "string",
+});
+export type TestParamsResponse = typeof TestParamsResponseSchema.infer;
 
-export interface SetHeaderAndCookieResponse {
-  status: string;
-}
+export const SetHeaderAndCookieResponseSchema = type({
+  status: "string",
+});
+export type SetHeaderAndCookieResponse = typeof SetHeaderAndCookieResponseSchema.infer;
 
-export interface TestMiddlewareResponse {
-  middlewares: string[];
-  status: string;
-}
+export const TestMiddlewareResponseSchema = type({
+  middlewares: "string[]",
+  status: "string",
+});
+export type TestMiddlewareResponse = typeof TestMiddlewareResponseSchema.infer;
 
-export interface UpdateWsTokenResponse {
-  status: string;
-  message?: string;
-  wsUrl?: string;
-}
+export const UpdateWsTokenResponseSchema = type({
+  status: "string",
+  "message?": "string",
+  "wsUrl?": "string",
+});
+export type UpdateWsTokenResponse = typeof UpdateWsTokenResponseSchema.infer;

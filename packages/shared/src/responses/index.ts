@@ -1,16 +1,21 @@
-export interface BaseResponse {
-  status: string;
-}
+import { type } from "@arktype/type";
 
-export interface ErrorResponse extends BaseResponse {
-  status: 'error' | 'unauthorized';
-  message: string;
-}
+export const BaseResponseSchema = type({
+  status: "string",
+});
+export type BaseResponse = typeof BaseResponseSchema.infer;
 
-export interface SuccessResponse<T = unknown> extends BaseResponse {
-  status: 'ok';
-  data?: T;
-}
+export const ErrorResponseSchema = type({
+  status: "'error' | 'unauthorized'",
+  message: "string",
+});
+export type ErrorResponse = typeof ErrorResponseSchema.infer;
+
+export const SuccessResponseSchema = type({
+  status: "'ok'",
+  "data?": "unknown",
+});
+export type SuccessResponse = typeof SuccessResponseSchema.infer;
 
 export type {
   PingResponse,
