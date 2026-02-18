@@ -1,105 +1,126 @@
 # backend
 
-High-performance HTTP/WebSocket server built with uWebSockets.js, Drizzle ORM, and ArkType validation.
+High-performance HTTP/WebSocket server on uWebSockets.js with Drizzle ORM and ArkType validation.
 
 ## Quick Start
 
 ```bash
-# Install dependencies (from monorepo root)
+# from monorepo root
 pnpm install
-
-# Build shared package first (required)
 pnpm build:shared
-
-# Start development server
 pnpm dev:backend
 
-# Or run directly from this package
+# or from this package
 pnpm dev
 ```
 
 ## Environment Variables
 
-Create a `.env` file in this directory:
+Create `packages/backend/.env`:
 
 ```env
-# Application
 NODE_ENV=local
 APP_PORT=3000
 APP_HOST=0.0.0.0
 
-# MySQL Database
 MYSQL_HOST=localhost
 MYSQL_PORT=3306
 MYSQL_USER=root
 MYSQL_PASSWORD=your_password
 MYSQL_DB_NAME=cosmetology
 
-# Redis
 REDIS_HOST=localhost
 REDIS_PORT=6379
 REDIS_PASSWORD=
 REDIS_PREFIX=uwebsocket:
 
-# Telegram Notifications
-TELEGRAM_BOT_TOKEN=your_bot_token
-TELEGRAM_CHAT_ID=your_chat_id
+S3_REGION=us-east-1
+S3_ENDPOINT=s3.example.com
+S3_ACCESS_KEY_ID=key
+S3_SECRET_ACCESS_KEY=secret
+S3_BUCKET=bucket
+S3_PREFIX=/prefix
+S3_STATIC_DATA_PREFIX=/static-data
+S3_DYNAMIC_DATA_PREFIX=/dynamic-data
 ```
+
+## Architecture Rules
+
+Target flow:
+
+`Client -> Controller -> Service -> Repository -> Service -> Transformer -> Controller -> Client`
+
+These rules are mandatory for backend code:
+
+1. Controllers are transport-only.
+- Parse typed payload via `getTypedPayload(context)`.
+- Read HTTP/WS context (auth/session/params/files).
+- Map service errors to transport statuses (`400/401/404/409/500` for HTTP).
+- Do not implement business logic.
+
+2. Services contain business logic only.
+- Orchestrate repositories, external integrations, side effects.
+- Build use-case responses.
+- Call transformers before returning data to controllers.
+- Do not execute raw SQL directly.
+
+3. Repositories are the only DB boundary.
+- Only Drizzle queries (`select/insert/update/delete`).
+- No HTTP/session logic.
+- No frontend formatting logic.
+
+4. Transformers shape output contracts.
+- Convert DB rows to API payloads.
+- Handle serialization (`createdAt -> created_at`, date stringification, hidden fields).
+- No DB or HTTP logic.
+
+5. WS layer follows the same pattern.
+- `ws controller -> ws service -> repository/transformer`.
+- Event handlers are thin and delegate to services.
+
+6. Legacy pattern prohibition.
+- New code must not use `app/models/*` for business endpoints.
+- New code must not use `app/servises/*` (removed).
+- Use `app/services/*`.
 
 ## Project Structure
 
-```
+```text
 src/
-├── index.ts                 # Entry point
+├── index.ts
 ├── app/
-│   ├── controllers/         # HTTP and WebSocket request handlers
-│   │   ├── http/            # HTTP controllers
-│   │   └── ws/              # WebSocket controllers
-│   ├── routes/              # Route definitions
-│   │   ├── http-routes.ts   # HTTP route configuration
-│   │   └── ws-routes.ts     # WebSocket route configuration
-│   ├── repositories/        # Database access layer (Drizzle ORM)
-│   ├── servises/            # Business logic services
-│   ├── middlewares/         # Middleware registry
-│   ├── validate/            # Validation error handlers
-│   ├── models/              # Data models
-│   ├── events/              # Event handling
-│   ├── start/               # Startup listeners
-│   └── state/               # Application state management
-├── config/                  # Configuration files
-│   ├── app.ts               # Application settings
-│   ├── database.ts          # MySQL configuration
-│   ├── redis.ts             # Redis configuration
-│   ├── cors.ts              # CORS policy
-│   └── cookies.ts           # Cookie defaults
-├── database/                # Database connections
-│   ├── db.ts                # Drizzle ORM instance
-│   └── redis.ts             # Redis client
-├── drizzle/                 # Database schema and migrations
-│   ├── schema/              # Table definitions
-│   └── migrations/          # SQL migrations
-├── vendor/                  # Core framework utilities
-│   ├── start/               # Server initialization
-│   ├── utils/               # Helpers (context, validation, routing)
-│   ├── types/               # TypeScript type definitions
-│   ├── constants/           # Constants (MIME types, etc.)
-│   └── handlers/            # Request/response handlers
-└── openapi/                 # OpenAPI specification
+│   ├── controllers/
+│   │   ├── http/
+│   │   └── ws/
+│   ├── services/
+│   │   ├── shared/
+│   │   └── statistics/
+│   ├── repositories/
+│   ├── transformers/
+│   ├── routes/
+│   │   ├── http-routes.ts
+│   │   └── ws-routes.ts
+│   ├── events/
+│   ├── middlewares/
+│   ├── start/
+│   └── state/
+├── config/
+├── database/
+├── drizzle/
+├── openapi/
+└── vendor/
 ```
 
 ## Path Aliases
 
-The backend uses TypeScript path aliases for cleaner imports:
-
-```typescript
-import { db } from '#database/db';
-import { logger } from '#logger';
-import { appConfig } from '#config/app';
-import { MainController } from '#app/controllers/http/main-controller';
+```ts
+import { db } from '#database/db.js'
+import logger from '#logger'
+import { defineRoute } from '#vendor/utils/routing/define-route.js'
 ```
 
 | Alias | Path |
-|-------|------|
+|---|---|
 | `#app/*` | `src/app/*` |
 | `#config/*` | `src/config/*` |
 | `#vendor/*` | `src/vendor/*` |
@@ -110,475 +131,204 @@ import { MainController } from '#app/controllers/http/main-controller';
 ## Available Scripts
 
 ```bash
-# Development
-pnpm dev              # Start with hot reload (tsx watch)
-pnpm start            # Start production server
-
-# Building
-pnpm build            # Compile TypeScript
-
-# Database
-pnpm db:generate      # Generate migrations from schema changes
-pnpm db:migrate       # Apply pending migrations
-pnpm db:studio        # Open Drizzle Studio (interactive DB UI)
-pnpm db:seed          # Seed database with initial data
-
-# Code Quality
-pnpm lint             # ESLint check
-pnpm lint:fix         # ESLint with auto-fix
-pnpm format           # Prettier format
-pnpm typecheck        # TypeScript type checking
-
-# Testing
-pnpm test             # Run tests (Vitest)
-pnpm test:watch       # Watch mode
+pnpm dev
+pnpm build
+pnpm start
+pnpm typecheck
+pnpm test
+pnpm test:watch
+pnpm db:generate
+pnpm db:migrate
+pnpm db:studio
+pnpm db:seed
 ```
 
-## Working with Routes
+## HTTP Route Example
 
-### Defining HTTP Routes
+`src/app/routes/http-routes.ts`
 
-Routes are defined in `src/app/routes/http-routes.ts` using the `defineRoute()` helper:
+```ts
+import MainController from '#app/controllers/http/main-controller.js'
+import { defineRoute } from '#vendor/utils/routing/define-route.js'
+import { SaveUserInputSchema } from 'shared/schemas'
 
-```typescript
-import { defineRoute, defineRouteGroup } from '#vendor/utils/define-route';
-import { MainController } from '#app/controllers/http/main-controller';
-import { CreateContactAsInputSchema } from '@cosmetology/shared/schemas';
-
-export const httpRoutes = defineRouteGroup({
+export default [
+  {
     prefix: 'main',
-    routes: [
-        // Simple GET route
-        defineRoute({
-            method: 'get',
-            path: '/ping',
-            handler: MainController.ping,
-        }),
-
-        // POST route with validation
-        defineRoute({
-            method: 'post',
-            path: '/contact',
-            validator: CreateContactAsInputSchema,
-            handler: MainController.newMessageFromContactForm,
-        }),
-
-        // Route with rate limiting
-        defineRoute({
-            method: 'post',
-            path: '/submit',
-            handler: MainController.submit,
-            rateLimit: {
-                maxRequests: 5,
-                windowMs: 60000, // 1 minute
-            },
-        }),
+    description: 'Main routes',
+    group: [
+      defineRoute({
+        url: '/ping',
+        method: 'get',
+        handler: MainController.ping,
+        typeResponse: 'MainController.PingResponse',
+      }),
+      defineRoute({
+        url: '/save-user',
+        method: 'post',
+        validator: SaveUserInputSchema,
+        handler: MainController.saveUser,
+        typeResponse: 'MainController.SaveUserResponse',
+      }),
     ],
-});
+  },
+]
 ```
 
-### Defining WebSocket Routes
+## WebSocket Route Example
 
-WebSocket routes are defined in `src/app/routes/ws-routes.ts`:
+`src/app/routes/ws-routes.ts`
 
-```typescript
-import { defineWsRoute } from '#vendor/utils/define-route';
-import { WsApiController } from '#app/controllers/ws/ws-api-controller';
+```ts
+import WSApiController from '#app/controllers/ws/ws-api-controller.js'
+import { defineWsRoute } from '#vendor/utils/routing/define-ws-route.js'
 
-export const wsRoutes = [
-    defineWsRoute({
-        event: 'event_typing',
-        handler: WsApiController.ping,
-    }),
-];
+export default [
+  {
+    prefix: 'main',
+    description: 'Main ws routes',
+    group: [
+      defineWsRoute({
+        url: 'event_typing',
+        handler: WSApiController.eventTyping,
+        typeResponse: 'WSApiController.EventTypingResponse',
+      }),
+    ],
+  },
+]
 ```
 
-## Working with Controllers
+## Controller Example (Thin)
 
-### HTTP Controller
+```ts
+import type { HttpContext } from '#vendor/types/types.js'
+import { getTypedPayload } from '#vendor/utils/validation/get-typed-payload.js'
+import { notesService } from '#app/services/notes-service.js'
 
-Controllers are plain objects with handler methods:
-
-```typescript
-// src/app/controllers/http/main-controller.ts
-import type { HttpController } from '#vendor/types/http';
-import { getTypedPayload } from '#vendor/utils/context';
-import type { CreateContactAsInput } from '@cosmetology/shared/schemas';
-
-export const MainController = {
-    // Simple handler
-    ping: (() => {
-        return { status: true };
-    }) satisfies HttpController,
-
-    // Handler with typed payload from validator
-    newMessageFromContactForm: ((context) => {
-        const payload = getTypedPayload<CreateContactAsInput>(context);
-
-        // Access request data
-        const { ip, userAgent, cookies, headers } = context.httpData;
-
-        // Use logger
-        context.log.info({ payload }, 'New contact form submission');
-
-        // Return response
-        return { success: true, data: payload };
-    }) satisfies HttpController<CreateContactAsInput>,
-};
-```
-
-### WebSocket Controller
-
-```typescript
-// src/app/controllers/ws/ws-api-controller.ts
-import type { WsController } from '#vendor/types/ws';
-
-export const WsApiController = {
-    ping: ((context) => {
-        return { status: true };
-    }) satisfies WsController,
-};
-```
-
-## Working with Database
-
-### Repository Pattern
-
-Repositories provide a clean interface for database operations:
-
-```typescript
-// src/app/repositories/contact-as-repository.ts
-import { db } from '#database/db';
-import { contactAs } from '#drizzle/schema/contact-as';
-import { eq } from 'drizzle-orm';
-
-export const ContactAsRepository = {
-    create: async (data: NewContactAs) => {
-        const [result] = await db.insert(contactAs).values(data);
-        return result.insertId;
-    },
-
-    findById: async (id: number) => {
-        return db.query.contactAs.findFirst({
-            where: eq(contactAs.id, id),
-        });
-    },
-
-    findAll: async (filters?: ContactFilters) => {
-        return db.query.contactAs.findMany({
-            where: filters?.name ? eq(contactAs.name, filters.name) : undefined,
-            limit: filters?.limit ?? 100,
-            offset: filters?.offset ?? 0,
-        });
-    },
-
-    update: async (id: number, data: Partial<ContactAs>) => {
-        await db.update(contactAs)
-            .set({ ...data, updatedAt: new Date() })
-            .where(eq(contactAs.id, id));
-    },
-
-    deleteById: async (id: number) => {
-        await db.delete(contactAs).where(eq(contactAs.id, id));
-    },
-};
-```
-
-### Schema Definition
-
-Define database schemas in `src/drizzle/schema/`:
-
-```typescript
-// src/drizzle/schema/contact-as.ts
-import { mysqlTable, bigint, varchar, text, datetime } from 'drizzle-orm/mysql-core';
-import { sql } from 'drizzle-orm';
-
-export const contactAs = mysqlTable('contact_as', {
-    id: bigint('id', { mode: 'number', unsigned: true })
-        .autoincrement()
-        .primaryKey(),
-    name: varchar('name', { length: 255 }).notNull(),
-    phone: varchar('phone', { length: 20 }).notNull(),
-    message: text('message').notNull(),
-    createdAt: datetime('created_at')
-        .notNull()
-        .default(sql`now()`),
-    updatedAt: datetime('updated_at')
-        .notNull()
-        .default(sql`now()`)
-        .$onUpdate(() => new Date()),
-});
-```
-
-### Database Migrations
-
-```bash
-# After modifying schema files
-pnpm db:generate    # Creates migration SQL in drizzle/migrations/
-
-# Apply migrations
-pnpm db:migrate     # Runs pending migrations
-
-# Interactive database UI
-pnpm db:studio      # Opens Drizzle Studio at http://localhost:4983
-```
-
-## Validation with ArkType
-
-Schemas are defined in `@cosmetology/shared` and used for request validation:
-
-```typescript
-// In @cosmetology/shared/src/schemas/contact.ts
-import { type } from 'arktype';
-
-export const CreateContactAsInputSchema = type({
-    name: 'string>0',
-    phone: 'string>0',
-    message: 'string>0',
-});
-
-export type CreateContactAsInput = typeof CreateContactAsInputSchema.infer;
-```
-
-Validation happens automatically when a route has a `validator`:
-
-```typescript
-defineRoute({
-    method: 'post',
-    path: '/contact',
-    validator: CreateContactAsInputSchema, // Validates request body
-    handler: MainController.newMessageFromContactForm,
-});
-```
-
-Validation errors return HTTP 422 with error details.
-
-## Middleware
-
-### Registering Middleware
-
-Middleware is registered in `src/app/middlewares/kernel.ts`:
-
-```typescript
-import type { MiddlewareRegistry } from '#vendor/types/middleware';
-import { sessionApiMiddleware } from './session-api';
-
-export const middlewareRegistry: MiddlewareRegistry = {
-    session_api: sessionApiMiddleware,
-};
-```
-
-### Creating Middleware
-
-```typescript
-// src/app/middlewares/auth.ts
-import type { Middleware } from '#vendor/types/middleware';
-
-export const authMiddleware: Middleware = async (context, next) => {
-    const token = context.httpData.headers['authorization'];
-
-    if (!token) {
-        throw new Error('Unauthorized');
+export default {
+  async createNote(context: HttpContext) {
+    const userId = context.auth.getUserId()
+    if (userId === null) {
+      context.responseData.status = 401
+      return { status: 'error', message: 'Unauthorized' }
     }
 
-    // Attach user to context
-    context.user = await validateToken(token);
+    const payload = getTypedPayload(context)
+    const result = await notesService.createNote(BigInt(userId), payload)
 
-    // Continue to next middleware or handler
-    return next();
-};
+    if (!result.ok) {
+      context.responseData.status = result.code === 'BAD_REQUEST' ? 400 : 500
+      return { status: 'error', message: result.message }
+    }
+
+    return { status: 'ok', data: result.data.data }
+  },
+}
 ```
 
-### Using Middleware in Routes
+## Service Example (Business Logic)
 
-```typescript
-defineRouteGroup({
-    prefix: 'admin',
-    middlewares: ['auth'], // Applied to all routes in group
-    routes: [
-        defineRoute({
-            method: 'get',
-            path: '/dashboard',
-            handler: AdminController.dashboard,
-        }),
-    ],
-});
+```ts
+import { notesRepository } from '#app/repositories/index.js'
+import { notesTransformer } from '#app/transformers/index.js'
+import { success, failure } from '#app/services/shared/service-result.js'
+
+export const notesService = {
+  async getNote(userId: bigint, noteId: bigint) {
+    const note = await notesRepository.findByIdAndUserId(noteId, userId)
+    if (note === undefined) return failure('NOT_FOUND', 'Note not found')
+    return success({ data: notesTransformer.serialize(note) })
+  },
+}
+```
+
+## Repository Example (Drizzle Only)
+
+```ts
+import { db } from '#database/db.js'
+import { notes } from '#database/schema.js'
+import { and, eq } from 'drizzle-orm'
+
+export const notesRepository = {
+  async findByIdAndUserId(id: bigint, userId: bigint) {
+    return await db
+      .select()
+      .from(notes)
+      .where(and(eq(notes.id, id), eq(notes.userId, userId)))
+      .limit(1)
+      .then((rows) => rows.at(0))
+  },
+}
+```
+
+## Transformer Example
+
+```ts
+import { DateTime } from 'luxon'
+
+export const calendarTransformer = {
+  serialize(event: { createdAt: Date; updatedAt: Date; startTime: Date; endTime: Date }) {
+    const { createdAt, updatedAt, startTime, endTime, ...rest } = event
+    return {
+      ...rest,
+      created_at: DateTime.fromJSDate(createdAt).toISO(),
+      updated_at: DateTime.fromJSDate(updatedAt).toISO(),
+      startTime: DateTime.fromJSDate(startTime).toISO(),
+      endTime: DateTime.fromJSDate(endTime).toISO(),
+    }
+  },
+}
+```
+
+## Validation (ArkType)
+
+Schemas come from `shared/schemas`.
+
+```ts
+import { CreateTaskInputSchema } from 'shared/schemas'
+
+defineRoute({
+  url: '/tasks',
+  method: 'post',
+  validator: CreateTaskInputSchema,
+  handler: TaskController.createTask,
+})
+```
+
+Use typed payload in handlers:
+
+```ts
+const payload = getTypedPayload(context)
+```
+
+## File Uploads (S3)
+
+- Files are available in `context.httpData.files` as `Map<string, UploadedFile>`.
+- Upload helper: `#vendor/utils/storage/s3.js`.
+
+```ts
+import { uploadToS3 } from '#vendor/utils/storage/s3.js'
+
+const file = context.httpData.files?.get('photo')
+if (file) {
+  await uploadToS3('dynamic-data/file.jpg', Buffer.from(file.data), file.type)
+}
 ```
 
 ## Logging
 
-The backend uses Pino for structured logging:
+```ts
+import logger from '#logger'
 
-```typescript
-import { logger } from '#logger';
-
-// In controllers, use context.log
-context.log.info({ userId: 123 }, 'User logged in');
-context.log.error({ err }, 'Failed to process request');
-context.log.debug({ data }, 'Processing data');
-
-// Standalone logging
-logger.info('Server started');
-```
-
-## Services
-
-Business logic is encapsulated in services:
-
-```typescript
-// src/app/servises/telegram/send-message.ts
-import { appConfig } from '#config/app';
-
-export const sendTelegramMessage = async (message: string): Promise<boolean> => {
-    const { telegramBotToken, telegramChatId } = appConfig;
-
-    if (!telegramBotToken || !telegramChatId) {
-        return false;
-    }
-
-    const response = await fetch(
-        `https://api.telegram.org/bot${telegramBotToken}/sendMessage`,
-        {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                chat_id: telegramChatId,
-                text: message,
-                parse_mode: 'HTML',
-            }),
-        }
-    );
-
-    return response.ok;
-};
-```
-
-## WebSocket Features
-
-### Connection Handling
-
-WebSocket connections are managed automatically:
-
-- **URL**: `/api/websocket/:token`
-- **Idle timeout**: 120 seconds
-- **Max payload**: 1MB
-
-### Broadcasting
-
-```typescript
-import { broadcastToAll, broadcastToUser } from '#vendor/utils/ws-storage';
-
-// Send to all connected clients
-broadcastToAll({ type: 'notification', data: 'Hello everyone!' });
-
-// Send to specific user by token
-broadcastToUser(token, { type: 'private', data: 'Hello you!' });
-```
-
-## Error Handling
-
-The server handles errors automatically:
-
-| Error Type | HTTP Status | Description |
-|------------|-------------|-------------|
-| `ValidationError` | 422 | Request body validation failed |
-| `ParameterValidationError` | 400 | URL parameter validation failed |
-| Other errors | 500 | Internal server error |
-
-In production, error details are masked for security.
-
-## Static File Serving
-
-The backend serves static files from the `public/` directory. Frontend build output is automatically copied there during `pnpm build`.
-
-To disable static serving, set `serveStatic: false` in `src/config/app.ts`.
-
-## File Uploads (S3 Object Storage)
-
-The backend supports file uploads via `multipart/form-data`. Uploaded files are stored in an S3-compatible object storage (AWS S3, MinIO, Ceph, DigitalOcean Spaces, etc.) using the [minio](https://www.npmjs.com/package/minio) client library.
-
-### Environment Variables
-
-Add the following to your `.env` file:
-
-```env
-S3_REGION=us-east-1
-S3_ENDPOINT=s3.example.com
-S3_ACCESS_KEY_ID=your_access_key
-S3_SECRET_ACCESS_KEY=your_secret_key
-S3_BUCKET=your-bucket-name
-S3_PREFIX=/prefix
-S3_STATIC_DATA_PREFIX=/static-data
-S3_DYNAMIC_DATA_PREFIX=/dynamic-data
-```
-
-Configuration is loaded from `src/config/disk.ts`.
-
-### How It Works
-
-1. The client sends a `multipart/form-data` request with a file field (e.g., `photo`)
-2. uWebSockets.js parses the multipart body — files are available in `httpData.files` (a `Map<string, UploadedFile>`)
-3. The controller accesses the file via `httpData.files.get("photo")`
-4. A unique filename is generated (`UUID + original extension`)
-5. The file is uploaded to S3 using `uploadToS3()` from `src/vendor/utils/storage/s3.ts`
-6. The S3 key is stored in the database as the file reference
-
-### S3 Utility
-
-The S3 upload utility is located at `src/vendor/utils/storage/s3.ts`:
-
-```typescript
-import { uploadToS3 } from "#vendor/utils/storage/s3.js";
-
-// Upload a file buffer to S3
-await uploadToS3("dynamic-data/photo.jpg", buffer, "image/jpeg");
-```
-
-### Usage in Controllers
-
-```typescript
-async addPhoto(context: HttpContext): Promise<AddPhotoResponse> {
-    const { httpData } = context;
-
-    // Access uploaded file from multipart form data
-    const file = httpData.files?.get("photo");
-    if (file === undefined) {
-        return { status: "error", message: "No file uploaded" };
-    }
-
-    // Generate unique S3 key
-    const ext = path.extname(file.filename) || ".bin";
-    const s3Key = `dynamic-data/${randomUUID()}${ext}`;
-
-    // Upload to S3
-    await uploadToS3(s3Key, Buffer.from(file.data), file.type);
-
-    // file.filename — original filename
-    // file.data.byteLength — file size in bytes
-    // file.type — MIME type (e.g., "image/jpeg")
-}
-```
-
-### UploadedFile Interface
-
-Files parsed from `multipart/form-data` have the following structure:
-
-```typescript
-interface UploadedFile {
-    name: string;       // Form field name
-    filename: string;   // Original filename
-    type: string;       // MIME type
-    data: ArrayBuffer;  // Raw file content
-}
+logger.info('Server started')
+context.logger.error({ err }, 'Request failed')
 ```
 
 ## Tech Stack
 
-- **Server**: uWebSockets.js v20.56.0
-- **Database**: Drizzle ORM with MySQL
-- **Cache**: Redis (ioredis)
-- **Validation**: ArkType
-- **Logging**: Pino
-- **Pattern Matching**: ts-pattern
-- **Object Storage**: MinIO client (S3-compatible)
-- **Testing**: Vitest
+- uWebSockets.js
+- Drizzle ORM + MySQL
+- ioredis
+- ArkType
+- Pino
+- Vitest
