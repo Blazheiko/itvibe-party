@@ -1,4 +1,4 @@
-# @cosmetology/backend
+# backend
 
 High-performance HTTP/WebSocket server built with uWebSockets.js, Drizzle ORM, and ArkType validation.
 
@@ -493,6 +493,85 @@ The backend serves static files from the `public/` directory. Frontend build out
 
 To disable static serving, set `serveStatic: false` in `src/config/app.ts`.
 
+## File Uploads (S3 Object Storage)
+
+The backend supports file uploads via `multipart/form-data`. Uploaded files are stored in an S3-compatible object storage (AWS S3, MinIO, Ceph, DigitalOcean Spaces, etc.) using the [minio](https://www.npmjs.com/package/minio) client library.
+
+### Environment Variables
+
+Add the following to your `.env` file:
+
+```env
+S3_REGION=us-east-1
+S3_ENDPOINT=s3.example.com
+S3_ACCESS_KEY_ID=your_access_key
+S3_SECRET_ACCESS_KEY=your_secret_key
+S3_BUCKET=your-bucket-name
+S3_PREFIX=/prefix
+S3_STATIC_DATA_PREFIX=/static-data
+S3_DYNAMIC_DATA_PREFIX=/dynamic-data
+```
+
+Configuration is loaded from `src/config/disk.ts`.
+
+### How It Works
+
+1. The client sends a `multipart/form-data` request with a file field (e.g., `photo`)
+2. uWebSockets.js parses the multipart body — files are available in `httpData.files` (a `Map<string, UploadedFile>`)
+3. The controller accesses the file via `httpData.files.get("photo")`
+4. A unique filename is generated (`UUID + original extension`)
+5. The file is uploaded to S3 using `uploadToS3()` from `src/vendor/utils/storage/s3.ts`
+6. The S3 key is stored in the database as the file reference
+
+### S3 Utility
+
+The S3 upload utility is located at `src/vendor/utils/storage/s3.ts`:
+
+```typescript
+import { uploadToS3 } from "#vendor/utils/storage/s3.js";
+
+// Upload a file buffer to S3
+await uploadToS3("dynamic-data/photo.jpg", buffer, "image/jpeg");
+```
+
+### Usage in Controllers
+
+```typescript
+async addPhoto(context: HttpContext): Promise<AddPhotoResponse> {
+    const { httpData } = context;
+
+    // Access uploaded file from multipart form data
+    const file = httpData.files?.get("photo");
+    if (file === undefined) {
+        return { status: "error", message: "No file uploaded" };
+    }
+
+    // Generate unique S3 key
+    const ext = path.extname(file.filename) || ".bin";
+    const s3Key = `dynamic-data/${randomUUID()}${ext}`;
+
+    // Upload to S3
+    await uploadToS3(s3Key, Buffer.from(file.data), file.type);
+
+    // file.filename — original filename
+    // file.data.byteLength — file size in bytes
+    // file.type — MIME type (e.g., "image/jpeg")
+}
+```
+
+### UploadedFile Interface
+
+Files parsed from `multipart/form-data` have the following structure:
+
+```typescript
+interface UploadedFile {
+    name: string;       // Form field name
+    filename: string;   // Original filename
+    type: string;       // MIME type
+    data: ArrayBuffer;  // Raw file content
+}
+```
+
 ## Tech Stack
 
 - **Server**: uWebSockets.js v20.56.0
@@ -501,4 +580,5 @@ To disable static serving, set `serveStatic: false` in `src/config/app.ts`.
 - **Validation**: ArkType
 - **Logging**: Pino
 - **Pattern Matching**: ts-pattern
+- **Object Storage**: MinIO client (S3-compatible)
 - **Testing**: Vitest

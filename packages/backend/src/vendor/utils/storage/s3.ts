@@ -8,7 +8,7 @@ logger.info({ endpoint, bucket: diskConfig.s3Bucket, region: diskConfig.s3Region
 
 const minioClient = new Minio.Client({
   endPoint: endpoint,
-  useSSL: diskConfig.s3Endpoint?.startsWith("https") !== false,
+  useSSL: diskConfig.s3Endpoint?.startsWith("http://") !== true,
   accessKey: diskConfig.s3AccessKeyId ?? "",
   secretKey: diskConfig.s3SecretAccessKey ?? "",
   region: diskConfig.s3Region ?? "us-east-1",
