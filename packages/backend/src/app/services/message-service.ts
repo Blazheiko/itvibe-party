@@ -9,7 +9,7 @@ import {
 import { getOnlineUser } from "#vendor/utils/network/ws-handlers.js";
 import { failure, success } from "#app/services/shared/service-result.js";
 import { broadcastService } from "#app/services/broadcast-service.js";
-import { uploadToS3 } from "#vendor/utils/storage/s3.js";
+import { deleteFromS3, uploadToS3 } from "#vendor/utils/storage/s3.js";
 import diskConfig from "#config/disk.js";
 import type { UploadedFile } from "#vendor/types/types.js";
 import path from "node:path";
@@ -383,6 +383,18 @@ export const messageService = {
     );
     if (message === undefined) {
       return failure("NOT_FOUND", "Message not found or access denied");
+    }
+
+    const s3Keys = new Set<string>();
+    if (message.src !== null && message.src.trim() !== "") {
+      s3Keys.add(message.src);
+    }
+    if (message.thumbnail !== null && message.thumbnail.trim() !== "") {
+      s3Keys.add(message.thumbnail);
+    }
+
+    for (const key of s3Keys) {
+      await deleteFromS3(key);
     }
 
     await messageRepository.deleteById(messageId);

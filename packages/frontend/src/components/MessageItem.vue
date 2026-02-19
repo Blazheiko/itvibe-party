@@ -9,6 +9,7 @@ interface Props {
     isOwner: boolean
     isEditing: boolean
     editText: string
+    isDeleting: boolean
 }
 
 const props = defineProps<Props>()
@@ -34,12 +35,18 @@ const fileName = computed(() => {
 })
 
 const handleContextMenu = (event: MouseEvent) => {
+    if (props.isDeleting) {
+        return
+    }
     if (props.isOwner) {
         emit('context-menu', event, props.index, props.message.text)
     }
 }
 
 const handleDoubleClick = () => {
+    if (props.isDeleting) {
+        return
+    }
     if (props.isOwner && (!props.message.type || props.message.type === 'TEXT')) {
         emit('start-edit', props.index, props.message.text)
     }
@@ -54,6 +61,9 @@ const handleCancelEdit = () => {
 }
 
 const openImageViewer = () => {
+    if (props.isDeleting) {
+        return
+    }
     if (!imageOriginalSrc.value) {
         return
     }
@@ -65,6 +75,7 @@ const closeImageViewer = () => {
 }
 
 const downloadCurrentFile = () => {
+    if (props.isDeleting) return
     if (!props.message.src) return
     const anchor = document.createElement('a')
     anchor.href = props.message.src
@@ -117,6 +128,15 @@ watch(
     { immediate: true },
 )
 
+watch(
+    () => props.isDeleting,
+    (isDeleting) => {
+        if (isDeleting && isImageViewerOpen.value) {
+            closeImageViewer()
+        }
+    },
+)
+
 const onDocumentKeyDown = (event: KeyboardEvent) => {
     if (event.key === 'Escape' && isImageViewerOpen.value) {
         closeImageViewer()
@@ -139,7 +159,7 @@ onUnmounted(() => {
         :class="[
             'message',
             message.isSent ? 'sent' : 'received',
-            { editable: isOwner },
+            { editable: isOwner && !isDeleting, deleting: isDeleting },
             {
                 'with-calendar': !!message.calendarId,
                 'with-task': !!message.taskId,
@@ -276,6 +296,13 @@ onUnmounted(() => {
     line-height: 1.5;
     font-size: 15px;
     cursor: context-menu;
+}
+
+.message.deleting {
+    filter: blur(2px);
+    opacity: 0.75;
+    pointer-events: none;
+    user-select: none;
 }
 
 .message-image {

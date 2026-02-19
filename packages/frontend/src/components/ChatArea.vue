@@ -104,6 +104,14 @@ const editingMessage = ref({
     index: -1,
     text: '',
 })
+const deletingMessageKey = ref<string | null>(null)
+
+const getMessageKey = (message: Message, index: number): string => {
+    if (typeof message.id === 'number') {
+        return `id:${message.id}`
+    }
+    return `idx:${index}`
+}
 
 // WebRTC состояние теперь управляется через useWebRTC в App.vue
 
@@ -403,6 +411,10 @@ const showContextMenu = (event: MouseEvent, index: number, text: string) => {
 
     // Проверяем, является ли пользователь владельцем сообщения
     const message = messagesStore.messages[index]
+    if (!message) return
+    if (deletingMessageKey.value === getMessageKey(message, index)) {
+        return
+    }
     if (!isMessageOwner(message)) {
         return // Не показываем контекстное меню для чужих сообщений
     }
@@ -522,17 +534,24 @@ const cancelEdit = () => {
 const deleteMessage = async () => {
     if (contextMenu.value.messageIndex !== -1) {
         const message = messagesStore.messages[contextMenu.value.messageIndex]
+        if (!message) {
+            hideContextMenu()
+            return
+        }
+        const messageKey = getMessageKey(message, contextMenu.value.messageIndex)
+        deletingMessageKey.value = messageKey
+        hideContextMenu()
 
         // Проверяем, является ли пользователь владельцем сообщения
         if (!isMessageOwner(message)) {
             console.error('Нельзя удалить чужое сообщение')
-            hideContextMenu()
+            deletingMessageKey.value = null
             return
         }
 
-        // Проверяем, есть ли ID сообщения для отправки на сервер
-        if (message.id) {
-            try {
+        try {
+            // Проверяем, есть ли ID сообщения для отправки на сервер
+            if (message.id) {
                 const { error } = await messagesApi.deleteMessage(message.id)
 
                 if (error) {
@@ -543,17 +562,19 @@ const deleteMessage = async () => {
 
                 // Если удаление на сервере прошло успешно, удаляем из локального стора
                 messagesStore.deleteMessage(contextMenu.value.messageIndex)
-            } catch (error) {
-                console.error('Ошибка сети при удалении сообщения:', error)
-                // Можно показать уведомление об ошибке пользователю
-                return
+            } else {
+                // Если нет ID (например, для локальных сообщений), удаляем только локально
+                messagesStore.deleteMessage(contextMenu.value.messageIndex)
             }
-        } else {
-            // Если нет ID (например, для локальных сообщений), удаляем только локально
-            messagesStore.deleteMessage(contextMenu.value.messageIndex)
+        } catch (error) {
+            console.error('Ошибка сети при удалении сообщения:', error)
+            // Можно показать уведомление об ошибке пользователю
+            return
+        } finally {
+            if (deletingMessageKey.value === messageKey) {
+                deletingMessageKey.value = null
+            }
         }
-
-        hideContextMenu()
     }
 }
 
@@ -570,6 +591,10 @@ const createTask = () => {
 const startMessageEdit = (index: number, text: string) => {
     // Проверяем, является ли пользователь владельцем сообщения
     const message = messagesStore.messages[index]
+    if (!message) return
+    if (deletingMessageKey.value === getMessageKey(message, index)) {
+        return
+    }
     if (!isMessageOwner(message)) {
         return // Не позволяем редактировать чужие сообщения
     }
@@ -751,6 +776,7 @@ onUnmounted(() => {
                         :is-owner="isMessageOwner(message)"
                         :is-editing="editingMessage.index === index"
                         :edit-text="editingMessage.text"
+                        :is-deleting="deletingMessageKey === getMessageKey(message, index)"
                         @start-edit="startMessageEdit"
                         @save-edit="saveMessageEdit"
                         @cancel-edit="cancelMessageEdit"

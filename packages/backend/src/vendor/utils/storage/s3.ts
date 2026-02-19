@@ -26,3 +26,10 @@ export async function uploadToS3(
     "Content-Type": contentType,
   });
 }
+
+export async function deleteFromS3(key: string): Promise<void> {
+  const bucket = diskConfig.s3Bucket ?? "";
+  logger.info({ bucket, key }, "Deleting object from S3");
+
+  await minioClient.removeObject(bucket, key);
+}
