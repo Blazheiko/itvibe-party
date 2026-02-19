@@ -3,32 +3,22 @@ import type {
   RouteItem,
   RouteConfig,
   InferPayload,
-  Payload,
+  HandlerReturn,
   HttpContext,
 } from "#vendor/types/types.js";
 
 /**
- * Тип возвращаемого значения handler — расширен object для совместимости с interface response-типами
- */
-type HandlerReturn = Promise<Payload | object> | Payload | object;
-
-/**
  * Типизированный handler с payload выведенным из validator
  */
-type TypedHandler<TValidator extends Type | string | undefined> = TValidator extends Type
-  ? {
-      bivarianceHack(context: HttpContext<InferPayload<TValidator>>): HandlerReturn;
-    }["bivarianceHack"]
-  : {
-      bivarianceHack(context: HttpContext<any>): HandlerReturn;
-    }["bivarianceHack"];
+type TypedHandler<TValidator extends Type | undefined> = TValidator extends Type
+  ? (context: HttpContext<InferPayload<TValidator>>) => HandlerReturn
+  : (context: HttpContext) => HandlerReturn;
 
 /**
  * Конфигурация роута с типизированным handler
  */
-interface TypedRouteConfig<
-  TValidator extends Type | string | undefined,
-> extends RouteConfig<TValidator> {
+interface TypedRouteConfig<TValidator extends Type | undefined>
+  extends RouteConfig<TValidator> {
   handler: TypedHandler<TValidator>;
 }
 
@@ -47,10 +37,9 @@ interface TypedRouteConfig<
  *     return Promise.resolve({ status: true });
  *   },
  *   description: "Create contact",
- *   typeResponse: "ContactResponse",
  * })
  */
-export function defineRoute<TValidator extends Type | string | undefined = undefined>(
+export function defineRoute<TValidator extends Type | undefined = undefined>(
   config: TypedRouteConfig<TValidator>,
 ): RouteItem {
   return config as RouteItem;

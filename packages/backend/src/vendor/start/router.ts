@@ -29,7 +29,6 @@ const createRoute = (
         groupRateLimit: groupRateLimit ?? undefined,
         parametersKey: parseRouteParams(route.url),
         description: route.description,
-        typeResponse: route.typeResponse,
         ...(responseSchema !== undefined ? { ResponseSchema: responseSchema } : {}),
     };
 };

@@ -126,4 +126,5 @@ export const MarkAsReadResponseSchema = type({
 });
 export type MarkAsReadResponse = typeof MarkAsReadResponseSchema.infer;
 
+export const MarkMessageAsReadResponseSchema = MarkAsReadResponseSchema;
 export type MarkMessageAsReadResponse = MarkAsReadResponse;

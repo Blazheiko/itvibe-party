@@ -67,5 +67,7 @@ export const DeletePhotoResponseSchema = type({
 });
 export type DeletePhotoResponse = typeof DeletePhotoResponseSchema.infer;
 
+export const AddNotePhotoResponseSchema = AddPhotoResponseSchema;
+export const DeleteNotePhotoResponseSchema = DeletePhotoResponseSchema;
 export type AddNotePhotoResponse = AddPhotoResponse;
 export type DeleteNotePhotoResponse = DeletePhotoResponse;
