@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, nextTick, watch, computed, onUnmounted } from 'vue'
 import type { Message } from '@/stores/messages'
+import AudioWaveform from './AudioWaveform.vue'
 
 interface Props {
     message: Message
@@ -27,7 +28,7 @@ const imagePreviewSrc = computed(() => props.message.thumbnail || props.message.
 const imageOriginalSrc = computed(() => props.message.src || props.message.thumbnail || '')
 
 const handleContextMenu = (event: MouseEvent) => {
-    if (props.isOwner && (!props.message.type || props.message.type === 'TEXT')) {
+    if (props.isOwner) {
         emit('context-menu', event, props.index, props.message.text)
     }
 }
@@ -168,6 +169,21 @@ onUnmounted(() => {
                 />
                 <div v-if="message.text" class="message-caption">{{ message.text }}</div>
             </template>
+            <template v-else-if="message.type === 'VIDEO' && imageOriginalSrc">
+                <video
+                    :src="imageOriginalSrc"
+                    class="message-video"
+                    controls
+                    playsinline
+                    preload="metadata"
+                    @loadeddata="emit('image-loaded', index)"
+                ></video>
+                <div v-if="message.text" class="message-caption">{{ message.text }}</div>
+            </template>
+            <template v-else-if="message.type === 'AUDIO' && imageOriginalSrc">
+                <AudioWaveform :src="imageOriginalSrc" />
+                <div v-if="message.text" class="message-caption">{{ message.text }}</div>
+            </template>
             <template v-else>
                 {{ message.text }}
             </template>
@@ -243,6 +259,15 @@ onUnmounted(() => {
 .message-caption {
     margin-top: 8px;
     white-space: pre-wrap;
+}
+
+.message-video {
+    max-width: 320px;
+    max-height: 320px;
+    width: min(320px, 72vw);
+    border-radius: 12px;
+    display: block;
+    background: #111;
 }
 
 .image-viewer-overlay {

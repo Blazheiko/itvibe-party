@@ -122,14 +122,18 @@ export default {
     let file: UploadedFile | undefined;
     let thumbnailFile: UploadedFile | undefined;
 
-    if (httpData.hasFile("image") || httpData.files !== null) {
+    if (httpData.files !== null) {
       const payload = (httpData.payload ?? {}) as Record<string, unknown>;
       contactId = Number(payload["contactId"]);
-      content = String(payload["content"]);
+      content = String(payload["content"] ?? "");
       userId = Number(payload["userId"]);
       type = parseMessageType(payload["type"]);
       file =
-        httpData.files?.get("image") ?? httpData.files?.values().next().value;
+        httpData.files?.get("media")
+        ?? httpData.files?.get("image")
+        ?? httpData.files?.get("audio")
+        ?? httpData.files?.get("video")
+        ?? httpData.files?.values().next().value;
       thumbnailFile = httpData.files?.get("thumbnail");
       logger.info(
         {

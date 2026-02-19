@@ -20,7 +20,7 @@ function isValidSessionUser(
     );
 }
 
-function resolveImageMimeType(file: UploadedFile): string {
+function resolveMediaMimeType(file: UploadedFile): string {
     const mimeTypeFromExt = (() => {
         const ext = path.extname(file.filename).toLowerCase();
         if (ext === '.jpg' || ext === '.jpeg') return 'image/jpeg';
@@ -29,15 +29,41 @@ function resolveImageMimeType(file: UploadedFile): string {
         if (ext === '.gif') return 'image/gif';
         if (ext === '.heic') return 'image/heic';
         if (ext === '.heif') return 'image/heif';
+        if (ext === '.mp3') return 'audio/mpeg';
+        if (ext === '.wav') return 'audio/wav';
+        if (ext === '.m4a') return 'audio/mp4';
+        if (ext === '.aac') return 'audio/aac';
+        if (ext === '.ogg') return 'audio/ogg';
+        if (ext === '.webm') return 'audio/webm';
+        if (ext === '.flac') return 'audio/flac';
+        if (ext === '.opus') return 'audio/opus';
+        if (ext === '.mp4') return 'video/mp4';
+        if (ext === '.mov') return 'video/quicktime';
+        if (ext === '.avi') return 'video/x-msvideo';
+        if (ext === '.mkv') return 'video/x-matroska';
+        if (ext === '.m4v') return 'video/mp4';
         return '';
     })();
 
     return (file.type || mimeTypeFromExt).toLowerCase();
 }
 
+function resolveMediaTypeFromFile(file: UploadedFile): 'IMAGE' | 'AUDIO' | 'VIDEO' | null {
+    const mimeType = resolveMediaMimeType(file);
+    if (mimeType.startsWith('image/')) return 'IMAGE';
+    if (mimeType.startsWith('audio/')) return 'AUDIO';
+    if (mimeType.startsWith('video/')) return 'VIDEO';
+
+    const ext = path.extname(file.filename).toLowerCase();
+    if (['.jpg', '.jpeg', '.png', '.webp', '.gif', '.heic', '.heif'].includes(ext)) return 'IMAGE';
+    if (['.mp3', '.wav', '.m4a', '.ogg', '.aac', '.flac', '.opus'].includes(ext)) return 'AUDIO';
+    if (['.mp4', '.webm', '.mov', '.m4v', '.avi', '.mkv'].includes(ext)) return 'VIDEO';
+    return null;
+}
+
 async function uploadChatImageToS3(
     file: UploadedFile,
-    directory: 'chat-images' | 'chat-thumbnails',
+    directory: 'chat-images' | 'chat-thumbnails' | 'chat-audio' | 'chat-video',
 ): Promise<{ key: string; mimeType: string }> {
     const extname = path.extname(file.filename);
     const ext = extname === '' ? '.bin' : extname;
@@ -45,7 +71,7 @@ async function uploadChatImageToS3(
     const prefix = (diskConfig.s3DynamicDataPrefix ?? 'uploads')
         .replace(/^\/+|\/+$/g, '');
     const s3Key = `${prefix}/${directory}/${uniqueName}`;
-    const mimeType = resolveImageMimeType(file);
+    const mimeType = resolveMediaMimeType(file);
 
     await uploadToS3(s3Key, Buffer.from(file.data), mimeType);
     return { key: s3Key, mimeType };
@@ -113,7 +139,8 @@ export const messageService = {
 
         const userId = BigInt(payloadUserId);
         const contactBigInt = BigInt(contactId);
-        const requestedType = options.type ?? (options.file ? 'IMAGE' : 'TEXT');
+        const fileType = options.file ? resolveMediaTypeFromFile(options.file) : null;
+        const requestedType = options.type ?? (fileType ?? 'TEXT');
         const normalizedType = String(requestedType).trim().toUpperCase();
         let messageType: 'TEXT' | 'IMAGE' | 'VIDEO' | 'AUDIO' | null = null;
         if (
@@ -129,21 +156,19 @@ export const messageService = {
             return failure('BAD_REQUEST', 'Unsupported message type');
         }
 
-        if (options.file !== undefined && messageType !== 'IMAGE') {
-            return failure('BAD_REQUEST', 'File upload is supported only for IMAGE messages');
+        if (options.file !== undefined && fileType === null) {
+            return failure('BAD_REQUEST', 'Unsupported media format');
         }
 
         let messageContent = content.trim();
         let messageSrc: string | undefined;
         let messageThumbnail: string | undefined;
 
-        if (messageType === 'IMAGE') {
+        if (options.file !== undefined) {
             const file = options.file;
-            if (file === undefined) {
-                return failure('BAD_REQUEST', 'Image file is required');
-            }
+            if (file === undefined) return failure('BAD_REQUEST', 'Media file is required');
 
-            const allowedMimeTypes = new Set([
+            const allowedImageMimeTypes = new Set([
                 'image/jpeg',
                 'image/jpg',
                 'image/png',
@@ -152,48 +177,94 @@ export const messageService = {
                 'image/heic',
                 'image/heif',
             ]);
+            const allowedAudioMimeTypes = new Set([
+                'audio/mpeg',
+                'audio/mp3',
+                'audio/wav',
+                'audio/x-wav',
+                'audio/mp4',
+                'audio/m4a',
+                'audio/aac',
+                'audio/ogg',
+                'audio/webm',
+                'audio/flac',
+                'audio/opus',
+            ]);
+            const allowedVideoMimeTypes = new Set([
+                'video/mp4',
+                'video/webm',
+                'video/quicktime',
+                'video/x-msvideo',
+                'video/x-matroska',
+                'video/mp2t',
+                'video/ogg',
+            ]);
 
-            const normalizedFileType = resolveImageMimeType(file);
+            const normalizedFileType = resolveMediaMimeType(file);
+            const detectedType = fileType;
+            if (detectedType === null) {
+                return failure('BAD_REQUEST', 'Unsupported media format');
+            }
+            messageType = detectedType;
 
-            if (!allowedMimeTypes.has(normalizedFileType)) {
-                return failure('BAD_REQUEST', 'Unsupported image format');
+            if (
+                (detectedType === 'IMAGE' && !allowedImageMimeTypes.has(normalizedFileType)) ||
+                (detectedType === 'AUDIO' && !allowedAudioMimeTypes.has(normalizedFileType)) ||
+                (detectedType === 'VIDEO' && !allowedVideoMimeTypes.has(normalizedFileType))
+            ) {
+                return failure('BAD_REQUEST', 'Unsupported media format');
             }
 
             const fileSize = file.data.byteLength;
-            const maxFileSizeBytes = 10 * 1024 * 1024;
+            const maxFileSizeBytes =
+                detectedType === 'IMAGE'
+                    ? 10 * 1024 * 1024
+                    : detectedType === 'AUDIO'
+                        ? 20 * 1024 * 1024
+                        : 80 * 1024 * 1024;
             if (fileSize <= 0) {
-                return failure('BAD_REQUEST', 'Uploaded file is empty');
+                return failure('BAD_REQUEST', 'Uploaded media file is empty');
             }
             if (fileSize > maxFileSizeBytes) {
-                return failure('BAD_REQUEST', 'Image exceeds 10MB limit');
+                return failure('BAD_REQUEST', 'Media file exceeds limit');
             }
 
-            const uploadedOriginal = await uploadChatImageToS3(file, 'chat-images');
+            const uploadDirectory =
+                detectedType === 'IMAGE'
+                    ? 'chat-images'
+                    : detectedType === 'AUDIO'
+                        ? 'chat-audio'
+                        : 'chat-video';
+            const uploadedOriginal = await uploadChatImageToS3(file, uploadDirectory);
             messageSrc = uploadedOriginal.key;
 
-            const thumbnailFile = options.thumbnailFile;
-            if (thumbnailFile !== undefined) {
-                const normalizedThumbnailType = resolveImageMimeType(thumbnailFile);
-                if (!allowedMimeTypes.has(normalizedThumbnailType)) {
-                    return failure('BAD_REQUEST', 'Unsupported thumbnail format');
-                }
+            if (detectedType === 'IMAGE') {
+                const thumbnailFile = options.thumbnailFile;
+                if (thumbnailFile !== undefined) {
+                    const normalizedThumbnailType = resolveMediaMimeType(thumbnailFile);
+                    if (!allowedImageMimeTypes.has(normalizedThumbnailType)) {
+                        return failure('BAD_REQUEST', 'Unsupported thumbnail format');
+                    }
 
-                const thumbnailSize = thumbnailFile.data.byteLength;
-                const maxThumbnailSizeBytes = 2 * 1024 * 1024;
-                if (thumbnailSize <= 0) {
-                    return failure('BAD_REQUEST', 'Uploaded thumbnail is empty');
-                }
-                if (thumbnailSize > maxThumbnailSizeBytes) {
-                    return failure('BAD_REQUEST', 'Thumbnail exceeds 2MB limit');
-                }
+                    const thumbnailSize = thumbnailFile.data.byteLength;
+                    const maxThumbnailSizeBytes = 2 * 1024 * 1024;
+                    if (thumbnailSize <= 0) {
+                        return failure('BAD_REQUEST', 'Uploaded thumbnail is empty');
+                    }
+                    if (thumbnailSize > maxThumbnailSizeBytes) {
+                        return failure('BAD_REQUEST', 'Thumbnail exceeds 2MB limit');
+                    }
 
-                const uploadedThumbnail = await uploadChatImageToS3(
-                    thumbnailFile,
-                    'chat-thumbnails',
-                );
-                messageThumbnail = uploadedThumbnail.key;
+                    const uploadedThumbnail = await uploadChatImageToS3(
+                        thumbnailFile,
+                        'chat-thumbnails',
+                    );
+                    messageThumbnail = uploadedThumbnail.key;
+                } else {
+                    messageThumbnail = messageSrc;
+                }
             } else {
-                messageThumbnail = messageSrc;
+                messageThumbnail = undefined;
             }
         } else {
             if (messageContent.length === 0) {

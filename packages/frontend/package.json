@@ -21,7 +21,8 @@
         "pinia": "^3.0.1",
         "shared": "workspace:*",
         "vue": "^3.5.13",
-        "vue-router": "^4.5.0"
+        "vue-router": "^4.5.0",
+        "wavesurfer.js": "^7.10.1"
     },
     "devDependencies": {
         "@playwright/test": "^1.51.0",

@@ -55,8 +55,9 @@ const dragCounter = ref(0)
 const isDragOver = ref(false)
 
 interface PendingImagePreview {
+    mediaType: 'IMAGE' | 'AUDIO' | 'VIDEO'
     file: File
-    thumbnailFile: File
+    thumbnailFile?: File
     previewUrl: string
     name: string
     size: number
@@ -64,7 +65,11 @@ interface PendingImagePreview {
 
 const pendingImage = ref<PendingImagePreview | null>(null)
 const maxImageSizeBytes = 10 * 1024 * 1024
-const allowedImageMimeTypes = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif'])
+const maxAudioSizeBytes = 20 * 1024 * 1024
+const maxVideoSizeBytes = 80 * 1024 * 1024
+const allowedImageMimeTypes = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/heic', 'image/heif'])
+const allowedAudioMimeTypes = new Set(['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/x-wav', 'audio/mp4', 'audio/m4a', 'audio/aac', 'audio/ogg', 'audio/webm', 'audio/flac', 'audio/opus'])
+const allowedVideoMimeTypes = new Set(['video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo', 'video/x-matroska', 'video/mp2t', 'video/ogg'])
 
 // Используем storeToRefs для получения реактивного selectedContact из стора
 const { selectedContact } = storeToRefs(contactsStore)
@@ -87,6 +92,7 @@ const contextMenu = ref({
     messageIndex: -1,
     isEditing: false,
     editText: '',
+    canEdit: false,
 })
 
 // Добавляем состояние для редактирования сообщения
@@ -177,12 +183,12 @@ defineExpose({
 
 const sendMessage = async () => {
     const message = newMessage.value.trim()
-    const imageFile = pendingImage.value?.file
+    const mediaFile = pendingImage.value?.file
     const thumbnailFile = pendingImage.value?.thumbnailFile
-    if (message || imageFile) {
+    if (message || mediaFile) {
         emit('send-message', {
             text: message,
-            imageFile,
+            mediaFile,
             thumbnailFile,
         })
 
@@ -219,6 +225,20 @@ const clearPendingImage = () => {
 const selectImageFromButton = () => {
     if (!selectedContact.value) return
     imageInputRef.value?.click()
+}
+
+const detectPendingMediaType = (file: File): PendingImagePreview['mediaType'] | null => {
+    if (allowedImageMimeTypes.has(file.type) || file.type.startsWith('image/')) return 'IMAGE'
+    if (allowedAudioMimeTypes.has(file.type) || file.type.startsWith('audio/')) return 'AUDIO'
+    if (allowedVideoMimeTypes.has(file.type) || file.type.startsWith('video/')) return 'VIDEO'
+    return null
+}
+
+const validatePendingMediaSize = (mediaType: PendingImagePreview['mediaType'], size: number): boolean => {
+    if (size <= 0) return false
+    if (mediaType === 'IMAGE') return size <= maxImageSizeBytes
+    if (mediaType === 'AUDIO') return size <= maxAudioSizeBytes
+    return size <= maxVideoSizeBytes
 }
 
 const generateThumbnailFile = async (file: File): Promise<File> => {
@@ -263,26 +283,30 @@ const generateThumbnailFile = async (file: File): Promise<File> => {
 const setPendingImage = async (file: File | null) => {
     if (!file) return
 
-    if (!allowedImageMimeTypes.has(file.type)) {
-        console.error('Unsupported image type')
+    const mediaType = detectPendingMediaType(file)
+    if (!mediaType) {
+        console.error('Unsupported media type')
         return
     }
 
-    if (file.size <= 0 || file.size > maxImageSizeBytes) {
-        console.error('Invalid image size')
+    if (!validatePendingMediaSize(mediaType, file.size)) {
+        console.error('Invalid media size')
         return
     }
 
-    let thumbnailFile: File
-    try {
-        thumbnailFile = await generateThumbnailFile(file)
-    } catch (error) {
-        console.error('Failed to generate image thumbnail', error)
-        return
+    let thumbnailFile: File | undefined
+    if (mediaType === 'IMAGE') {
+        try {
+            thumbnailFile = await generateThumbnailFile(file)
+        } catch (error) {
+            console.error('Failed to generate image thumbnail', error)
+            return
+        }
     }
 
     clearPendingImage()
     pendingImage.value = {
+        mediaType,
         file,
         thumbnailFile,
         previewUrl: URL.createObjectURL(file),
@@ -382,9 +406,6 @@ const showContextMenu = (event: MouseEvent, index: number, text: string) => {
     if (!isMessageOwner(message)) {
         return // Не показываем контекстное меню для чужих сообщений
     }
-    if (message.type && message.type !== 'TEXT') {
-        return
-    }
 
     contextMenu.value = {
         show: true,
@@ -393,12 +414,14 @@ const showContextMenu = (event: MouseEvent, index: number, text: string) => {
         messageIndex: index,
         isEditing: false,
         editText: text,
+        canEdit: !message.type || message.type === 'TEXT',
     }
 }
 
 const hideContextMenu = () => {
     contextMenu.value.show = false
     contextMenu.value.messageIndex = -1
+    contextMenu.value.canEdit = false
 }
 
 const startEditing = () => {
@@ -750,7 +773,20 @@ onUnmounted(() => {
                 :src="pendingImage.previewUrl"
                 alt="Pending upload preview"
                 class="pending-image"
+                v-if="pendingImage.mediaType === 'IMAGE'"
             />
+            <video
+                v-else-if="pendingImage.mediaType === 'VIDEO'"
+                :src="pendingImage.previewUrl"
+                class="pending-image pending-video"
+                controls
+            ></video>
+            <audio
+                v-else
+                :src="pendingImage.previewUrl"
+                class="pending-audio"
+                controls
+            ></audio>
             <div class="pending-image-meta">
                 <div class="pending-image-name">{{ pendingImage.name }}</div>
                 <div class="pending-image-size">{{ formatFileSize(pendingImage.size) }}</div>
@@ -805,7 +841,7 @@ onUnmounted(() => {
             <input
                 ref="imageInputRef"
                 type="file"
-                accept="image/jpeg,image/png,image/webp,image/gif"
+                accept="image/*,audio/*,video/*"
                 class="hidden-image-input"
                 @change="handleImageInputChange"
             />
@@ -884,7 +920,7 @@ onUnmounted(() => {
                 </div>
             </div>
             <div v-else class="menu-items">
-                <button @click="startEditing" class="menu-item">
+                <button v-if="contextMenu.canEdit" @click="startEditing" class="menu-item">
                     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path
                             d="M3 17.25V21H6.75L17.81 9.94L14.06 6.19L3 17.25ZM20.71 7.05C21.1 6.66 21.1 6.02 20.71 5.63L18.37 3.29C17.98 2.9 17.34 2.9 16.95 3.29L15.66 4.58L19.42 8.34L20.71 7.05Z"
@@ -1228,6 +1264,14 @@ onUnmounted(() => {
     border: 1px solid rgba(0, 0, 0, 0.12);
     background: #fff;
     padding: 4px;
+}
+
+.pending-video {
+    width: min(360px, 62vw);
+}
+
+.pending-audio {
+    width: min(360px, 62vw);
 }
 
 .pending-image-meta {

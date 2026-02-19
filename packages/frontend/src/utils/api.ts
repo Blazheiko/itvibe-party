@@ -368,18 +368,17 @@ export const messagesApi = {
   sendMessage: async (
     body: SendMessageRequest,
     files?: {
-      imageFile?: File
+      mediaFile?: File
       thumbnailFile?: File
     },
   ): Promise<ApiResponse<SendMessageResponse>> => {
-    const imageFile = files?.imageFile
-    if (imageFile) {
+    const mediaFile = files?.mediaFile
+    if (mediaFile) {
       const formData = new FormData()
       formData.append('userId', String(Number(body.userId)))
       formData.append('contactId', String(Number(body.contactId)))
       formData.append('content', body.content ?? '')
-      formData.append('type', 'IMAGE')
-      formData.append('image', imageFile)
+      formData.append('media', mediaFile)
       if (files?.thumbnailFile) {
         formData.append('thumbnail', files.thumbnailFile)
       }
