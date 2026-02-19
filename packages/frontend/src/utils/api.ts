@@ -36,6 +36,28 @@ import type {
   UpdateWsTokenResponse,
   UseInvitationResponse,
 } from 'shared/responses'
+import type {
+  CreateChatInput,
+  CreateInvitationInput,
+  CreateNoteInput,
+  CreateProjectInput,
+  CreateSubscriptionInput,
+  CreateTaskInput,
+  EditMessageInput,
+  GetContactListInput,
+  GetMessagesInput,
+  GetUserInvitationsInput,
+  LoginInput,
+  MarkMessageAsReadInput,
+  RegisterInput,
+  SaveUserInput,
+  SendMessageInput,
+  UpdateProjectInput,
+  UpdateTaskInput,
+  UpdateTaskProgressInput,
+  UpdateTaskStatusInput,
+  UseInvitationInput,
+} from 'shared/schemas'
 
 interface ApiResponse<T> {
   data: T | null
@@ -66,26 +88,23 @@ export interface Task {
   updatedAt: Date
 }
 
-export interface CreateTaskRequest {
-  title: string
-  description?: string
-  userId: string
-  projectId?: string | null
-  status: Task['status']
-  priority: Task['priority']
-  progress: number
-  isCompleted: boolean
-  tags?: string | null
-  dueDate?: string | null
-  startDate?: string | null
-  estimatedHours?: number | null
+export type CreateTaskRequest = Omit<
+  CreateTaskInput,
+  'projectId' | 'parentTaskId' | 'tags'
+> & {
+  projectId?: CreateTaskInput['projectId'] | string | null
+  parentTaskId?: CreateTaskInput['parentTaskId'] | string | null
+  tags?: CreateTaskInput['tags'] | string | null
+  userId?: string | number
+  progress?: number
+  isCompleted?: boolean
   actualHours?: number | null
-  parentTaskId?: string | null
-  [key: string]: unknown
 }
 
-export interface UpdateTaskRequest extends Partial<CreateTaskRequest> {
-  id?: never
+export type UpdateTaskRequest = Omit<UpdateTaskInput, 'projectId' | 'tags'> & {
+  projectId?: UpdateTaskInput['projectId'] | string | null
+  tags?: UpdateTaskInput['tags'] | string | null
+  parentTaskId?: string | number | null
 }
 
 export interface Project {
@@ -107,24 +126,38 @@ export interface Project {
   tasks?: unknown[]
 }
 
-export interface CreateProjectRequest {
-  title: string
-  description?: string
-  userId: string
-  status: Project['status']
-  priority: Project['priority']
-  progress: number
-  dueDate?: string | null
+export type CreateProjectRequest = CreateProjectInput & {
+  userId?: string | number
+  status?: Project['status']
+  priority?: Project['priority']
+  progress?: number
   tags?: string[] | null
-  color?: string | null
-  endDate?: string | null
-  isActive: boolean
-  startDate?: string | null
-  [key: string]: unknown
+  isActive?: boolean
 }
 
-export interface UpdateProjectRequest extends Partial<CreateProjectRequest> {
-  id?: never
+export type UpdateProjectRequest = UpdateProjectInput & {
+  userId?: string | number
+  status?: Project['status']
+  priority?: Project['priority']
+  tags?: string[] | null
+}
+
+type GetContactListRequest = Omit<GetContactListInput, 'userId'> & {
+  userId: GetContactListInput['userId'] | string | undefined
+}
+
+type CreateInvitationRequest = Omit<CreateInvitationInput, 'userId'> & {
+  userId: CreateInvitationInput['userId'] | string | undefined
+}
+
+type GetMessagesRequest = Omit<GetMessagesInput, 'userId' | 'contactId'> & {
+  userId: GetMessagesInput['userId'] | string | undefined
+  contactId: GetMessagesInput['contactId'] | string
+}
+
+type SendMessageRequest = Omit<SendMessageInput, 'userId' | 'contactId'> & {
+  userId: SendMessageInput['userId'] | string | undefined
+  contactId: SendMessageInput['contactId'] | string
 }
 
 const transformTaskDates = (task: Record<string, unknown>): Task => {
@@ -223,20 +256,11 @@ const transformProjectDates = (project: Record<string, unknown>): Project => {
 // ============================================================================
 
 export const authApi = {
-  login: async (body: {
-    email: string
-    password: string
-    token?: string
-  }): Promise<ApiResponse<LoginResponse>> => {
+  login: async (body: LoginInput): Promise<ApiResponse<LoginResponse>> => {
     return baseApi.http<LoginResponse>('POST', '/api/auth/login', body)
   },
 
-  register: async (body: {
-    name: string
-    email: string
-    password: string
-    token?: string
-  }): Promise<ApiResponse<RegisterResponse>> => {
+  register: async (body: RegisterInput): Promise<ApiResponse<RegisterResponse>> => {
     return baseApi.http<RegisterResponse>('POST', '/api/auth/register', body)
   },
 
@@ -263,14 +287,14 @@ export const mainApi = {
   },
 
   saveUser: async (
-    body: Record<string, unknown>,
+    body: SaveUserInput,
   ): Promise<ApiResponse<SaveUserResponse>> => {
     return baseApi.http<SaveUserResponse>('POST', '/api/main/save-user', body)
   },
 
-  useInvitation: async (body: {
-    token: string
-  }): Promise<ApiResponse<UseInvitationResponse>> => {
+  useInvitation: async (
+    body: UseInvitationInput,
+  ): Promise<ApiResponse<UseInvitationResponse>> => {
     return baseApi.http<UseInvitationResponse>('POST', '/api/main/invitations/use', body)
   },
 }
@@ -280,17 +304,15 @@ export const mainApi = {
 // ============================================================================
 
 export const chatApi = {
-  getContactList: async (body: {
-    userId: string | number | undefined
-  }): Promise<ApiResponse<GetContactListResponse>> => {
+  getContactList: async (
+    body: GetContactListRequest,
+  ): Promise<ApiResponse<GetContactListResponse>> => {
     return baseApi.http<GetContactListResponse>('POST', '/api/chat/get-contact-list', {
       userId: Number(body.userId),
     })
   },
 
-  createChat: async (
-    body: Record<string, unknown>,
-  ): Promise<ApiResponse<CreateChatResponse>> => {
+  createChat: async (body: CreateChatInput): Promise<ApiResponse<CreateChatResponse>> => {
     return baseApi.http<CreateChatResponse>('POST', '/api/chat/chats', body)
   },
 
@@ -298,10 +320,9 @@ export const chatApi = {
     return baseApi.http<DeleteChatResponse>('DELETE', `/api/chat/chats/${chatId}`)
   },
 
-  createInvitation: async (body: {
-    name: string
-    userId: string | number | undefined
-  }): Promise<ApiResponse<CreateInvitationResponse>> => {
+  createInvitation: async (
+    body: CreateInvitationRequest,
+  ): Promise<ApiResponse<CreateInvitationResponse>> => {
     return baseApi.http<CreateInvitationResponse>('POST', '/api/chat/invitations', {
       name: body.name,
       userId: Number(body.userId),
@@ -309,7 +330,7 @@ export const chatApi = {
   },
 
   getUserInvitations: async (
-    userId: number,
+    userId: GetUserInvitationsInput['userId'],
   ): Promise<ApiResponse<GetUserInvitationsResponse>> => {
     return baseApi.http<GetUserInvitationsResponse>('GET', `/api/chat/invitations/user/${userId}`)
   },
@@ -334,21 +355,18 @@ interface UpdateMessageResponse extends EditMessageResponse {
 }
 
 export const messagesApi = {
-  getMessages: async <T = GetMessagesResponse>(body: {
-    contactId: string | number
-    userId: string | number | undefined
-  }): Promise<ApiResponse<T>> => {
+  getMessages: async <T = GetMessagesResponse>(
+    body: GetMessagesRequest,
+  ): Promise<ApiResponse<T>> => {
     return baseApi.http<T>('POST', '/api/chat/get-messages', {
       userId: Number(body.userId),
       contactId: Number(body.contactId),
     })
   },
 
-  sendMessage: async (body: {
-    contactId: string | number
-    content: string
-    userId: string | number | undefined
-  }): Promise<ApiResponse<SendMessageResponse>> => {
+  sendMessage: async (
+    body: SendMessageRequest,
+  ): Promise<ApiResponse<SendMessageResponse>> => {
     return baseApi.http<SendMessageResponse>('POST', '/api/chat/send-chat-messages', {
       userId: Number(body.userId),
       contactId: Number(body.contactId),
@@ -367,8 +385,8 @@ export const messagesApi = {
 
   updateMessage: async (
     messageId: number,
-    content: string,
-    userId: number,
+    content: EditMessageInput['content'],
+    userId: EditMessageInput['userId'],
   ): Promise<ApiResponse<UpdateMessageResponse>> => {
     return baseApi.http<UpdateMessageResponse>(
       'PUT',
@@ -382,7 +400,7 @@ export const messagesApi = {
   },
 
   markAsRead: async (
-    messageId: number,
+    messageId: MarkMessageAsReadInput['messageId'],
   ): Promise<ApiResponse<MarkAsReadResponse>> => {
     return baseApi.http<MarkAsReadResponse>('PUT', `/api/chat/messages/${messageId}/read`, {
       messageId,
@@ -549,7 +567,7 @@ export const tasksApi = {
 
   async updateTaskStatus(
     taskId: number,
-    status: Task['status'],
+    status: UpdateTaskStatusInput['status'],
   ): Promise<Task | null> {
     try {
       const response = await baseApi.http<UpdateTaskStatusResponse>(
@@ -576,7 +594,7 @@ export const tasksApi = {
 
   async updateTaskProgress(
     taskId: number,
-    progress: number,
+    progress: UpdateTaskProgressInput['progress'] | number,
   ): Promise<Task | null> {
     try {
       const response = await baseApi.http<UpdateTaskProgressResponse>(
@@ -874,7 +892,7 @@ export const pushSubscriptionApi = {
   },
 
   createSubscription: async (
-    subscriptionData: PushSubscriptionData,
+    subscriptionData: CreateSubscriptionInput | PushSubscriptionData,
   ): Promise<ApiResponse<PushSubscriptionResponse>> => {
     return baseApi.http<PushSubscriptionResponse>(
       'POST',
@@ -975,10 +993,7 @@ export const notesApi = {
     return baseApi.http<GetNotesResponse>('GET', '/api/notes')
   },
 
-  createNote: async (body: {
-    title: string
-    description: string
-  }): Promise<ApiResponse<CreateNoteResponse>> => {
+  createNote: async (body: CreateNoteInput): Promise<ApiResponse<CreateNoteResponse>> => {
     return baseApi.http<CreateNoteResponse>('POST', '/api/notes', body)
   },
 
