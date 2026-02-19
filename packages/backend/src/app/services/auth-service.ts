@@ -2,14 +2,24 @@ import { hashPassword, validatePassword } from 'metautil';
 import type { Auth, Session } from '#vendor/types/types.js';
 import { userRepository } from '#app/repositories/index.js';
 import { userTransformer } from '#app/transformers/index.js';
-import { failure, success } from '#app/services/shared/service-result.js';
+import { failure, success, type ServiceResult, type ServiceSuccess } from '#app/services/shared/service-result.js';
 import { acceptInvitation } from '#app/services/invitation-accept-service.js';
 import { generateWsToken } from '#app/services/generate-ws-token-service.js';
 import { getWsUrl } from '#app/services/get-ws-url-service.js';
 import type { LoginInput, RegisterInput } from 'shared/schemas';
 
 export const authService = {
-    async register(payload: RegisterInput, auth: Auth, session: Session) {
+    async register(
+        payload: RegisterInput,
+        auth: Auth,
+        session: Session,
+    ): Promise<
+        ServiceResult<{
+            status: 'success' | 'error';
+            user: ReturnType<typeof userTransformer.serialize>;
+            wsUrl: string;
+        }>
+    > {
         const { name, email, password, token } = payload;
 
         const exist = await userRepository.findByEmail(email);
@@ -41,7 +51,7 @@ export const authService = {
             wsToken = await generateWsToken(sessionInfo, Number(userCreated.id));
         }
 
-        if (token !== undefined && token !== '') {
+        if (token !== '') {
             await acceptInvitation(token, Number(userCreated.id));
         }
 
@@ -52,7 +62,17 @@ export const authService = {
         });
     },
 
-    async login(payload: LoginInput, auth: Auth, session: Session) {
+    async login(
+        payload: LoginInput,
+        auth: Auth,
+        session: Session,
+    ): Promise<
+        ServiceResult<{
+            status: 'success' | 'error';
+            user: ReturnType<typeof userTransformer.serialize>;
+            wsUrl: string;
+        }>
+    > {
         const { email, password, token } = payload;
 
         const user = await userRepository.findByEmail(email);
@@ -80,7 +100,7 @@ export const authService = {
             wsToken = await generateWsToken(sessionInfo, Number(user.id));
         }
 
-        if (token !== undefined && token !== '') {
+        if (token !== '') {
             await acceptInvitation(token, Number(user.id));
         }
 
@@ -91,13 +111,15 @@ export const authService = {
         });
     },
 
-    async logout(auth: Auth) {
+    async logout(auth: Auth): Promise<ServiceSuccess<{ status: 'success' | 'error' }>> {
         const result = await auth.logout();
         const status: 'success' | 'error' = result ? 'success' : 'error';
         return success({ status });
     },
 
-    async logoutAll(auth: Auth) {
+    async logoutAll(
+        auth: Auth,
+    ): Promise<ServiceSuccess<{ status: 'success' | 'error'; deletedCount: number }>> {
         const result = await auth.logoutAll();
         const status: 'success' | 'error' = result > 0 ? 'success' : 'error';
         return success({

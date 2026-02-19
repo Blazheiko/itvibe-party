@@ -1,6 +1,6 @@
 import { env } from "node:process";
 export default Object.freeze({
-    /* eslint-disable no-undef */
+     
     client: env['DB_CONNECTION'],
     host: env['MYSQL_HOST'],
     port: Number(env['MYSQL_PORT']) || 3306,

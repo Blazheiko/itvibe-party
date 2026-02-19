@@ -3,7 +3,7 @@ import { invitations, contactList } from '#database/schema.js';
 import { eq, and } from 'drizzle-orm';
 
 export async function acceptInvitation(token: string, userId: number): Promise<void> {
-    if (!token || !userId) return;
+    if (token === '' || !Number.isFinite(userId) || userId <= 0) return;
 
     const invitation = await db
         .select()
@@ -12,7 +12,7 @@ export async function acceptInvitation(token: string, userId: number): Promise<v
         .limit(1);
 
     const invitationItem = invitation.at(0);
-    if (!invitationItem || Number(invitationItem.invitedId) === userId) return;
+    if (invitationItem === undefined || Number(invitationItem.invitedId) === userId) return;
 
     await db
         .update(invitations)

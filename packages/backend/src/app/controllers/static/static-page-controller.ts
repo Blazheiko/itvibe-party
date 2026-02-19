@@ -7,10 +7,10 @@ type StaticHttpData = Readonly<
   }
 >;
 
-type StaticPageContext = {
+interface StaticPageContext {
   httpData: StaticHttpData;
   responseData: ResponseData;
-};
+}
 
 const staticPageController = async (_context: StaticPageContext): Promise<void> => {
   // No-op: static pages are served as-is

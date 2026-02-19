@@ -12,9 +12,24 @@ interface UpdateProjectPayload extends UpdateProjectInput {
     projectId: bigint;
 }
 
+interface ProjectStatistics {
+    totalTasks: number;
+    completedTasks: number;
+    inProgressTasks: number;
+    todoTasks: number;
+    onHoldTasks: number;
+    cancelledTasks: number;
+    overdueTasks: number;
+    completionRate: number;
+    averageProgress: number;
+    totalEstimatedHours: number;
+    totalActualHours: number;
+    timeVariance: number;
+}
+
 function calculateProjectStatistics(
-    tasks: Array<{ isCompleted: boolean; status: string; dueDate: Date | null; progress: number; estimatedHours: unknown; actualHours: unknown }>,
-) {
+    tasks: { isCompleted: boolean; status: string; dueDate: Date | null; progress: number; estimatedHours: unknown; actualHours: unknown }[],
+): ProjectStatistics {
     const now = new Date();
     const totalTasks = tasks.length;
     const completedTasks = tasks.filter((task) => task.isCompleted).length;
@@ -24,17 +39,17 @@ function calculateProjectStatistics(
     const cancelledTasks = tasks.filter((task) => task.status === 'CANCELLED').length;
 
     const totalEstimatedHours = tasks.reduce(
-        (sum, task) => sum + (Number(task.estimatedHours) || 0),
+        (sum, task) => sum + (typeof task.estimatedHours === 'number' ? task.estimatedHours : 0),
         0,
     );
     const totalActualHours = tasks.reduce(
-        (sum, task) => sum + (Number(task.actualHours) || 0),
+        (sum, task) => sum + (typeof task.actualHours === 'number' ? task.actualHours : 0),
         0,
     );
 
     const averageProgress =
         totalTasks > 0
-            ? tasks.reduce((sum, task) => sum + Number(task.progress), 0) / totalTasks
+            ? tasks.reduce((sum, task) => sum + task.progress, 0) / totalTasks
             : 0;
 
     const overdueTasks = tasks.filter(
@@ -89,7 +104,10 @@ export const projectService = {
         return success({ project: projectTransformer.serialize(withTasks) });
     },
 
-    async getProject(projectId: bigint, userId: bigint) {
+    async getProject(
+        projectId: bigint,
+        userId: bigint,
+    ): Promise<ServiceResult<{ project: ReturnType<typeof projectTransformer.serialize> }>> {
         const project = await projectRepository.findByIdAndUserId(projectId, userId);
         if (project === undefined) {
             return failure('NOT_FOUND', 'Project not found');
@@ -129,7 +147,10 @@ export const projectService = {
         return success({ project: projectTransformer.serialize(project) });
     },
 
-    async deleteProject(projectId: bigint, userId: bigint) {
+    async deleteProject(
+        projectId: bigint,
+        userId: bigint,
+    ): Promise<ServiceResult<{ message: string }>> {
         const deleted = await projectRepository.delete(projectId, userId);
         if (!deleted) {
             return failure('NOT_FOUND', 'Project not found');
@@ -138,7 +159,10 @@ export const projectService = {
         return success({ message: 'Project deleted successfully' });
     },
 
-    async getProjectTasks(projectId: bigint, userId: bigint) {
+    async getProjectTasks(
+        projectId: bigint,
+        userId: bigint,
+    ): Promise<ServiceResult<{ tasks: ReturnType<typeof taskTransformer.serializeSubTask>[] }>> {
         const tasks = await projectRepository.getProjectTasks(projectId, userId);
         if (tasks === undefined) {
             return failure('NOT_FOUND', 'Project not found');
@@ -147,7 +171,15 @@ export const projectService = {
         return success({ tasks: tasks.map(taskTransformer.serializeSubTask) });
     },
 
-    async getProjectStatistics(projectId: bigint, userId: bigint) {
+    async getProjectStatistics(
+        projectId: bigint,
+        userId: bigint,
+    ): Promise<
+        ServiceResult<{
+            project: ReturnType<typeof projectTransformer.serialize>;
+            statistics: ProjectStatistics;
+        }>
+    > {
         const project = await projectRepository.findByIdAndUserId(projectId, userId);
         if (project === undefined) {
             return failure('NOT_FOUND', 'Project not found');

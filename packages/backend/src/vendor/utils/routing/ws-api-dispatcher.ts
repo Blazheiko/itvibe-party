@@ -60,7 +60,7 @@ export default async (
       }
 
       const rawPayload = (message as { payload?: unknown }).payload;
-      let payload: Payload | null = (rawPayload as unknown as Payload | null) ?? null;
+      let payload: Payload | null = (rawPayload as Payload | null) ?? null;
       if (route.validator !== undefined) {
         const validate = route.validator as unknown as (input: unknown) => unknown;
         const validatedInput = validate(rawPayload);
@@ -94,7 +94,7 @@ export default async (
         ))
       ) {
         const handler = route.handler;
-        responseData.data = (await handler(context)) as Payload;
+        responseData.data = (await handler(context));
       }
 
       return responseData;

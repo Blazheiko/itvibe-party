@@ -62,7 +62,7 @@ export const sanitizeRedisKey = (key: string | undefined | null ): string => {
 };
 
 export const saveSession = async (sessionInfo: SessionInfo): Promise<void> => {
-    const userId = normalizeUserId(sessionInfo.data['userId'] as string);
+    const userId = normalizeUserId(sessionInfo.data.userId as string);
     const redisKey = sanitizeRedisKey(`session:${userId}:${sessionInfo.id}`);
 
     await redis.setex(

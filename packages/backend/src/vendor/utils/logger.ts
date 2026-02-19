@@ -12,11 +12,11 @@ function createLogger(): BackendLogger {
     };
 
     if (appConfig.env === "prod" || appConfig.env === "production") {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+       
       return pino(baseConfig);
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+     
     return pino({
       ...baseConfig,
       transport: {

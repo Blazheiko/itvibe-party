@@ -9,7 +9,7 @@ export type ContactListUpdate = Partial<
     Pick<ContactListInsert, 'status' | 'rename' | 'unreadCount' | 'lastMessageId' | 'lastMessageAt'>
 >;
 
-export type ContactListWithDetails = {
+export interface ContactListWithDetails {
     id: bigint;
     userId: bigint;
     contactId: bigint;
@@ -22,7 +22,7 @@ export type ContactListWithDetails = {
     lastMessageAt: Date;
     contact: { id: bigint | null; name: string | null } | null;
     lastMessage: InferSelectModel<typeof messages> | null;
-};
+}
 
 export interface IContactListRepository {
     create(data: ContactListInsert): Promise<ContactListRow>;

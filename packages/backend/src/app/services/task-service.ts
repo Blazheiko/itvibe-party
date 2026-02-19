@@ -116,7 +116,10 @@ export const taskService = {
         return success({ task: taskTransformer.serialize(withRelations) });
     },
 
-    async getTask(taskId: bigint, userId: bigint) {
+    async getTask(
+        taskId: bigint,
+        userId: bigint,
+    ): Promise<ServiceResult<{ task: ReturnType<typeof taskTransformer.serialize> }>> {
         const task = await taskRepository.findByIdAndUserId(taskId, userId);
         if (task === undefined) {
             return failure('NOT_FOUND', 'Task not found');
@@ -154,7 +157,10 @@ export const taskService = {
         return success({ task: taskTransformer.serialize(task) });
     },
 
-    async deleteTask(taskId: bigint, userId: bigint) {
+    async deleteTask(
+        taskId: bigint,
+        userId: bigint,
+    ): Promise<ServiceResult<{ message: string }>> {
         const deleted = await taskRepository.delete(taskId, userId);
         if (!deleted) {
             return failure('NOT_FOUND', 'Task not found');

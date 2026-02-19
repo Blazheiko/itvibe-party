@@ -34,7 +34,7 @@ import type { RouteItem } from "#vendor/types/types.js";
 
 const start = async (): Promise<void> => {
   try {
-    /* eslint-disable no-undef */
+     
     process.title = configApp.appName;
     logger.info(`Starting application on port ${String(configApp.port)}`);
     logger.info(

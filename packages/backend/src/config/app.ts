@@ -6,7 +6,7 @@ import { normalizePath } from '#vendor/utils/network/http-request-handlers.js';
 // Поддерживаемые значения для false: 'false', '0', 'no', 'off' или пустое значение
 function parseBoolean(
     value: string | undefined,
-    defaultValue: boolean = false,
+    defaultValue = false,
 ): boolean {
     if (value === undefined) return defaultValue;
     return (
@@ -17,7 +17,7 @@ function parseBoolean(
 // Parse port with validation and default value
 function parsePort(
     value: string | undefined,
-    defaultValue: number = 3000,
+    defaultValue = 3000,
 ): number {
     console.log('parsePort value: ' + value);
     if (value === undefined) return defaultValue;
@@ -29,7 +29,7 @@ function parsePort(
 }
 
 const config = Object.freeze({
-    /* eslint-disable no-undef */
+     
     appName: env['APP_NAME'] || 'uwebsockets-api',
     key: env['APP_KEY'],
     env: env['APP_ENV'],

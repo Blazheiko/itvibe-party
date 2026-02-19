@@ -171,15 +171,15 @@ export const sessionHandler = async (
   
   context.auth.getUserId = (): string | null => {
     if (sessionInfo === null) return null;
-    if (sessionInfo.data['userId'] === undefined) return null;
-    return sessionInfo.data['userId'] as string;
+    if (sessionInfo.data.userId === undefined) return null;
+    return sessionInfo.data.userId as string;
   };
-  context.auth.check = (): boolean => Boolean(sessionInfo?.data['userId']);
+  context.auth.check = (): boolean => Boolean(sessionInfo?.data.userId);
   context.auth.login = async (userId: string | bigint | number | undefined): Promise<boolean> => {
     if (userId === undefined) return false;
     try {
       const oldSessionId = sessionInfo?.id;
-      const oldUserId = sessionInfo?.data['userId'];
+      const oldUserId = sessionInfo?.data.userId;
 
       // Destroy old session with normalized userId
       if (oldSessionId !== undefined) {
@@ -214,7 +214,7 @@ export const sessionHandler = async (
 
   context.auth.logout = async (): Promise<boolean> => {
     try {
-      const userId = sessionInfo?.data['userId'];
+      const userId = sessionInfo?.data.userId;
       let sessionId = undefined;
       if (userId !== undefined) {
         sessionId = sessionInfo?.id;
@@ -248,7 +248,7 @@ export const sessionHandler = async (
   context.auth.logoutAll = async (): Promise<number> => {
     try {
       let deletedCount = 0;
-      const userId = sessionInfo?.data['userId'];
+      const userId = sessionInfo?.data.userId;
       let sessionId = undefined;
       if (userId === undefined || userId === "0") return 0;
 
@@ -298,7 +298,7 @@ export const wsSessionHandler = async (
     }
 
     // Normalize userId from session and strictly compare
-    const sessionUserId = normalizeUserId(sessionInfo.data['userId'] as string);
+    const sessionUserId = normalizeUserId(sessionInfo.data.userId as string);
 
     // CRITICAL: use strict comparison !== for protection against type coercion
     if (sessionUserId !== normalizedUserId) {
@@ -309,7 +309,7 @@ export const wsSessionHandler = async (
           expectedType: typeof normalizedUserId,
           actualUserId: sessionUserId,
           actualType: typeof sessionUserId,
-          rawSessionUserId: sessionInfo.data['userId'],
+          rawSessionUserId: sessionInfo.data.userId,
         },
         `Session userId mismatch - potential security breach`
       );

@@ -4,18 +4,25 @@ import {
 } from "#app/repositories/index.js";
 import { contactListTransformer } from "#app/transformers/index.js";
 import { getOnlineUser } from "#vendor/utils/network/ws-handlers.js";
-import { failure, success } from "#app/services/shared/service-result.js";
+import { failure, success, type ServiceResult } from "#app/services/shared/service-result.js";
+
+type SessionUserId = string | number | bigint | undefined;
 
 export const chatListService = {
   async getContactList(
     requestedUserId: number,
-    sessionUserId: string | number | bigint | undefined,
-  ) {
-    if (!requestedUserId || !sessionUserId) {
+    sessionUserId: SessionUserId,
+  ): Promise<
+    ServiceResult<{
+      contactList: ReturnType<typeof contactListTransformer.serializeArrayWithDetails>;
+      onlineUsers: ReturnType<typeof getOnlineUser>;
+    }>
+  > {
+    if (!Number.isFinite(requestedUserId) || requestedUserId <= 0 || sessionUserId === undefined) {
       return failure("UNAUTHORIZED", "Session expired");
     }
 
-    if (Number(requestedUserId) !== Number(sessionUserId)) {
+    if (requestedUserId !== Number(sessionUserId)) {
       return failure("UNAUTHORIZED", "Session expired");
     }
 
@@ -28,21 +35,21 @@ export const chatListService = {
 
     return success({
       contactList: contactListTransformer.serializeArrayWithDetails(
-        contactListData as any,
+        contactListData,
       ),
       onlineUsers,
     });
   },
 
   async createChat(
-    userIdValue: string | number | bigint | undefined,
+    userIdValue: SessionUserId,
     participantId: number,
-  ) {
-    if (!userIdValue) {
+  ): Promise<ServiceResult<{ chat: ReturnType<typeof contactListTransformer.serialize> }>> {
+    if (userIdValue === undefined) {
       return failure("UNAUTHORIZED", "Session expired");
     }
 
-    if (!participantId) {
+    if (!Number.isFinite(participantId) || participantId <= 0) {
       return failure("BAD_REQUEST", "Participant ID is required");
     }
 
@@ -61,7 +68,7 @@ export const chatListService = {
 
     if (existingChat !== undefined) {
       return success({
-        chat: contactListTransformer.serialize(existingChat as any),
+        chat: contactListTransformer.serialize(existingChat),
       });
     }
 
@@ -76,14 +83,14 @@ export const chatListService = {
     }
 
     return success({
-      chat: contactListTransformer.serialize(createdChat as any),
+      chat: contactListTransformer.serialize(createdChat),
     });
   },
 
   async deleteChat(
-    userIdValue: string | number | bigint | undefined,
+    userIdValue: SessionUserId,
     chatIdValue: number,
-  ) {
+  ): Promise<ServiceResult<{ message: string }>> {
     if (userIdValue === undefined) {
       return failure("UNAUTHORIZED", "Session expired");
     }

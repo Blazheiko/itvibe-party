@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { invitationRepository } from '#app/repositories/index.js';
 import { invitationTransformer } from '#app/transformers/index.js';
-import { failure, success } from '#app/services/shared/service-result.js';
+import { failure, success, type ServiceResult } from '#app/services/shared/service-result.js';
 import { acceptInvitation } from '#app/services/invitation-accept-service.js';
 import type { Session } from '#vendor/types/types.js';
 
@@ -10,8 +10,19 @@ export const invitationService = {
         userId: number,
         name: string,
         sessionUserId: string | number | bigint | undefined,
-    ) {
-        if (!userId || !sessionUserId || Number(userId) !== Number(sessionUserId) || !name) {
+    ): Promise<
+        ServiceResult<{
+            token: string;
+            invitation: ReturnType<typeof invitationTransformer.serialize>;
+        }>
+    > {
+        if (
+            !Number.isFinite(userId) ||
+            userId <= 0 ||
+            sessionUserId === undefined ||
+            userId !== Number(sessionUserId) ||
+            name === ''
+        ) {
             return failure('BAD_REQUEST', 'User ID is required');
         }
 
@@ -31,8 +42,14 @@ export const invitationService = {
         });
     },
 
-    async getUserInvitations(userId: number) {
-        if (!userId) {
+    async getUserInvitations(
+        userId: number,
+    ): Promise<
+        ServiceResult<{
+            invitations: ReturnType<typeof invitationTransformer.serializeArrayWithInvited>;
+        }>
+    > {
+        if (!Number.isFinite(userId) || userId <= 0) {
             return failure('BAD_REQUEST', 'User ID is required');
         }
 
@@ -42,8 +59,11 @@ export const invitationService = {
         });
     },
 
-    async useInvitation(token: string, session: Session) {
-        if (!token) {
+    async useInvitation(
+        token: string,
+        session: Session,
+    ): Promise<ServiceResult<{ status: 'success' | 'error' | 'awaiting' }>> {
+        if (token === '') {
             return failure('BAD_REQUEST', 'Token are required');
         }
 
@@ -51,8 +71,8 @@ export const invitationService = {
 
         const sessionInfo = session.sessionInfo;
         if (sessionInfo !== null) {
-            const userId = sessionInfo.data?.['userId'];
-            if (userId) {
+            const userId = sessionInfo.data.userId;
+            if (userId !== undefined && userId !== '') {
                 await acceptInvitation(token, Number(userId));
                 status = 'success';
             } else {

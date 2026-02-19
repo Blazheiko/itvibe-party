@@ -138,7 +138,7 @@ export type {
 } from './WSApiController.js';
 
 // Response type registry for documentation
-export type ResponseTypeRegistry = {
+export interface ResponseTypeRegistry {
     // Main Controller
     ping: import('./MainController.js').PingResponse;
     init: import('./MainController.js').InitResponse;
@@ -193,7 +193,7 @@ export type ResponseTypeRegistry = {
     wsError: import('./WSApiController.js').ErrorResponse;
     testWs: import('./WSApiController.js').TestWsResponse;
     wsSaveUser: import('./WSApiController.js').SaveUserResponse;
-};
+}
 
 // Helper type for controller handlers with typed responses
 export type TypedHandler<TResponse> = (...args: any[]) => Promise<TResponse>;

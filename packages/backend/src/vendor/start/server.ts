@@ -79,7 +79,7 @@ export type {
 } from "uWebSockets.js";
 
 export type UserData = Record<string, unknown>;
-const server: TemplatedApp = uWS.App() as TemplatedApp;
+const server: TemplatedApp = uWS.App();
 
 const broadcastMessage = (
   userId: number,
@@ -407,7 +407,7 @@ const setHttpHandler = async (
         responseData.status >= 200 &&
         responseData.status < 300
       )
-        responseData.payload = (await route.handler(context)) as Payload;
+        responseData.payload = (await route.handler(context));
 
       if (aborted) return;
 

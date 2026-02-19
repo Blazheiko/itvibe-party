@@ -1,6 +1,6 @@
 import type { HttpContext, WsContext } from "#vendor/types/types.js";
 
-type AnyContext = HttpContext<unknown> | WsContext<unknown>;
+type AnyContext = HttpContext | WsContext;
 type PayloadFromContext<TContext extends AnyContext> =
   TContext extends HttpContext<infer TPayload>
     ? TPayload

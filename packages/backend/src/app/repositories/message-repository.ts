@@ -89,7 +89,7 @@ export const messageRepository: IMessageRepository = {
 
     async markAsRead(messageId, userId) {
         const message = await messageRepository.findById(messageId);
-        if (message === undefined || message.receiverId !== userId) {
+        if (message?.receiverId !== userId) {
             return undefined;
         }
         await db

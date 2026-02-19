@@ -16,9 +16,7 @@ interface ParsedType {
     description?: string;
 }
 
-interface TypesRegistry {
-    [key: string]: ParsedType;
-}
+type TypesRegistry = Record<string, ParsedType>;
 
 /**
  * Simple TypeScript .d.ts parser to extract interface definitions
@@ -119,8 +117,8 @@ function parseFields(body: string, currentFields: Record<string, TypeField>): Re
         if (i >= body.length) break;
 
         // Find field name
-        const fieldNameMatch = body.slice(i).match(/^(\w+)(\?)?:\s*/);
-        if (!fieldNameMatch || !fieldNameMatch[1]) {
+        const fieldNameMatch = /^(\w+)(\?)?:\s*/.exec(body.slice(i));
+        if (!fieldNameMatch?.[1]) {
             i++;
             continue;
         }
@@ -236,8 +234,8 @@ function parseFieldType(typeString: string, required: boolean): TypeField {
     }
 
     // Handle Array<Type> syntax
-    const arrayMatch = cleanType.match(/^Array<(.+)>$/);
-    if (arrayMatch && arrayMatch[1]) {
+    const arrayMatch = /^Array<(.+)>$/.exec(cleanType);
+    if (arrayMatch?.[1]) {
         field.type = 'array';
         field.properties = {
             items: parseFieldType(arrayMatch[1], false),
@@ -290,7 +288,7 @@ function parseFieldType(typeString: string, required: boolean): TypeField {
  * Example: AuthController.register -> register
  */
 export function getHandlerMethodName(handler: Function): string {
-    if (!handler || !handler.name) return 'unknown';
+    if (!handler?.name) return 'unknown';
     return handler.name;
 }
 

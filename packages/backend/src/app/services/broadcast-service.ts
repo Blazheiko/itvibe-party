@@ -8,9 +8,9 @@ export const broadcastService = {
     broadcastMessageToUser(userId: string, event: string, payload: Payload): number {
         logger.info(`broadcastMessageToUser: ${userId} ${event}`);
         let counter = 0;
-        const userConnections = getUserConnections(String(userId));
+        const userConnections = getUserConnections(userId);
 
-        if (userConnections) {
+        if (userConnections !== undefined) {
             for (const userConnection of userConnections.connections.values()) {
                 try {
                     const result = userConnection.send(makeBroadcastJson(event, 200, payload));

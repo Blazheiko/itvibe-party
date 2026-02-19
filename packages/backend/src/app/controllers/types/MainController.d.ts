@@ -35,18 +35,18 @@ export interface TestRouteResponse {
 
 export interface TestHeadersResponse {
     status: string;
-    headers: Array<{ key: string; value: string }>;
+    headers: { key: string; value: string }[];
     params: any[];
 }
 
 export interface GetSetCookiesResponse {
     status: string;
-    cookies: Array<{ key: string; value: string }>;
+    cookies: { key: string; value: string }[];
 }
 
 export interface TestSessionResponse {
     status: string;
-    cookies: Array<{ key: string; value: string }>;
+    cookies: { key: string; value: string }[];
     sessionInfo: any;
 }
 
@@ -61,7 +61,7 @@ export interface SaveUserResponse {
 
 export interface TestApiSessionResponse {
     status: string;
-    headers: Array<{ key: string; value: string }>;
+    headers: { key: string; value: string }[];
     sessionInfo: any;
 }
 

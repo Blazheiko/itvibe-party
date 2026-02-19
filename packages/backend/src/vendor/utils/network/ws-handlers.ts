@@ -420,7 +420,7 @@ const checkUserAccess = async (
 
     const sessionInfo = JSON.parse(sessionData) as SessionInfo;
     const data: SessionData = sessionInfo.data;
-    if ("userId" in data && String(data["userId"]) === String(userId))
+    if ("userId" in data && String(data.userId) === String(userId))
       return { sessionId, userId };
 
     return null;

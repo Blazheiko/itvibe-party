@@ -5,19 +5,12 @@ import type {
 } from '#vendor/types/types.js';
 
 export const wsPresenceService = {
-    onUserConnected(event: WebSocketConnectionEvent) {
-        if (event.ws) {
-            event.ws.subscribe('change_online');
-        }
-
-        if (event.userId) {
-            broadcastService.broadcastOnline(event.userId, 'online');
-        }
+    onUserConnected(event: WebSocketConnectionEvent): void {
+        event.ws.subscribe('change_online');
+        broadcastService.broadcastOnline(event.userId, 'online');
     },
 
-    onUserDisconnected(event: WebSocketDisconnectionEvent) {
-        if (event.userId) {
-            broadcastService.broadcastOnline(event.userId, 'offline');
-        }
+    onUserDisconnected(event: WebSocketDisconnectionEvent): void {
+        broadcastService.broadcastOnline(event.userId, 'offline');
     },
 };

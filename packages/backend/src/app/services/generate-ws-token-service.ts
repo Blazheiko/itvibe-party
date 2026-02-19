@@ -7,20 +7,21 @@ export async function generateWsToken(
     sessionInfo: SessionInfo,
     userId: number | bigint,
 ): Promise<string> {
-    let wsToken = '';
     const userIdNumber = Number(userId);
 
-    if (sessionInfo && userIdNumber) {
-        wsToken = generateKey(configApp.characters, 16);
-        await redis.setex(
-            `auth:ws:${wsToken}`,
-            60,
-            JSON.stringify({
-                sessionId: sessionInfo.id,
-                userId: `${userIdNumber}`,
-            }),
-        );
+    if (!Number.isFinite(userIdNumber) || userIdNumber <= 0) {
+        return '';
     }
+
+    const wsToken = generateKey(configApp.characters, 16);
+    await redis.setex(
+        `auth:ws:${wsToken}`,
+        60,
+        JSON.stringify({
+            sessionId: sessionInfo.id,
+            userId: String(userIdNumber),
+        }),
+    );
 
     return wsToken;
 }
