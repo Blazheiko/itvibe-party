@@ -15,7 +15,6 @@ import {
   type ServiceResult,
 } from "#app/services/shared/service-result.js";
 import { uploadToS3 } from "#vendor/utils/storage/s3.js";
-import diskConfig from "#config/disk.js";
 import type { CreateNoteInput, UpdateNoteInput } from "shared/schemas";
 
 export const notesService = {

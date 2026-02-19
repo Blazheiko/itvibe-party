@@ -6,7 +6,16 @@ import vueDevTools from 'vite-plugin-vue-devtools'
 
 // https://vite.dev/config/
 export default defineConfig({
-    plugins: [vue(), vueDevTools()],
+    plugins: [
+        vue({
+            template: {
+                compilerOptions: {
+                    isCustomElement: (tag) => tag === 'pwa-install',
+                },
+            },
+        }),
+        vueDevTools(),
+    ],
     resolve: {
         alias: {
             '@': fileURLToPath(new URL('./src', import.meta.url)),
@@ -27,5 +36,7 @@ export default defineConfig({
     },
     define: {
         BUILD_TIMESTAMP: JSON.stringify(Date.now()),
+        // Suppress Lit dev-mode warning from pwa-install (pre-populates the issued-warnings set)
+        'globalThis.litIssuedWarnings': 'globalThis.litIssuedWarnings ?? new Set(["dev-mode"])',
     },
 })

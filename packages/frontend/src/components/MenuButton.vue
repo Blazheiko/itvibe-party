@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import '@khmyznikov/pwa-install'
+import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { authApi } from '@/utils/api'
 import { useEventBus } from '@/utils/event-bus'
@@ -14,13 +15,9 @@ const isMenuOpen = ref(false)
 const isLoggingOut = ref(false)
 
 // PWA установка
-interface BeforeInstallPromptEvent extends Event {
-    prompt(): Promise<void>
-    userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>
-}
-
-const deferredPrompt = ref<BeforeInstallPromptEvent | null>(null)
-const showInstallButton = ref(false)
+type PwaInstallElement = HTMLElement & { isInstallAvailable: boolean; showDialog(): void }
+const pwaInstall = ref<PwaInstallElement | null>(null)
+const isInstallAvailable = ref(false)
 
 // Управление меню
 const toggleMenu = () => {
@@ -39,38 +36,35 @@ const handleClickOutside = (event: MouseEvent) => {
     }
 }
 
-// Обработчик события beforeinstallprompt
-const handleBeforeInstallPrompt = (e: Event) => {
-    e.preventDefault()
-    deferredPrompt.value = e as BeforeInstallPromptEvent
-    showInstallButton.value = true
+// Обработчик доступности установки PWA
+const handleInstallAvailable = () => {
+    isInstallAvailable.value = true
 }
 
 // Функция установки PWA
-const installApp = async () => {
-    if (!deferredPrompt.value) return
-
-    deferredPrompt.value.prompt()
-    const { outcome } = await deferredPrompt.value.userChoice
-
-    if (outcome === 'accepted') {
-        console.log('PWA установлено')
-        showInstallButton.value = false
-    }
-
-    deferredPrompt.value = null
+const installApp = () => {
+    pwaInstall.value?.showDialog()
     closeMenu()
 }
 
 // Добавляем обработчики событий
-onMounted(() => {
+onMounted(async () => {
     window.addEventListener('click', handleClickOutside)
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
+
+    // Ждём рендер элемента <pwa-install>, затем слушаем событие на нём
+    await nextTick()
+    if (pwaInstall.value) {
+        pwaInstall.value.addEventListener('pwa-install-available-event', handleInstallAvailable)
+        // На iOS isInstallAvailable может быть уже true к этому моменту
+        if (pwaInstall.value.isInstallAvailable) {
+            isInstallAvailable.value = true
+        }
+    }
 })
 
 onUnmounted(() => {
     window.removeEventListener('click', handleClickOutside)
-    window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
+    pwaInstall.value?.removeEventListener('pwa-install-available-event', handleInstallAvailable)
 })
 
 // Переход в аккаунт
@@ -88,7 +82,7 @@ const goToProjects = () => {
 // Выход из аккаунта
 const logout = async () => {
     isLoggingOut.value = true
-    
+
     try {
         const { error, data } = await authApi.logout()
         if (error) {
@@ -109,18 +103,9 @@ const logout = async () => {
 
 <template>
     <div class="menu-container">
+        <pwa-install ref="pwaInstall"></pwa-install>
+
         <button class="menu-button" @click.stop="toggleMenu">
-            <!-- <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                width="24"
-                height="24"
-                fill="white"
-            >
-                <path
-                    d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
-                />
-            </svg> -->
             <svg
                 class="menu-icon"
                 xmlns="http://www.w3.org/2000/svg"
@@ -134,7 +119,7 @@ const logout = async () => {
         </button>
 
         <div class="dropdown-menu" :class="{ show: isMenuOpen }">
-            <button v-if="showInstallButton" class="menu-item install-app" @click="installApp">
+            <button v-if="isInstallAvailable" class="menu-item install-app" @click="installApp">
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
                     viewBox="0 0 24 24"
@@ -224,8 +209,6 @@ const logout = async () => {
     background-color: rgba(255, 255, 255, 0.25);
     transform: translateY(0);
 }
-
-/* Иконка меню - стили применяются через inline стили в template */
 
 /* Стили для выпадающего меню */
 .dropdown-menu {
