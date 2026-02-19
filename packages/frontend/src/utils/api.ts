@@ -1,4 +1,41 @@
 import baseApi from './base-api'
+import type {
+  AddPhotoResponse,
+  CreateChatResponse,
+  CreateInvitationResponse,
+  CreateNoteResponse,
+  CreateProjectResponse,
+  CreateTaskResponse,
+  DeleteChatResponse,
+  DeleteMessageResponse,
+  DeleteProjectResponse,
+  DeleteTaskResponse,
+  EditMessageResponse,
+  GetContactListResponse,
+  GetMessagesResponse,
+  GetNotesResponse,
+  GetProjectResponse,
+  GetProjectsResponse,
+  GetSubTasksResponse,
+  GetTaskResponse,
+  GetTasksByProjectResponse,
+  GetTasksResponse,
+  GetUserInvitationsResponse,
+  InitResponse,
+  LoginResponse,
+  LogoutAllResponse,
+  LogoutResponse,
+  MarkAsReadResponse,
+  RegisterResponse,
+  SaveUserResponse,
+  SendMessageResponse,
+  UpdateProjectResponse,
+  UpdateTaskProgressResponse,
+  UpdateTaskResponse,
+  UpdateTaskStatusResponse,
+  UpdateWsTokenResponse,
+  UseInvitationResponse,
+} from 'shared/responses'
 
 interface ApiResponse<T> {
   data: T | null
@@ -51,10 +88,6 @@ export interface UpdateTaskRequest extends Partial<CreateTaskRequest> {
   id?: never
 }
 
-export interface TasksResponse {
-  tasks: Task[]
-}
-
 export interface Project {
   id: string
   title: string
@@ -92,10 +125,6 @@ export interface CreateProjectRequest {
 
 export interface UpdateProjectRequest extends Partial<CreateProjectRequest> {
   id?: never
-}
-
-export interface ProjectsResponse {
-  projects: Project[]
 }
 
 const transformTaskDates = (task: Record<string, unknown>): Task => {
@@ -198,8 +227,8 @@ export const authApi = {
     email: string
     password: string
     token?: string
-  }): Promise<ApiResponse<Record<string, unknown>>> => {
-    return baseApi.http('POST', '/api/auth/login', body)
+  }): Promise<ApiResponse<LoginResponse>> => {
+    return baseApi.http<LoginResponse>('POST', '/api/auth/login', body)
   },
 
   register: async (body: {
@@ -207,16 +236,16 @@ export const authApi = {
     email: string
     password: string
     token?: string
-  }): Promise<ApiResponse<Record<string, unknown>>> => {
-    return baseApi.http('POST', '/api/auth/register', body)
+  }): Promise<ApiResponse<RegisterResponse>> => {
+    return baseApi.http<RegisterResponse>('POST', '/api/auth/register', body)
   },
 
-  logout: async (): Promise<ApiResponse<Record<string, unknown>>> => {
-    return baseApi.http('POST', '/api/auth/logout')
+  logout: async (): Promise<ApiResponse<LogoutResponse>> => {
+    return baseApi.http<LogoutResponse>('POST', '/api/auth/logout')
   },
 
-  logoutAll: async (): Promise<ApiResponse<Record<string, unknown>>> => {
-    return baseApi.http('POST', '/api/auth/logout-all')
+  logoutAll: async (): Promise<ApiResponse<LogoutAllResponse>> => {
+    return baseApi.http<LogoutAllResponse>('POST', '/api/auth/logout-all')
   },
 }
 
@@ -225,24 +254,24 @@ export const authApi = {
 // ============================================================================
 
 export const mainApi = {
-  init: async (): Promise<ApiResponse<Record<string, unknown>>> => {
-    return baseApi.http('GET', '/api/main/init')
+  init: async (): Promise<ApiResponse<InitResponse>> => {
+    return baseApi.http<InitResponse>('GET', '/api/main/init')
   },
 
-  updateWsToken: async (): Promise<ApiResponse<Record<string, unknown>>> => {
-    return baseApi.http('GET', '/api/main/update-ws-token')
+  updateWsToken: async (): Promise<ApiResponse<UpdateWsTokenResponse>> => {
+    return baseApi.http<UpdateWsTokenResponse>('GET', '/api/main/update-ws-token')
   },
 
   saveUser: async (
     body: Record<string, unknown>,
-  ): Promise<ApiResponse<Record<string, unknown>>> => {
-    return baseApi.http('POST', '/api/main/save-user', body)
+  ): Promise<ApiResponse<SaveUserResponse>> => {
+    return baseApi.http<SaveUserResponse>('POST', '/api/main/save-user', body)
   },
 
   useInvitation: async (body: {
     token: string
-  }): Promise<ApiResponse<Record<string, unknown>>> => {
-    return baseApi.http('POST', '/api/main/invitations/use', body)
+  }): Promise<ApiResponse<UseInvitationResponse>> => {
+    return baseApi.http<UseInvitationResponse>('POST', '/api/main/invitations/use', body)
   },
 }
 
@@ -253,27 +282,27 @@ export const mainApi = {
 export const chatApi = {
   getContactList: async (body: {
     userId: string | number | undefined
-  }): Promise<ApiResponse<Record<string, unknown>>> => {
-    return baseApi.http('POST', '/api/chat/get-contact-list', {
+  }): Promise<ApiResponse<GetContactListResponse>> => {
+    return baseApi.http<GetContactListResponse>('POST', '/api/chat/get-contact-list', {
       userId: Number(body.userId),
     })
   },
 
   createChat: async (
     body: Record<string, unknown>,
-  ): Promise<ApiResponse<Record<string, unknown>>> => {
-    return baseApi.http('POST', '/api/chat/chats', body)
+  ): Promise<ApiResponse<CreateChatResponse>> => {
+    return baseApi.http<CreateChatResponse>('POST', '/api/chat/chats', body)
   },
 
-  deleteChat: async (chatId: number): Promise<ApiResponse<Record<string, unknown>>> => {
-    return baseApi.http('DELETE', `/api/chat/chats/${chatId}`)
+  deleteChat: async (chatId: number): Promise<ApiResponse<DeleteChatResponse>> => {
+    return baseApi.http<DeleteChatResponse>('DELETE', `/api/chat/chats/${chatId}`)
   },
 
   createInvitation: async (body: {
     name: string
     userId: string | number | undefined
-  }): Promise<ApiResponse<Record<string, unknown>>> => {
-    return baseApi.http('POST', '/api/chat/invitations', {
+  }): Promise<ApiResponse<CreateInvitationResponse>> => {
+    return baseApi.http<CreateInvitationResponse>('POST', '/api/chat/invitations', {
       name: body.name,
       userId: Number(body.userId),
     })
@@ -281,8 +310,8 @@ export const chatApi = {
 
   getUserInvitations: async (
     userId: number,
-  ): Promise<ApiResponse<Record<string, unknown>>> => {
-    return baseApi.http('GET', `/api/chat/invitations/user/${userId}`)
+  ): Promise<ApiResponse<GetUserInvitationsResponse>> => {
+    return baseApi.http<GetUserInvitationsResponse>('GET', `/api/chat/invitations/user/${userId}`)
   },
 }
 
@@ -290,8 +319,7 @@ export const chatApi = {
 // Messages API
 // ============================================================================
 
-interface UpdateMessageResponse {
-  status: string
+interface UpdateMessageResponse extends EditMessageResponse {
   message?: {
     id: number
     sender_id: number
@@ -306,7 +334,7 @@ interface UpdateMessageResponse {
 }
 
 export const messagesApi = {
-  getMessages: async <T = Record<string, unknown>>(body: {
+  getMessages: async <T = GetMessagesResponse>(body: {
     contactId: string | number
     userId: string | number | undefined
   }): Promise<ApiResponse<T>> => {
@@ -320,8 +348,8 @@ export const messagesApi = {
     contactId: string | number
     content: string
     userId: string | number | undefined
-  }): Promise<ApiResponse<Record<string, unknown>>> => {
-    return baseApi.http('POST', '/api/chat/send-chat-messages', {
+  }): Promise<ApiResponse<SendMessageResponse>> => {
+    return baseApi.http<SendMessageResponse>('POST', '/api/chat/send-chat-messages', {
       userId: Number(body.userId),
       contactId: Number(body.contactId),
       content: body.content,
@@ -330,8 +358,8 @@ export const messagesApi = {
 
   deleteMessage: async (
     messageId: number,
-  ): Promise<ApiResponse<{ success: boolean }>> => {
-    return baseApi.http<{ success: boolean }>(
+  ): Promise<ApiResponse<DeleteMessageResponse>> => {
+    return baseApi.http<DeleteMessageResponse>(
       'DELETE',
       `/api/chat/messages/${messageId}`,
     )
@@ -355,8 +383,8 @@ export const messagesApi = {
 
   markAsRead: async (
     messageId: number,
-  ): Promise<ApiResponse<Record<string, unknown>>> => {
-    return baseApi.http('PUT', `/api/chat/messages/${messageId}/read`, {
+  ): Promise<ApiResponse<MarkAsReadResponse>> => {
+    return baseApi.http<MarkAsReadResponse>('PUT', `/api/chat/messages/${messageId}/read`, {
       messageId,
     })
   },
@@ -369,7 +397,7 @@ export const messagesApi = {
 export const tasksApi = {
   async getTasks(): Promise<{ tasks: Task[]; projects: Project[] }> {
     try {
-      const response = await baseApi.http<TasksResponse>('GET', '/api/tasks')
+      const response = await baseApi.http<GetTasksResponse>('GET', '/api/tasks')
       console.log('Tasks API response:', response)
 
       if (response.error || !response.data) {
@@ -386,7 +414,7 @@ export const tasksApi = {
 
   async getTask(taskId: number): Promise<Task | null> {
     try {
-      const response = await baseApi.http<Record<string, unknown>>(
+      const response = await baseApi.http<GetTaskResponse>(
         'GET',
         `/api/tasks/${taskId}`,
       )
@@ -425,7 +453,7 @@ export const tasksApi = {
       if (taskData.estimatedHours != null) payload.estimatedHours = Number(taskData.estimatedHours)
       if (taskData.parentTaskId != null) payload.parentTaskId = Number(taskData.parentTaskId)
 
-      const response = await baseApi.http<Record<string, unknown>>(
+      const response = await baseApi.http<CreateTaskResponse>(
         'POST',
         '/api/tasks',
         payload,
@@ -478,7 +506,7 @@ export const tasksApi = {
         payload.actualHours = taskData.actualHours != null ? Number(taskData.actualHours) : undefined
       }
 
-      const response = await baseApi.http<Record<string, unknown>>(
+      const response = await baseApi.http<UpdateTaskResponse>(
         'PUT',
         `/api/tasks/${taskId}`,
         payload,
@@ -502,7 +530,7 @@ export const tasksApi = {
 
   async deleteTask(taskId: number): Promise<boolean> {
     try {
-      const response = await baseApi.http<Record<string, unknown>>(
+      const response = await baseApi.http<DeleteTaskResponse>(
         'DELETE',
         `/api/tasks/${taskId}`,
       )
@@ -524,7 +552,7 @@ export const tasksApi = {
     status: Task['status'],
   ): Promise<Task | null> {
     try {
-      const response = await baseApi.http<Record<string, unknown>>(
+      const response = await baseApi.http<UpdateTaskStatusResponse>(
         'PUT',
         `/api/tasks/${taskId}/status`,
         { status },
@@ -551,7 +579,7 @@ export const tasksApi = {
     progress: number,
   ): Promise<Task | null> {
     try {
-      const response = await baseApi.http<Record<string, unknown>>(
+      const response = await baseApi.http<UpdateTaskProgressResponse>(
         'PUT',
         `/api/tasks/${taskId}/progress`,
         { progress: String(progress) },
@@ -575,7 +603,7 @@ export const tasksApi = {
 
   async getTasksByProject(projectId: number): Promise<Task[]> {
     try {
-      const response = await baseApi.http<TasksResponse>(
+      const response = await baseApi.http<GetTasksByProjectResponse>(
         'GET',
         `/api/tasks/project/${projectId}`,
       )
@@ -606,7 +634,7 @@ export const tasksApi = {
 
   async getSubTasks(parentTaskId: number): Promise<Task[]> {
     try {
-      const response = await baseApi.http<TasksResponse>(
+      const response = await baseApi.http<GetSubTasksResponse>(
         'GET',
         `/api/tasks/${parentTaskId}/subtasks`,
       )
@@ -643,7 +671,7 @@ export const tasksApi = {
 export const projectsApi = {
   async getProjects(): Promise<Project[]> {
     try {
-      const response = await baseApi.http<ProjectsResponse>(
+      const response = await baseApi.http<GetProjectsResponse>(
         'GET',
         '/api/projects',
       )
@@ -678,7 +706,7 @@ export const projectsApi = {
 
   async getProject(projectId: number): Promise<Project | null> {
     try {
-      const response = await baseApi.http<Record<string, unknown>>(
+      const response = await baseApi.http<GetProjectResponse>(
         'GET',
         `/api/projects/${projectId}`,
       )
@@ -689,7 +717,7 @@ export const projectsApi = {
       }
 
       const responseData = response.data as Record<string, unknown>
-      const foundProject = responseData?.project || responseData
+      const foundProject = responseData?.project || responseData?.data || responseData
       return foundProject
         ? transformProjectDates(foundProject as Record<string, unknown>)
         : null
@@ -713,7 +741,7 @@ export const projectsApi = {
       if (projectData.endDate != null) payload.endDate = projectData.endDate
       if (projectData.dueDate != null) payload.dueDate = projectData.dueDate
 
-      const response = await baseApi.http<Record<string, unknown>>(
+      const response = await baseApi.http<CreateProjectResponse>(
         'POST',
         '/api/projects/create',
         payload,
@@ -753,7 +781,7 @@ export const projectsApi = {
       if (projectData.isActive !== undefined) payload.isActive = projectData.isActive
       if (projectData.progress !== undefined) payload.progress = Number(projectData.progress)
 
-      const response = await baseApi.http<Record<string, unknown>>(
+      const response = await baseApi.http<UpdateProjectResponse>(
         'PUT',
         `/api/projects/${projectId}`,
         payload,
@@ -777,7 +805,7 @@ export const projectsApi = {
 
   async deleteProject(projectId: number): Promise<boolean> {
     try {
-      const response = await baseApi.http(
+      const response = await baseApi.http<DeleteProjectResponse>(
         'DELETE',
         `/api/projects/${projectId}`,
       )
@@ -943,23 +971,23 @@ export const pushSubscriptionApi = {
 // ============================================================================
 
 export const notesApi = {
-  getNotes: async (): Promise<ApiResponse<Record<string, unknown>>> => {
-    return baseApi.http('GET', '/api/notes')
+  getNotes: async (): Promise<ApiResponse<GetNotesResponse>> => {
+    return baseApi.http<GetNotesResponse>('GET', '/api/notes')
   },
 
   createNote: async (body: {
     title: string
     description: string
-  }): Promise<ApiResponse<Record<string, unknown>>> => {
-    return baseApi.http('POST', '/api/notes', body)
+  }): Promise<ApiResponse<CreateNoteResponse>> => {
+    return baseApi.http<CreateNoteResponse>('POST', '/api/notes', body)
   },
 
   addPhoto: async (
     noteId: string | number,
     file: File,
-  ): Promise<ApiResponse<Record<string, unknown>>> => {
+  ): Promise<ApiResponse<AddPhotoResponse>> => {
     const formData = new FormData()
     formData.append('photo', file)
-    return baseApi.upload('POST', `/api/notes/${noteId}/photos`, formData)
+    return baseApi.upload<AddPhotoResponse>('POST', `/api/notes/${noteId}/photos`, formData)
   },
 }
