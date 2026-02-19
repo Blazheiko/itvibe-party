@@ -39,8 +39,6 @@ const destroyWebsocketBase = () => {
     websocketClose()
 }
 
-
-
 const windowWidth = stateStore.windowWidth
 
 // Обработчики WebRTC событий из event bus
@@ -197,14 +195,6 @@ const initializeApp = async () => {
 
             console.log('Data in initialization:')
 
-            // websocketBase = new WebsocketBase(data.wsUrl as string, {
-            //     callbacks: {
-            //       onReauthorize,
-            //       onBroadcast,
-            //       onConnectionClosed: destroyWebsocketBase
-            //     },
-            // })
-            // initialize(data.wsUrl as string)
             websocketOpen(data.wsUrl as string)
 
             // baseApi.setWebSocketClient(websocketBase)

@@ -10,7 +10,6 @@ import { getOnlineUser } from "#vendor/utils/network/ws-handlers.js";
 import { failure, success } from "#app/services/shared/service-result.js";
 import { broadcastService } from "#app/services/broadcast-service.js";
 import { deleteFromS3, uploadToS3 } from "#vendor/utils/storage/s3.js";
-import diskConfig from "#config/disk.js";
 import type { UploadedFile } from "#vendor/types/types.js";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
@@ -30,7 +29,7 @@ function isValidSessionUser(
 }
 
 function resolveMediaMimeType(file: UploadedFile): string {
-  const mimeTypeFromExt = (() : string => {
+  const mimeTypeFromExt = ((): string => {
     const ext = path.extname(file.filename).toLowerCase();
     if (ext === ".jpg" || ext === ".jpeg") return "image/jpeg";
     if (ext === ".png") return "image/png";
@@ -54,8 +53,9 @@ function resolveMediaMimeType(file: UploadedFile): string {
     return "";
   })();
 
-  const normalized =
-    (file.type !== "" ? file.type : mimeTypeFromExt).toLowerCase();
+  const normalized = (
+    file.type !== "" ? file.type : mimeTypeFromExt
+  ).toLowerCase();
   return normalized.length > 0 ? normalized : "application/octet-stream";
 }
 
@@ -91,11 +91,8 @@ async function uploadChatImageToS3(
   const extname = path.extname(file.filename);
   const ext = extname === "" ? ".bin" : extname;
   const uniqueName = `${randomUUID()}${ext}`;
-  const prefix = (diskConfig.s3DynamicDataPrefix ?? "uploads").replace(
-    /^\/+|\/+$/g,
-    "",
-  );
-  const s3Key = `${prefix}/${directory}/${uniqueName}`;
+
+  const s3Key = `${directory}/${uniqueName}`;
   const mimeType = resolveMediaMimeType(file);
 
   await uploadToS3(s3Key, Buffer.from(file.data), mimeType);
@@ -179,7 +176,9 @@ export const messageService = {
     const userId = BigInt(payloadUserId);
     const contactBigInt = BigInt(contactId);
     const fileType =
-      options.file !== undefined ? resolveMediaTypeFromFile(options.file) : null;
+      options.file !== undefined
+        ? resolveMediaTypeFromFile(options.file)
+        : null;
     const requestedType = options.type ?? fileType ?? "TEXT";
     const normalizedType = requestedType.trim().toUpperCase();
     let messageType: "TEXT" | "IMAGE" | "VIDEO" | "AUDIO" | "FILE";
@@ -416,7 +415,11 @@ export const messageService = {
       return failure("UNAUTHORIZED", "Session expired");
     }
 
-    if (!Number.isInteger(messageId) || messageId <= 0 || content.trim() === "") {
+    if (
+      !Number.isInteger(messageId) ||
+      messageId <= 0 ||
+      content.trim() === ""
+    ) {
       return failure("BAD_REQUEST", "Message ID and content are required");
     }
 

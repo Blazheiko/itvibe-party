@@ -179,18 +179,6 @@ export default {
       content = payload.content;
       userId = payload.userId;
       type = payload.type;
-      // logger.info(
-      //   {
-      //     mode: "json",
-      //     parsed: {
-      //       userId,
-      //       contactId,
-      //       contentLength: content.length,
-      //       type,
-      //     },
-      //   },
-      //   "sendChatMessage: json payload parsed",
-      // );
     }
 
     const sendOptions: {
@@ -207,19 +195,6 @@ export default {
     if (thumbnailFile !== undefined) {
       sendOptions.thumbnailFile = thumbnailFile;
     }
-
-    // logger.info(
-    //   {
-    //     userId,
-    //     contactId,
-    //     sessionUserId: sessionInfo.data.userId,
-    //     type: sendOptions.type ?? "TEXT",
-    //     hasFile: sendOptions.file !== undefined,
-    //     hasThumbnailFile: sendOptions.thumbnailFile !== undefined,
-    //     contentLength: content.length,
-    //   },
-    //   "sendChatMessage: calling service",
-    // );
 
     let result: Awaited<ReturnType<typeof messageService.sendChatMessage>>;
     try {

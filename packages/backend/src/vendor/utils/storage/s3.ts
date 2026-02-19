@@ -4,7 +4,10 @@ import logger from "#logger";
 
 const endpoint = (diskConfig.s3Endpoint ?? "").replace(/^https?:\/\//, "");
 
-logger.info({ endpoint, bucket: diskConfig.s3Bucket, region: diskConfig.s3Region }, "S3 config (minio)");
+logger.info(
+  { endpoint, bucket: diskConfig.s3Bucket, region: diskConfig.s3Region },
+  "S3 config (minio)",
+);
 
 const minioClient = new Minio.Client({
   endPoint: endpoint,
@@ -20,9 +23,18 @@ export async function uploadToS3(
   contentType: string,
 ): Promise<void> {
   const bucket = diskConfig.s3Bucket ?? "";
-  logger.info({ bucket, key, contentType, size: body.length }, "Uploading to S3");
+  logger.info(
+    { bucket, key, contentType, size: body.length },
+    "Uploading to S3",
+  );
+  const s3DynamicDataPrefix = (
+    diskConfig.s3DynamicDataPrefix ?? "uploads"
+  ).replace(/^\/+|\/+$/g, "");
+  const prefix = (diskConfig.s3Prefix ?? "app").replace(/^\/+|\/+$/g, "");
 
-  await minioClient.putObject(bucket, key, body, body.length, {
+  const finalKey = `${prefix}/${s3DynamicDataPrefix}/${key}`;
+
+  await minioClient.putObject(bucket, finalKey, body, body.length, {
     "Content-Type": contentType,
   });
 }
