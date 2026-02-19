@@ -48,10 +48,7 @@ export default {
 
     const { userId } = getTypedPayload(context);
     const myUserId = sessionInfo.data.userId;
-    const result = await chatListService.getContactList(
-      Number(userId),
-      myUserId,
-    );
+    const result = await chatListService.getContactList(userId, myUserId);
 
     if (!result.ok) {
       setServiceErrorStatus(context, result.code);
@@ -81,7 +78,7 @@ export default {
     const { participantId } = getTypedPayload(context);
     const result = await chatListService.createChat(
       sessionInfo.data.userId,
-      Number(participantId),
+      participantId,
     );
 
     if (!result.ok) {
@@ -108,7 +105,7 @@ export default {
     const { chatId } = getTypedPayload(context);
     const result = await chatListService.deleteChat(
       sessionInfo.data.userId,
-      Number(chatId),
+      chatId,
     );
 
     if (!result.ok) {
