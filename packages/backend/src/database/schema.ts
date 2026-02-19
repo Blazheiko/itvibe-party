@@ -62,16 +62,16 @@ export const contactList = mysqlTable(
             unsigned: true,
         }),
     },
-    (table) => ({
-        contactIdIdx: index('contact_list_contact_id_fkey').on(table.contactId),
-        lastMessageIdIdx: index('contact_list_last_message_id_fkey').on(
+    (table) => [
+        index('contact_list_contact_id_fkey').on(table.contactId),
+        index('contact_list_last_message_id_fkey').on(
             table.lastMessageId,
         ),
-        userContactUnique: unique('contact_list_user_id_contact_id_key').on(
+        unique('contact_list_user_id_contact_id_key').on(
             table.userId,
             table.contactId,
         ),
-    }),
+    ],
 );
 
 // Messages Table
@@ -103,12 +103,12 @@ export const messages = mysqlTable(
             .default(new Date())
             .$onUpdate(() => new Date()),
     },
-    (table) => ({
-        calendarIdIdx: index('messages_calendar_id_fkey').on(table.calendarId),
-        receiverIdIdx: index('messages_receiver_id_fkey').on(table.receiverId),
-        senderIdIdx: index('messages_sender_id_fkey').on(table.senderId),
-        taskIdIdx: index('messages_task_id_fkey').on(table.taskId),
-    }),
+    (table) => [
+        index('messages_calendar_id_fkey').on(table.calendarId),
+        index('messages_receiver_id_fkey').on(table.receiverId),
+        index('messages_sender_id_fkey').on(table.senderId),
+        index('messages_task_id_fkey').on(table.taskId),
+    ],
 );
 
 // Invitations Table
@@ -130,10 +130,10 @@ export const invitations = mysqlTable(
             .$onUpdate(() => new Date()),
         name: varchar('name', { length: 100 }).notNull(),
     },
-    (table) => ({
-        invitedIdIdx: index('invitations_invited_id_fkey').on(table.invitedId),
-        userIdIdx: index('invitations_user_id_fkey').on(table.userId),
-    }),
+    (table) => [
+        index('invitations_invited_id_fkey').on(table.invitedId),
+        index('invitations_user_id_fkey').on(table.userId),
+    ],
 );
 
 // Notes Table
@@ -152,9 +152,9 @@ export const notes = mysqlTable(
             .default(new Date())
             .$onUpdate(() => new Date()),
     },
-    (table) => ({
-        userIdIdx: index('notes_user_id_fkey').on(table.userId),
-    }),
+    (table) => [
+        index('notes_user_id_fkey').on(table.userId),
+    ],
 );
 
 // Notes Photos Table
@@ -174,9 +174,9 @@ export const notesPhotos = mysqlTable(
             .default(new Date())
             .$onUpdate(() => new Date()),
     },
-    (table) => ({
-        noteIdIdx: index('notes_photos_note_id_fkey').on(table.noteId),
-    }),
+    (table) => [
+        index('notes_photos_note_id_fkey').on(table.noteId),
+    ],
 );
 
 // Calendar Table
@@ -197,9 +197,9 @@ export const calendar = mysqlTable(
             .default(new Date())
             .$onUpdate(() => new Date()),
     },
-    (table) => ({
-        userIdIdx: index('calendar_user_id_fkey').on(table.userId),
-    }),
+    (table) => [
+        index('calendar_user_id_fkey').on(table.userId),
+    ],
 );
 
 // Tasks Table
@@ -242,13 +242,13 @@ export const tasks = mysqlTable(
             .default(new Date())
             .$onUpdate(() => new Date()),
     },
-    (table) => ({
-        parentTaskIdIdx: index('tasks_parent_task_id_fkey').on(
+    (table) => [
+        index('tasks_parent_task_id_fkey').on(
             table.parentTaskId,
         ),
-        projectIdIdx: index('tasks_project_id_fkey').on(table.projectId),
-        userIdIdx: index('tasks_user_id_fkey').on(table.userId),
-    }),
+        index('tasks_project_id_fkey').on(table.projectId),
+        index('tasks_user_id_fkey').on(table.userId),
+    ],
 );
 
 // Projects Table
@@ -285,9 +285,9 @@ export const projects = mysqlTable(
             .notNull()
             .default('planning'),
     },
-    (table) => ({
-        userIdIdx: index('projects_user_id_fkey').on(table.userId),
-    }),
+    (table) => [
+        index('projects_user_id_fkey').on(table.userId),
+    ],
 );
 
 // Project Tags Table
@@ -304,12 +304,12 @@ export const projectTags = mysqlTable(
         tag: varchar('tag', { length: 100 }).notNull(),
         createdAt: datetime('created_at').notNull().default(new Date()),
     },
-    (table) => ({
-        projectTagUnique: unique('project_tags_project_id_tag_key').on(
+    (table) => [
+        unique('project_tags_project_id_tag_key').on(
             table.projectId,
             table.tag,
         ),
-    }),
+    ],
 );
 
 // Project Assignees Table
@@ -331,12 +331,12 @@ export const projectAssignees = mysqlTable(
             .default(new Date())
             .$onUpdate(() => new Date()),
     },
-    (table) => ({
-        userIdIdx: index('project_assignees_user_id_fkey').on(table.userId),
-        projectUserUnique: unique(
+    (table) => [
+        index('project_assignees_user_id_fkey').on(table.userId),
+        unique(
             'project_assignees_project_id_user_id_key',
         ).on(table.projectId, table.userId),
-    }),
+    ],
 );
 
 // Push Subscriptions Table
@@ -367,9 +367,9 @@ export const pushSubscriptions = mysqlTable(
         notificationTypes: json('notification_types'),
         timezone: varchar('timezone', { length: 50 }),
     },
-    (table) => ({
-        userIdIdx: index('push_subscriptions_user_id_fkey').on(table.userId),
-    }),
+    (table) => [
+        index('push_subscriptions_user_id_fkey').on(table.userId),
+    ],
 );
 
 // Push Notification Logs Table
@@ -392,14 +392,14 @@ export const pushNotificationLogs = mysqlTable(
         errorMessage: text('error_message'),
         responseData: json('response_data'),
     },
-    (table) => ({
-        userIdIdx: index('push_notifications_log_user_id_fkey').on(
+    (table) => [
+        index('push_notifications_log_user_id_fkey').on(
             table.userId,
         ),
-        subscriptionIdIdx: index(
+        index(
             'push_notifications_log_subscription_id_fkey',
         ).on(table.subscriptionId),
-    }),
+    ],
 );
 
 // Relations
