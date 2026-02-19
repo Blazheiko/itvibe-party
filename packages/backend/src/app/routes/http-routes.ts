@@ -51,12 +51,6 @@ export default [
         ResponseSchema: ResponseSchemas.TestRouteResponseSchema,
         description: "Test route",
       }),
-      defineRoute({
-        url: "/test-tasks",
-        method: "get",
-        handler: TaskController.testTasks.bind(TaskController),
-        description: "Get all tasks 4",
-      }),
     ],
     description: "Test routes",
     prefix: "test",
@@ -174,7 +168,8 @@ export default [
       defineRoute({
         url: "/invitations",
         method: "post",
-        handler: InvitationController.createInvitation.bind(InvitationController),
+        handler:
+          InvitationController.createInvitation.bind(InvitationController),
         validator: CreateInvitationInputSchema,
         ResponseSchema: ResponseSchemas.CreateInvitationResponseSchema,
         description: "Create an invitation",
@@ -182,7 +177,8 @@ export default [
       defineRoute({
         url: "/invitations/user/:userId",
         method: "get",
-        handler: InvitationController.getUserInvitations.bind(InvitationController),
+        handler:
+          InvitationController.getUserInvitations.bind(InvitationController),
         validator: GetUserInvitationsInputSchema,
         ResponseSchema: ResponseSchemas.GetUserInvitationsResponseSchema,
         description: "Get user invitations",
@@ -563,52 +559,68 @@ export default [
       defineRoute({
         url: "/",
         method: "get",
-        handler: PushSubscriptionController.getSubscriptions.bind(PushSubscriptionController),
+        handler: PushSubscriptionController.getSubscriptions.bind(
+          PushSubscriptionController,
+        ),
         ResponseSchema: ResponseSchemas.GetSubscriptionsResponseSchema,
       }),
       defineRoute({
         url: "/",
         method: "post",
-        handler: PushSubscriptionController.createSubscription.bind(PushSubscriptionController),
+        handler: PushSubscriptionController.createSubscription.bind(
+          PushSubscriptionController,
+        ),
         validator: CreateSubscriptionInputSchema,
         ResponseSchema: ResponseSchemas.CreateSubscriptionResponseSchema,
       }),
       defineRoute({
         url: "/:subscriptionId",
         method: "get",
-        handler: PushSubscriptionController.getSubscription.bind(PushSubscriptionController),
+        handler: PushSubscriptionController.getSubscription.bind(
+          PushSubscriptionController,
+        ),
         ResponseSchema: ResponseSchemas.GetSubscriptionResponseSchema,
       }),
       defineRoute({
         url: "/:subscriptionId",
         method: "put",
-        handler: PushSubscriptionController.updateSubscription.bind(PushSubscriptionController),
+        handler: PushSubscriptionController.updateSubscription.bind(
+          PushSubscriptionController,
+        ),
         validator: UpdateSubscriptionInputSchema,
         ResponseSchema: ResponseSchemas.UpdateSubscriptionResponseSchema,
       }),
       defineRoute({
         url: "/:subscriptionId",
         method: "delete",
-        handler: PushSubscriptionController.deleteSubscription.bind(PushSubscriptionController),
+        handler: PushSubscriptionController.deleteSubscription.bind(
+          PushSubscriptionController,
+        ),
         ResponseSchema: ResponseSchemas.DeleteSubscriptionResponseSchema,
       }),
       // Push Subscription specific routes
       defineRoute({
         url: "/:subscriptionId/logs",
         method: "get",
-        handler: PushSubscriptionController.getSubscriptionLogs.bind(PushSubscriptionController),
+        handler: PushSubscriptionController.getSubscriptionLogs.bind(
+          PushSubscriptionController,
+        ),
         ResponseSchema: ResponseSchemas.GetSubscriptionLogsResponseSchema,
       }),
       defineRoute({
         url: "/:subscriptionId/statistics",
         method: "get",
-        handler: PushSubscriptionController.getSubscriptionStatistics.bind(PushSubscriptionController),
+        handler: PushSubscriptionController.getSubscriptionStatistics.bind(
+          PushSubscriptionController,
+        ),
         ResponseSchema: ResponseSchemas.GetSubscriptionStatisticsResponseSchema,
       }),
       defineRoute({
         url: "/:subscriptionId/deactivate",
         method: "put",
-        handler: PushSubscriptionController.deactivateSubscription.bind(PushSubscriptionController),
+        handler: PushSubscriptionController.deactivateSubscription.bind(
+          PushSubscriptionController,
+        ),
         ResponseSchema: ResponseSchemas.DeactivateSubscriptionResponseSchema,
       }),
     ],

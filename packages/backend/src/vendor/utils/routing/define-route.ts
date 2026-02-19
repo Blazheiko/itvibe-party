@@ -39,6 +39,12 @@ interface TypedRouteConfig<TValidator extends Type | undefined>
  *   description: "Create contact",
  * })
  */
+export function defineRoute(
+  config: TypedRouteConfig<undefined>,
+): RouteItem;
+export function defineRoute<TValidator extends Type>(
+  config: TypedRouteConfig<TValidator> & { validator: TValidator },
+): RouteItem;
 export function defineRoute<TValidator extends Type | undefined = undefined>(
   config: TypedRouteConfig<TValidator>,
 ): RouteItem {

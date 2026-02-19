@@ -213,14 +213,14 @@ export type WsController = Record<string, WsHandler>;
 export interface RouteConfig<TValidator extends Type | undefined = undefined> {
   url: string;
   method: Method;
-  middlewares?: string[];
-  validator: TValidator;
-  description: string;
+  middlewares?: string[] | undefined;
+  validator?: TValidator | undefined;
+  description?: string | undefined;
   rateLimit?: RateLimit | undefined;
   groupRateLimit?: RateLimit | undefined;
   parametersKey?: string[];
   requestBody?: RequestSchema;
-  ResponseSchema: unknown;
+  ResponseSchema?: Type | undefined;
 }
 
 // RouteItem with handler - uses function overload pattern for type erasure
