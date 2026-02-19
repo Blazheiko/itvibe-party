@@ -80,6 +80,7 @@ function resolveMediaTypeFromFile(
 }
 
 async function uploadChatImageToS3(
+  userId: bigint,
   file: UploadedFile,
   directory:
     | "chat-images"
@@ -92,7 +93,7 @@ async function uploadChatImageToS3(
   const ext = extname === "" ? ".bin" : extname;
   const uniqueName = `${randomUUID()}${ext}`;
 
-  const s3Key = `${directory}/${uniqueName}`;
+  const s3Key = `${directory}/${String(userId)}/${uniqueName}`;
   const mimeType = resolveMediaMimeType(file);
 
   await uploadToS3(s3Key, Buffer.from(file.data), mimeType);
@@ -276,7 +277,11 @@ export const messageService = {
             : detectedType === "VIDEO"
               ? "chat-video"
               : "chat-files";
-      const uploadedOriginal = await uploadChatImageToS3(file, uploadDirectory);
+      const uploadedOriginal = await uploadChatImageToS3(
+        userId,
+        file,
+        uploadDirectory,
+      );
       messageSrc = uploadedOriginal.key;
       if (detectedType === "FILE" && messageContent.length === 0) {
         messageContent = file.filename;
@@ -300,6 +305,7 @@ export const messageService = {
           }
 
           const uploadedThumbnail = await uploadChatImageToS3(
+            userId,
             thumbnailFile,
             "chat-thumbnails",
           );
