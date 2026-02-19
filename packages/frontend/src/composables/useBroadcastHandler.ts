@@ -4,7 +4,7 @@ import { useContactsStore } from '@/stores/contacts'
 import { useStateStore } from '@/stores/state'
 import { useUserStore } from '@/stores/user'
 import type { WebsocketMessage } from '@/utils/websocket-base'
-import type { ApiMessage } from '@/views/Chat.vue'
+import type { ApiMessage } from '@/types/chat'
 
 export const useBroadcastHandler = () => {
     const eventBus = useEventBus()

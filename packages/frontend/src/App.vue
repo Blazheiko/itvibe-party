@@ -186,6 +186,13 @@ const initializeApp = async () => {
             return null
         } else if (data && data.status === 'ok' && data.user && data.wsUrl) {
             userStore.setUser(data.user as User)
+            stateStore.setNotesStorageConfig({
+                s3Endpoint: data.storage?.s3Endpoint ?? '',
+                s3Bucket: data.storage?.s3Bucket ?? '',
+                s3Prefix: data.storage?.s3Prefix ?? '',
+                s3StaticDataPrefix: data.storage?.s3StaticDataPrefix ?? '',
+                s3DynamicDataPrefix: data.storage?.s3DynamicDataPrefix ?? '',
+            })
             if (route.name !== 'JoinChat') router.push({ name: 'Chat' })
 
             console.log('Data in initialization:')

@@ -1,5 +1,5 @@
 import mitt from 'mitt'
-import type { ApiMessage } from '@/views/Chat.vue'
+import type { ApiMessage } from '@/types/chat'
 
 export type Events = {
     user_online: { userId: number; isOnline: boolean }

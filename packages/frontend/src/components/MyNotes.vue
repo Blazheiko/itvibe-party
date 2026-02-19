@@ -3,6 +3,8 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import VoiceInput from './VoiceInput.vue'
 import { notesApi } from '@/utils/api'
+import { useStateStore } from '@/stores/state'
+import { useUserStore } from '@/stores/user'
 
 // Добавляем проп для управления отображением шапки
 defineProps({
@@ -25,89 +27,24 @@ interface NewsItem {
     timeAgo: string
 }
 
-// Демонстрационные данные
-const newsItems = ref<NewsItem[]>([
-    {
-        id: 1,
-        userId: 1,
-        userName: 'John Doe',
-        // userAvatar: '/avatars/user1.png',
-        title: 'Vue 3 Composition API Guide',
-        description:
-            'When using a language model for code completion, we typically want the model to produce a completion that begins with what the user has typed.However, modern language models operate on sequences of tokens, not characters, so naively tokenizing the users input and sending it to the model produces wrong results if the users cursor doesnt happen to lie on a token boundary.Instead, we need an algorithm that samples a sequence of tokens conditional on a prefix of characters, rather than the more typical case of sampling conditional on a prefix of tokens.We call this character prefix conditioning, an algorithm for sampling a sequence of tokens conditioned on a character prefix.Just found this amazing article about Vue 3 composition API and how it changes the way we build Vue apps!',
-        images: [
-            'https://images.unsplash.com/photo-1544947950-fa07a98d237f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1374&q=80',
-        ],
-        timeAgo: '3h ago',
-    },
-    {
-        id: 2,
-        userId: 2,
-        userName: 'Mary Johnson',
-        title: 'Book Recommendation',
-        description: 'Just finished reading this amazing book. Highly recommend it to everyone!',
-        images: [
-            'https://images.unsplash.com/photo-1544947950-fa07a98d237f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1374&q=80',
-        ],
-        timeAgo: '5 hours ago',
-    },
-    {
-        id: 3,
-        userId: 3,
-        userName: 'Alex Wilson',
-        title: 'New Job at Google!',
-        description:
-            'Just got a new job at Google! So excited to start this new chapter in my life.',
-        timeAgo: '1 day ago',
-    },
-    {
-        id: 4,
-        userId: 4,
-        userName: 'Helen Brown',
-        title: 'Dinner at Italian Restaurant',
-        description:
-            'Had a wonderful dinner with friends last night at the new Italian restaurant downtown. The pasta was incredible!',
-        images: [
-            'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1374&q=80',
-        ],
-        timeAgo: '1 day ago',
-    },
-    {
-        id: 5,
-        userId: 5,
-        userName: 'James Wilson',
-        title: 'iPhone Upgrade Thoughts',
-        description:
-            "Thoughts on the new iPhone? Thinking about upgrading but not sure if it's worth it.",
-        timeAgo: '2 days ago',
-    },
-    {
-        id: 6,
-        userId: 6,
-        userName: 'Sarah Parker',
-        title: 'Trip to Japan - Tokyo & Kyoto',
-        description:
-            'Just came back from my trip to Japan! Here are some pictures from Tokyo and Kyoto. The culture, food, and people were amazing!',
-        images: [
-            'https://images.unsplash.com/photo-1528360983277-13d401cdc186?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80',
-            'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80',
-        ],
-        timeAgo: '3 days ago',
-    },
-    {
-        id: 7,
-        userId: 7,
-        userName: 'Michael Chen',
-        title: 'First Marathon Completed!',
-        description:
-            'Just completed my first marathon! It was tough but so rewarding. Thanks to everyone who supported me along the way.',
-        images: [
-            'https://images.unsplash.com/photo-1528360983277-13d401cdc186?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80',
-            'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80',
-        ],
-        timeAgo: '5 days ago',
-    },
-])
+interface ApiPhoto {
+    src?: string
+}
+
+interface ApiNote {
+    id: string | number
+    userId: string | number
+    title: string
+    description: string
+    createdAt?: string
+    photos?: ApiPhoto[]
+}
+
+const newsItems = ref<NewsItem[]>([])
+const isNotesLoading = ref(false)
+const notesLoadError = ref('')
+const stateStore = useStateStore()
+const userStore = useUserStore()
 
 // Лайки и комментарии убраны из интерфейса
 
@@ -125,6 +62,79 @@ const router = useRouter()
 // Подробный просмотр новости
 const viewNewsDetail = (newsId: string | number) => {
     router.push(`/news/${newsId}`)
+}
+
+const formatTimeAgo = (dateValue?: string): string => {
+    if (!dateValue) return 'Recently'
+    const created = new Date(dateValue)
+    if (Number.isNaN(created.getTime())) return 'Recently'
+
+    const diffSeconds = Math.floor((Date.now() - created.getTime()) / 1000)
+    if (diffSeconds < 60) return 'Just now'
+
+    const minutes = Math.floor(diffSeconds / 60)
+    if (minutes < 60) return `${minutes}m ago`
+
+    const hours = Math.floor(minutes / 60)
+    if (hours < 24) return `${hours}h ago`
+
+    const days = Math.floor(hours / 24)
+    if (days < 7) return `${days}d ago`
+
+    return created.toLocaleDateString()
+}
+
+const extractNotes = (payload: unknown): ApiNote[] => {
+    if (payload === null || typeof payload !== 'object') return []
+
+    const value = payload as { data?: unknown }
+    if (!Array.isArray(value.data)) return []
+
+    return value.data.filter((item): item is ApiNote => {
+        if (item === null || typeof item !== 'object') return false
+        const note = item as Partial<ApiNote>
+        return note.id !== undefined && typeof note.title === 'string'
+    })
+}
+
+const mapNoteToNewsItem = (note: ApiNote): NewsItem => {
+    const photos = Array.isArray(note.photos) ? note.photos : []
+    const images = photos
+        .map((photo) => (typeof photo.src === 'string' ? stateStore.getNotesPhotoUrl(photo.src) : ''))
+        .filter((src) => src.length > 0)
+
+    return {
+        id: note.id,
+        userId: note.userId,
+        userName: userStore.user?.name || 'You',
+        title: note.title,
+        description: note.description,
+        images,
+        timeAgo: formatTimeAgo(note.createdAt),
+    }
+}
+
+const loadNotes = async () => {
+    isNotesLoading.value = true
+    notesLoadError.value = ''
+
+    try {
+        const response = await notesApi.getNotes()
+        if (response.error !== null || response.data === null) {
+            notesLoadError.value = response.error?.message ?? 'Failed to load notes'
+            newsItems.value = []
+            return
+        }
+
+        const notes = extractNotes(response.data)
+        newsItems.value = notes.map(mapNoteToNewsItem)
+    } catch (err) {
+        notesLoadError.value = 'Failed to load notes'
+        newsItems.value = []
+        console.error('Error loading notes:', err)
+    } finally {
+        isNotesLoading.value = false
+    }
 }
 
 const showCreateNews = ref(false)
@@ -223,30 +233,13 @@ const postNews = async () => {
         const noteId = note.id as string | number
 
         // Загружаем фото
-        const uploadedImages: string[] = []
         for (const file of newsImages.value) {
             const photoResponse = await notesApi.addPhoto(noteId, file)
-            if (photoResponse.error === null && photoResponse.data !== null) {
-                const photoData = photoResponse.data as Record<string, unknown>
-                const photo = (photoData.photo ?? photoData) as Record<string, unknown>
-                if (typeof photo.src === 'string') {
-                    const baseUrl = import.meta.env.VITE_BASE_URL || 'http://127.0.0.1:5174'
-                    uploadedImages.push(`${baseUrl}/api/storage/${photo.src}`)
-                }
+            if (photoResponse.error !== null) {
+                error.value = photoResponse.error.message
+                return
             }
         }
-
-        // Добавляем в начало списка
-        const newPost = {
-            id: noteId,
-            userId: 'current-user',
-            userName: 'You',
-            title: newsTitle.value,
-            description: newsDescription.value,
-            images: uploadedImages,
-            timeAgo: 'Just now',
-        }
-        newsItems.value.unshift(newPost)
 
         // Сбрасываем форму
         newsTitle.value = ''
@@ -256,6 +249,7 @@ const postNews = async () => {
 
         // Закрываем форму создания новости
         showCreateNews.value = false
+        await loadNotes()
     } catch (err) {
         error.value = 'Failed to post news. Please try again.'
         console.error('Error posting news:', err)
@@ -266,8 +260,9 @@ const postNews = async () => {
 
 const windowWidth = ref(window.innerWidth)
 
-onMounted(() => {
+onMounted(async () => {
     window.addEventListener('resize', updateWindowWidth)
+    await loadNotes()
 })
 
 onUnmounted(() => {
@@ -459,7 +454,16 @@ function updateWindowWidth() {
         </div>
 
         <div v-else class="news-content-container">
-            <div class="news-items-grid">
+            <div v-if="isNotesLoading" class="load-more">
+                <span>Loading notes...</span>
+            </div>
+            <div v-else-if="notesLoadError" class="error-message">
+                {{ notesLoadError }}
+            </div>
+            <div v-else-if="newsItems.length === 0" class="load-more">
+                <span>No notes yet</span>
+            </div>
+            <div v-else class="news-items-grid">
                 <div
                     class="news-item"
                     v-for="item in newsItems"
@@ -539,7 +543,7 @@ function updateWindowWidth() {
                 </div>
             </div>
 
-            <div class="load-more">
+            <div v-if="newsItems.length > 0" class="load-more">
                 <button class="load-more-button">Load More</button>
             </div>
         </div>

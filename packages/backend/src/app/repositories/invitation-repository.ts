@@ -31,7 +31,12 @@ export interface IInvitationRepository {
 
 export const invitationRepository: IInvitationRepository = {
     async create(data) {
-        const [result] = await db.insert(invitations).values(data);
+        const now = new Date();
+        const [result] = await db.insert(invitations).values({
+            ...data,
+            createdAt: data.createdAt ?? now,
+            updatedAt: data.updatedAt ?? now,
+        });
         const created = await db
             .select()
             .from(invitations)

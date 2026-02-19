@@ -68,7 +68,12 @@ export const taskRepository: ITaskRepository = {
     },
 
     async create(data) {
-        const [result] = await db.insert(tasks).values(data);
+        const now = new Date();
+        const [result] = await db.insert(tasks).values({
+            ...data,
+            createdAt: data.createdAt ?? now,
+            updatedAt: data.updatedAt ?? now,
+        });
         const created = await db
             .select()
             .from(tasks)

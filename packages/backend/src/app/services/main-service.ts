@@ -4,6 +4,7 @@ import { userTransformer } from '#app/transformers/index.js';
 import { generateWsToken } from '#app/services/generate-ws-token-service.js';
 import { getWsUrl } from '#app/services/get-ws-url-service.js';
 import { success } from '#app/services/shared/service-result.js';
+import diskConfig from '#config/disk.js';
 import type { SaveUserInput } from 'shared/schemas';
 
 export const mainService = {
@@ -101,6 +102,13 @@ export const mainService = {
             status: 'ok',
             user: userTransformer.serialize(user),
             wsUrl: wsToken ? getWsUrl(wsToken) : '',
+            storage: {
+                s3Endpoint: diskConfig.s3Endpoint ?? '',
+                s3Bucket: diskConfig.s3Bucket ?? '',
+                s3Prefix: diskConfig.s3Prefix ?? '',
+                s3StaticDataPrefix: diskConfig.s3StaticDataPrefix ?? '',
+                s3DynamicDataPrefix: diskConfig.s3DynamicDataPrefix ?? '',
+            },
         });
     },
 

@@ -43,7 +43,13 @@ export interface IContactListRepository {
 
 export const contactListRepository: IContactListRepository = {
     async create(data) {
-        const [result] = await db.insert(contactList).values(data);
+        const now = new Date();
+        const [result] = await db.insert(contactList).values({
+            ...data,
+            createdAt: data.createdAt ?? now,
+            updatedAt: data.updatedAt ?? now,
+            lastMessageAt: data.lastMessageAt ?? now,
+        });
         const created = await db
             .select()
             .from(contactList)

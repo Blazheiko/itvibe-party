@@ -60,7 +60,12 @@ async function getTaskSummaries(projectId: bigint): Promise<ProjectTaskSummary[]
 
 export const projectRepository: IProjectRepository = {
     async create(data) {
-        const [result] = await db.insert(projects).values(data);
+        const now = new Date();
+        const [result] = await db.insert(projects).values({
+            ...data,
+            createdAt: data.createdAt ?? now,
+            updatedAt: data.updatedAt ?? now,
+        });
         const created = await db
             .select()
             .from(projects)

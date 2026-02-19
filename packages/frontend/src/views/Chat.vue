@@ -27,6 +27,7 @@ import { useMessagesStore, type Message } from '@/stores/messages'
 import type { Contact } from '@/stores/contacts'
 import { useEventBus } from '@/utils/event-bus'
 import type { WebsocketPayload } from '@/utils/websocket-base'
+import type { ApiMessage } from '@/types/chat'
 import { useStateStore } from '@/stores/state'
 const messagesStore = useMessagesStore()
 const eventBus = useEventBus()
@@ -82,20 +83,6 @@ interface ContactResponse {
     status: string
     updatedAt: string
     createdAt: string
-}
-
-export interface ApiMessage {
-    id: string
-    content: string
-    createdAt: string
-    senderId: string
-    receiverId: string
-    type: 'TEXT' | 'IMAGE' | 'VIDEO' | 'AUDIO'
-    src?: string | null
-    taskId?: string | null
-    calendarId?: string | null
-    isRead: boolean
-    updatedAt?: string | null
 }
 
 interface MessagesResponse {

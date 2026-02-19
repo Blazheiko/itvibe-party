@@ -21,6 +21,13 @@ export const InitResponseSchema = type({
     updatedAt: "string",
   },
   "wsUrl?": "string",
+  "storage?": {
+    "s3Endpoint?": "string",
+    "s3Bucket?": "string",
+    "s3Prefix?": "string",
+    "s3StaticDataPrefix?": "string",
+    "s3DynamicDataPrefix?": "string",
+  },
 });
 export type InitResponse = typeof InitResponseSchema.infer;
 

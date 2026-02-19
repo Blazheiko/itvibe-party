@@ -9,6 +9,14 @@ export interface IncomingCall {
     offer?: RTCSessionDescriptionInit
 }
 
+export interface NotesStorageConfig {
+    s3Endpoint: string
+    s3Bucket: string
+    s3Prefix: string
+    s3StaticDataPrefix: string
+    s3DynamicDataPrefix: string
+}
+
 export const useStateStore = defineStore('state', () => {
     const theme = localStorage.getItem('theme')
     const darkMode = ref(theme === 'dark')
@@ -24,6 +32,13 @@ export const useStateStore = defineStore('state', () => {
     const pushSubscription = ref<PushSubscription | null>(null)
     const isSubscribedToPush = ref(false)
     const pushSubscriptionId = ref<number | null>(null)
+    const notesStorageConfig = ref<NotesStorageConfig>({
+        s3Endpoint: '',
+        s3Bucket: '',
+        s3Prefix: '',
+        s3StaticDataPrefix: '',
+        s3DynamicDataPrefix: '',
+    })
     // const doubleCount = computed(() => count.value * 2)
 
     // Incoming call state
@@ -69,6 +84,46 @@ export const useStateStore = defineStore('state', () => {
     const handleResize = () => {
         windowWidth.value = window.innerWidth
         isMobile.value = window.innerWidth <= 768
+    }
+
+    const setNotesStorageConfig = (config: Partial<NotesStorageConfig>) => {
+        notesStorageConfig.value = {
+            ...notesStorageConfig.value,
+            ...config,
+        }
+    }
+
+    const normalizeUrl = (value: string): string => {
+        if (!value) return ''
+        return value.endsWith('/') ? value.slice(0, -1) : value
+    }
+
+    const getNotesPhotoUrl = (src: string): string => {
+        if (src.startsWith('http://') || src.startsWith('https://')) {
+            return src
+        }
+
+        const cleanSrc = src.replace(/^\/+/, '')
+        const dynamicPrefix = notesStorageConfig.value.s3DynamicDataPrefix
+            .replace(/^\/+|\/+$/g, '')
+        const srcWithPrefix =
+            dynamicPrefix && !cleanSrc.startsWith(`${dynamicPrefix}/`)
+                ? `${dynamicPrefix}/${cleanSrc}`
+                : cleanSrc
+
+        const endpoint = notesStorageConfig.value.s3Endpoint.trim()
+        const bucket = notesStorageConfig.value.s3Bucket.trim().replace(/^\/+|\/+$/g, '')
+
+        if (endpoint) {
+            const endpointWithProtocol = /^https?:\/\//i.test(endpoint)
+                ? endpoint
+                : `https://${endpoint}`
+            const base = normalizeUrl(endpointWithProtocol)
+            return bucket ? `${base}/${bucket}/${srcWithPrefix}` : `${base}/${srcWithPrefix}`
+        }
+
+        const apiBase = normalizeUrl(import.meta.env.VITE_BASE_URL || 'http://127.0.0.1:5174')
+        return `${apiBase}/api/storage/${srcWithPrefix}`
     }
 
     // Функция для определения режима PWA
@@ -625,6 +680,9 @@ export const useStateStore = defineStore('state', () => {
         pushSubscription,
         isSubscribedToPush,
         pushSubscriptionId,
+        notesStorageConfig,
+        setNotesStorageConfig,
+        getNotesPhotoUrl,
         requestNotificationPermission,
         ensureNotificationPermission,
         subscribeToPush,
