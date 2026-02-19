@@ -18,6 +18,7 @@ const emit = defineEmits<{
     'cancel-edit': []
     'context-menu': [event: MouseEvent, index: number, text: string]
     'update:edit-text': [text: string]
+    'image-loaded': [index: number]
 }>()
 
 const editTextarea = ref<HTMLTextAreaElement | null>(null)
@@ -163,6 +164,7 @@ onUnmounted(() => {
                     alt="Chat image preview"
                     class="message-image"
                     @click="openImageViewer"
+                    @load="emit('image-loaded', index)"
                 />
                 <div v-if="message.text" class="message-caption">{{ message.text }}</div>
             </template>

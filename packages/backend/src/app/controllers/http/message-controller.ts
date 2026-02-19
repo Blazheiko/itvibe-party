@@ -125,7 +125,7 @@ export default {
     if (httpData.hasFile("image") || httpData.files !== null) {
       const payload = (httpData.payload ?? {}) as Record<string, unknown>;
       contactId = Number(payload["contactId"]);
-      content = String(payload["content"] ?? "");
+      content = String(payload["content"]);
       userId = Number(payload["userId"]);
       type = parseMessageType(payload["type"]);
       file =

@@ -156,6 +156,21 @@ const scrollToBottom = () => {
     }
 }
 
+const scrollToBottomAfterRender = () => {
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            scrollToBottom()
+        })
+    })
+}
+
+const handleMessageImageLoaded = (index: number) => {
+    // Доскролливаем только для последних сообщений, чтобы не прыгать при загрузке старых картинок.
+    if (index >= messagesStore.messages.length - 2) {
+        scrollToBottomAfterRender()
+    }
+}
+
 defineExpose({
     scrollToBottom,
 })
@@ -175,12 +190,14 @@ const sendMessage = async () => {
         clearPendingImage()
 
         // Прокрутка вниз после отправки сообщения
-        setTimeout(scrollToBottom, 100)
+        scrollToBottomAfterRender()
     }
 }
 
 const canSendMessage = computed(
-    () => Boolean(selectedContact.value) && (newMessage.value.trim().length > 0 || pendingImage.value),
+    () =>
+        Boolean(selectedContact.value) &&
+        (newMessage.value.trim().length > 0 || pendingImage.value),
 )
 
 const formatFileSize = (size: number): string => {
@@ -206,7 +223,7 @@ const selectImageFromButton = () => {
 
 const generateThumbnailFile = async (file: File): Promise<File> => {
     const imageBitmap = await createImageBitmap(file)
-    const maxSide = 480
+    const maxSide = 250
     const scale = Math.min(1, maxSide / Math.max(imageBitmap.width, imageBitmap.height))
     const width = Math.max(1, Math.round(imageBitmap.width * scale))
     const height = Math.max(1, Math.round(imageBitmap.height * scale))
@@ -691,6 +708,7 @@ onUnmounted(() => {
                         @cancel-edit="cancelMessageEdit"
                         @context-menu="showContextMenu"
                         @update:edit-text="(text) => (editingMessage.text = text)"
+                        @image-loaded="handleMessageImageLoaded"
                     />
                 </template>
             </div>
@@ -728,13 +746,23 @@ onUnmounted(() => {
         </div>
 
         <div v-if="pendingImage && selectedContact" class="pending-image-preview">
-            <img :src="pendingImage.previewUrl" alt="Pending upload preview" class="pending-image" />
+            <img
+                :src="pendingImage.previewUrl"
+                alt="Pending upload preview"
+                class="pending-image"
+            />
             <div class="pending-image-meta">
                 <div class="pending-image-name">{{ pendingImage.name }}</div>
                 <div class="pending-image-size">{{ formatFileSize(pendingImage.size) }}</div>
             </div>
             <button class="pending-image-remove" @click="clearPendingImage" title="Remove image">
-                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <svg
+                    viewBox="0 0 24 24"
+                    width="18"
+                    height="18"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                >
                     <path
                         d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"
                         fill="currentColor"
