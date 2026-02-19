@@ -269,26 +269,63 @@ const logout = () => {
     router.push('/')
 }
 
-const formatChatMesssage = (message: ApiMessage): Message => ({
-    id: Number(message.id),
-    text: message.content,
-    time: new Date(message.createdAt).toLocaleTimeString([], {
-        hour: '2-digit',
-        minute: '2-digit',
-    }),
-    isSent: String(userStore.user?.id) === message.senderId,
-    isRead: message.isRead,
-    createdAt: message.createdAt,
-    taskId: message.taskId ? Number(message.taskId) : undefined,
-    calendarId: message.calendarId ? Number(message.calendarId) : undefined,
-    date: isToday(new Date(message.createdAt))
-        ? 'Today'
-        : formatMessageDate(String(message.createdAt)),
-})
+interface ChatSendPayload {
+    text: string
+    imageFile?: File
+    thumbnailFile?: File
+}
 
-const sendMessage = async (newMessage: string) => {
-    console.log('sendMessage', newMessage)
-    if (newMessage && contactsStore.selectedContact && userStore.user) {
+const getMessageField = (message: Record<string, unknown>, ...keys: string[]): unknown => {
+    for (const key of keys) {
+        if (message[key] !== undefined && message[key] !== null) {
+            return message[key]
+        }
+    }
+    return undefined
+}
+
+const formatChatMesssage = (message: ApiMessage | Record<string, unknown>): Message => {
+    const messageData = message as Record<string, unknown>
+    const createdAtRaw = String(getMessageField(messageData, 'createdAt', 'created_at') ?? new Date().toISOString())
+    const senderId = String(getMessageField(messageData, 'senderId', 'sender_id') ?? '')
+    const srcRaw = getMessageField(messageData, 'src')
+    const thumbnailRaw = getMessageField(messageData, 'thumbnail')
+    const messageSrc = typeof srcRaw === 'string' && srcRaw.length > 0 ? stateStore.getNotesPhotoUrl(srcRaw) : null
+    const messageThumbnail =
+        typeof thumbnailRaw === 'string' && thumbnailRaw.length > 0
+            ? stateStore.getNotesPhotoUrl(thumbnailRaw)
+            : messageSrc
+    const messageType = String(getMessageField(messageData, 'type') ?? 'TEXT') as Message['type']
+    const content = String(getMessageField(messageData, 'content') ?? '')
+
+    return {
+        id: Number(getMessageField(messageData, 'id') ?? 0),
+        text: content,
+        type: messageType,
+        src: messageSrc,
+        thumbnail: messageThumbnail,
+        time: new Date(createdAtRaw).toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit',
+        }),
+        isSent: String(userStore.user?.id) === senderId,
+        isRead: Boolean(getMessageField(messageData, 'isRead', 'is_read')),
+        createdAt: createdAtRaw,
+        taskId: getMessageField(messageData, 'taskId', 'task_id')
+            ? Number(getMessageField(messageData, 'taskId', 'task_id'))
+            : undefined,
+        calendarId: getMessageField(messageData, 'calendarId', 'calendar_id')
+            ? Number(getMessageField(messageData, 'calendarId', 'calendar_id'))
+            : undefined,
+        date: isToday(new Date(createdAtRaw)) ? 'Today' : formatMessageDate(String(createdAtRaw)),
+    }
+}
+
+const sendMessage = async (payload: string | ChatSendPayload) => {
+    const text = typeof payload === 'string' ? payload : payload.text
+    const imageFile = typeof payload === 'string' ? undefined : payload.imageFile
+    const thumbnailFile = typeof payload === 'string' ? undefined : payload.thumbnailFile
+    if ((text || imageFile) && contactsStore.selectedContact && userStore.user) {
         isSendingMessage.value = true
 
         try {
@@ -303,9 +340,10 @@ const sendMessage = async (newMessage: string) => {
             const contactId = contactsStore.selectedContact.contactId
             const { error, data } = await messagesApi.sendMessage({
                 contactId,
-                content: newMessage,
+                content: text ?? '',
                 userId: userStore.user?.id,
-            })
+                type: imageFile ? 'IMAGE' : 'TEXT',
+            }, { imageFile, thumbnailFile })
             if (error) {
                 console.error(error)
             } else if (data && data.message) {
@@ -323,7 +361,7 @@ const sendMessage = async (newMessage: string) => {
 
                 contactsStore.updateContact({
                     contactId: contactId,
-                    lastMessage: message.text,
+                    lastMessage: message.type === 'IMAGE' ? 'Image' : message.text,
                     lastMessageTime: formatMessageDate(String(message.createdAt)),
                     updatedAt: new Date().toISOString(),
                     lastMessageId: String(message.id) || undefined,
@@ -431,31 +469,19 @@ onMounted(() => {
     eventBus.on('new_message', (payload: WebsocketPayload) => {
         console.log('event new_message', payload)
         const message: ApiMessage = payload.message as ApiMessage
-        if (message?.senderId) {
-            contactsStore.updateContactById(String(message.senderId), {
-                lastMessage: message.content,
+        const messageData = message as unknown as Record<string, unknown>
+        const senderId = String(getMessageField(messageData, 'senderId', 'sender_id') ?? '')
+        const formattedMessage = formatChatMesssage(messageData)
+        if (senderId) {
+            contactsStore.updateContactById(senderId, {
+                lastMessage: formattedMessage.type === 'IMAGE' ? 'Image' : formattedMessage.text,
             })
             if (
                 contactsStore.selectedContact &&
-                message.senderId === String(contactsStore.selectedContact.contactId)
+                senderId === String(contactsStore.selectedContact.contactId)
             ) {
                 console.log('new_message')
-                messagesStore.addMessage({
-                    id: Number(message.id),
-                    text: message.content,
-                    time: new Date().toLocaleTimeString([], {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                    }),
-                    isSent: false,
-                    isRead: true,
-                    createdAt: new Date().toISOString(),
-                    taskId: message.taskId ? Number(message.taskId) : undefined,
-                    calendarId: message.calendarId ? Number(message.calendarId) : undefined,
-                    date: isToday(new Date())
-                        ? 'Today'
-                        : formatMessageDate(new Date().toISOString()),
-                })
+                messagesStore.addMessage(formattedMessage)
                 // Воспроизводим звук щелчка при получении сообщения в активный чат
                 playClickSound()
                 nextTick(() => {
@@ -469,11 +495,11 @@ onMounted(() => {
                 console.log('new_message not for this contact')
                 // Воспроизводим звук при получении нового сообщения в неактивный чат
                 playNotificationSound()
-                contactsStore.incrementUnreadCount(String(message.senderId))
-                contactsStore.updateContactById(String(message.senderId), {
+                contactsStore.incrementUnreadCount(senderId)
+                contactsStore.updateContactById(senderId, {
                     isOnline: true,
-                    lastMessage: message.content,
-                    lastMessageTime: formatMessageDate(String(message.createdAt)),
+                    lastMessage: formattedMessage.type === 'IMAGE' ? 'Image' : formattedMessage.text,
+                    lastMessageTime: formatMessageDate(String(formattedMessage.createdAt)),
                     updatedAt: new Date().toISOString(),
                 })
             }

@@ -6,6 +6,7 @@ export interface ApiMessage {
     receiverId: string
     type: 'TEXT' | 'IMAGE' | 'VIDEO' | 'AUDIO'
     src?: string | null
+    thumbnail?: string | null
     taskId?: string | null
     calendarId?: string | null
     isRead: boolean

@@ -22,6 +22,7 @@ export const MessageSchema = type({
   isRead: "boolean",
   type: "unknown",
   src: "string | null",
+  thumbnail: "string | null",
   calendarId: "bigint | null",
   taskId: "bigint | null",
 });
@@ -51,6 +52,7 @@ export const ContactSchema = type({
     updatedAt: "Date",
     type: "unknown",
     src: "string | null",
+    thumbnail: "string | null",
     isRead: "boolean",
     calendarId: "bigint | null",
     taskId: "bigint | null",

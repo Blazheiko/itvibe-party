@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, nextTick } from 'vue'
+import { computed, ref, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 // Menu moved to AppHeader; keep only chat controls locally
@@ -50,6 +50,21 @@ const newMessage = ref('')
 const messageContainerRef = ref(null)
 const chatAreaRef = ref<HTMLElement | null>(null)
 const chatAreaHeight = ref<string>('100%')
+const imageInputRef = ref<HTMLInputElement | null>(null)
+const dragCounter = ref(0)
+const isDragOver = ref(false)
+
+interface PendingImagePreview {
+    file: File
+    thumbnailFile: File
+    previewUrl: string
+    name: string
+    size: number
+}
+
+const pendingImage = ref<PendingImagePreview | null>(null)
+const maxImageSizeBytes = 10 * 1024 * 1024
+const allowedImageMimeTypes = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif'])
 
 // Используем storeToRefs для получения реактивного selectedContact из стора
 const { selectedContact } = storeToRefs(contactsStore)
@@ -147,15 +162,151 @@ defineExpose({
 
 const sendMessage = async () => {
     const message = newMessage.value.trim()
-    if (message) {
-        console.log('sendMessage', message)
-        emit('send-message', message)
+    const imageFile = pendingImage.value?.file
+    const thumbnailFile = pendingImage.value?.thumbnailFile
+    if (message || imageFile) {
+        emit('send-message', {
+            text: message,
+            imageFile,
+            thumbnailFile,
+        })
 
         newMessage.value = ''
+        clearPendingImage()
 
         // Прокрутка вниз после отправки сообщения
         setTimeout(scrollToBottom, 100)
     }
+}
+
+const canSendMessage = computed(
+    () => Boolean(selectedContact.value) && (newMessage.value.trim().length > 0 || pendingImage.value),
+)
+
+const formatFileSize = (size: number): string => {
+    if (size < 1024) return `${size} B`
+    if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`
+    return `${(size / (1024 * 1024)).toFixed(1)} MB`
+}
+
+const clearPendingImage = () => {
+    if (pendingImage.value?.previewUrl) {
+        URL.revokeObjectURL(pendingImage.value.previewUrl)
+    }
+    pendingImage.value = null
+    if (imageInputRef.value) {
+        imageInputRef.value.value = ''
+    }
+}
+
+const selectImageFromButton = () => {
+    if (!selectedContact.value) return
+    imageInputRef.value?.click()
+}
+
+const generateThumbnailFile = async (file: File): Promise<File> => {
+    const imageBitmap = await createImageBitmap(file)
+    const maxSide = 480
+    const scale = Math.min(1, maxSide / Math.max(imageBitmap.width, imageBitmap.height))
+    const width = Math.max(1, Math.round(imageBitmap.width * scale))
+    const height = Math.max(1, Math.round(imageBitmap.height * scale))
+
+    const canvas = document.createElement('canvas')
+    canvas.width = width
+    canvas.height = height
+    const context = canvas.getContext('2d')
+    if (!context) {
+        imageBitmap.close()
+        throw new Error('Canvas 2D context is not available')
+    }
+
+    context.imageSmoothingEnabled = true
+    context.imageSmoothingQuality = 'high'
+    context.drawImage(imageBitmap, 0, 0, width, height)
+    imageBitmap.close()
+
+    const thumbnailBlob = await new Promise<Blob>((resolve, reject) => {
+        canvas.toBlob(
+            (blob) => {
+                if (!blob) {
+                    reject(new Error('Failed to generate thumbnail blob'))
+                    return
+                }
+                resolve(blob)
+            },
+            'image/jpeg',
+            0.82,
+        )
+    })
+
+    const cleanName = file.name.replace(/\.[^.]+$/, '')
+    return new File([thumbnailBlob], `${cleanName}_thumb.jpg`, { type: 'image/jpeg' })
+}
+
+const setPendingImage = async (file: File | null) => {
+    if (!file) return
+
+    if (!allowedImageMimeTypes.has(file.type)) {
+        console.error('Unsupported image type')
+        return
+    }
+
+    if (file.size <= 0 || file.size > maxImageSizeBytes) {
+        console.error('Invalid image size')
+        return
+    }
+
+    let thumbnailFile: File
+    try {
+        thumbnailFile = await generateThumbnailFile(file)
+    } catch (error) {
+        console.error('Failed to generate image thumbnail', error)
+        return
+    }
+
+    clearPendingImage()
+    pendingImage.value = {
+        file,
+        thumbnailFile,
+        previewUrl: URL.createObjectURL(file),
+        name: file.name,
+        size: file.size,
+    }
+}
+
+const handleImageInputChange = async (event: Event) => {
+    const input = event.target as HTMLInputElement
+    const file = input.files?.[0] ?? null
+    await setPendingImage(file)
+}
+
+const handleDragEnter = (event: DragEvent) => {
+    event.preventDefault()
+    if (!selectedContact.value) return
+    dragCounter.value += 1
+    isDragOver.value = true
+}
+
+const handleDragOver = (event: DragEvent) => {
+    event.preventDefault()
+}
+
+const handleDragLeave = (event: DragEvent) => {
+    event.preventDefault()
+    dragCounter.value -= 1
+    if (dragCounter.value <= 0) {
+        isDragOver.value = false
+        dragCounter.value = 0
+    }
+}
+
+const handleDrop = async (event: DragEvent) => {
+    event.preventDefault()
+    dragCounter.value = 0
+    isDragOver.value = false
+    if (!selectedContact.value) return
+    const file = event.dataTransfer?.files?.[0] ?? null
+    await setPendingImage(file)
 }
 
 let userTyping = false
@@ -213,6 +364,9 @@ const showContextMenu = (event: MouseEvent, index: number, text: string) => {
     const message = messagesStore.messages[index]
     if (!isMessageOwner(message)) {
         return // Не показываем контекстное меню для чужих сообщений
+    }
+    if (message.type && message.type !== 'TEXT') {
+        return
     }
 
     contextMenu.value = {
@@ -354,6 +508,9 @@ const startMessageEdit = (index: number, text: string) => {
     if (!isMessageOwner(message)) {
         return // Не позволяем редактировать чужие сообщения
     }
+    if (message.type && message.type !== 'TEXT') {
+        return
+    }
 
     editingMessage.value = {
         index,
@@ -466,11 +623,20 @@ onUnmounted(() => {
 
     // Удаляем обработчик клика
     document.removeEventListener('click', hideContextMenu)
+    clearPendingImage()
 })
 </script>
 
 <template>
-    <div class="chat-area" ref="chatAreaRef" :style="{ height: chatAreaHeight }">
+    <div
+        class="chat-area"
+        ref="chatAreaRef"
+        :style="{ height: chatAreaHeight }"
+        @dragenter="handleDragEnter"
+        @dragover="handleDragOver"
+        @dragleave="handleDragLeave"
+        @drop="handleDrop"
+    >
         <div class="chat-header">
             <button class="toggle-contacts" @click="$emit('toggle-contacts')">
                 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -499,6 +665,9 @@ onUnmounted(() => {
         </div>
 
         <div class="messages-container">
+            <div v-if="isDragOver && selectedContact" class="dropzone-overlay">
+                <div class="dropzone-overlay-content">Drop image to upload</div>
+            </div>
             <!-- Loader overlay for messages -->
             <LoaderOverlay :show="messagesStore.isLoading" />
 
@@ -558,6 +727,22 @@ onUnmounted(() => {
             </div>
         </div>
 
+        <div v-if="pendingImage && selectedContact" class="pending-image-preview">
+            <img :src="pendingImage.previewUrl" alt="Pending upload preview" class="pending-image" />
+            <div class="pending-image-meta">
+                <div class="pending-image-name">{{ pendingImage.name }}</div>
+                <div class="pending-image-size">{{ formatFileSize(pendingImage.size) }}</div>
+            </div>
+            <button class="pending-image-remove" @click="clearPendingImage" title="Remove image">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path
+                        d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"
+                        fill="currentColor"
+                    />
+                </svg>
+            </button>
+        </div>
+
         <div class="input-area">
             <button
                 class="video-call-button"
@@ -577,6 +762,25 @@ onUnmounted(() => {
                     />
                 </svg>
             </button>
+            <button
+                class="attachment-button"
+                title="Attach image"
+                @click="selectImageFromButton"
+                :disabled="!selectedContact"
+            >
+                <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+                    <path
+                        d="M16.5 6.5L8 15c-.83.83-.83 2.17 0 3 .83.83 2.17.83 3 0l9-9a4.243 4.243 0 00-6-6l-9.5 9.5c-2.17 2.17-2.17 5.67 0 7.84a5.538 5.538 0 007.84 0l8.5-8.5-1.41-1.41-8.5 8.5a3.536 3.536 0 01-5 0 3.536 3.536 0 010-5L15.41 4.41a2.242 2.242 0 013.18 3.18l-9 9a.996.996 0 11-1.41-1.41l8.5-8.5-1.41-1.18z"
+                    />
+                </svg>
+            </button>
+            <input
+                ref="imageInputRef"
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                class="hidden-image-input"
+                @change="handleImageInputChange"
+            />
             <!-- <button
                 class="voice-call-button"
                 title="Start voice call"
@@ -609,14 +813,14 @@ onUnmounted(() => {
 
             <!-- Show voice input button when message is empty, send button when there's text -->
             <VoiceInput
-                v-if="!newMessage.trim() && selectedContact"
+                v-if="!newMessage.trim() && selectedContact && !pendingImage"
                 @text-recognized="handleTextRecognized"
             />
             <button
                 v-else
                 class="send-button"
                 @click="sendMessage"
-                :disabled="!newMessage.trim() || !selectedContact || props.isSendingMessage"
+                :disabled="!canSendMessage || props.isSendingMessage"
             >
                 <svg
                     width="24"
@@ -798,6 +1002,26 @@ onUnmounted(() => {
     position: relative;
 }
 
+.dropzone-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 15;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(26, 115, 232, 0.12);
+    border: 2px dashed rgba(26, 115, 232, 0.5);
+    pointer-events: none;
+}
+
+.dropzone-overlay-content {
+    background: rgba(255, 255, 255, 0.95);
+    color: var(--primary-color);
+    border-radius: 12px;
+    padding: 10px 16px;
+    font-weight: 600;
+}
+
 /* Переопределяем стили лоадера для контейнера сообщений */
 .messages-container .loader-overlay {
     position: absolute;
@@ -959,10 +1183,96 @@ onUnmounted(() => {
     min-height: calc(72px + env(safe-area-inset-bottom, 20px));
 }
 
+.pending-image-preview {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px;
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+    background: rgba(26, 115, 232, 0.06);
+}
+
+.pending-image {
+    width: min(320px, 55vw);
+    max-height: 300px;
+    border-radius: 12px;
+    object-fit: contain;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    background: #fff;
+    padding: 4px;
+}
+
+.pending-image-meta {
+    min-width: 0;
+    flex: 1;
+}
+
+.pending-image-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-color);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.pending-image-size {
+    font-size: 13px;
+    color: #6c757d;
+}
+
+.pending-image-remove {
+    border: none;
+    border-radius: 50%;
+    width: 38px;
+    height: 38px;
+    background: #ffe5e5;
+    color: #b22a2a;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.pending-image-remove:hover {
+    background: #ffd6d6;
+}
+
 .dark-theme .input-area {
     background-color: #1e1e1e;
     border-top: 1px solid rgba(255, 255, 255, 0.04);
     box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.2);
+}
+
+.attachment-button {
+    background-color: #e8f0fe;
+    color: var(--primary-color);
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.attachment-button:hover {
+    transform: translateY(-1px);
+    background-color: #d2e3fc;
+}
+
+.attachment-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.hidden-image-input {
+    display: none;
 }
 
 .video-call-button,

@@ -13,6 +13,9 @@ export interface Message {
     sender_id?: number
     receiver_id?: number
     text: string
+    type?: 'TEXT' | 'IMAGE' | 'VIDEO' | 'AUDIO'
+    src?: string | null
+    thumbnail?: string | null
     time: string
     isSent: boolean
     isRead: boolean

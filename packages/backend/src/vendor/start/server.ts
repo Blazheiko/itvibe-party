@@ -226,6 +226,7 @@ const getHttpData = async (
 
   if (hasBody && contentType !== undefined) {
     const result = await getData(res, contentType, headers);
+    payload = result.payload;
 
     if (isPayload && route.validator !== undefined && result.payload !== null) {
       logger.info('route.validator Get Http Data')

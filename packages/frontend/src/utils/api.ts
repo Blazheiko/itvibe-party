@@ -348,6 +348,7 @@ interface UpdateMessageResponse extends EditMessageResponse {
     type: string
     content: string
     src: string
+    thumbnail?: string
     is_read: boolean
     created_at: string
     updated_at: string
@@ -366,11 +367,30 @@ export const messagesApi = {
 
   sendMessage: async (
     body: SendMessageRequest,
+    files?: {
+      imageFile?: File
+      thumbnailFile?: File
+    },
   ): Promise<ApiResponse<SendMessageResponse>> => {
+    const imageFile = files?.imageFile
+    if (imageFile) {
+      const formData = new FormData()
+      formData.append('userId', String(Number(body.userId)))
+      formData.append('contactId', String(Number(body.contactId)))
+      formData.append('content', body.content ?? '')
+      formData.append('type', 'IMAGE')
+      formData.append('image', imageFile)
+      if (files?.thumbnailFile) {
+        formData.append('thumbnail', files.thumbnailFile)
+      }
+      return baseApi.upload<SendMessageResponse>('POST', '/api/chat/send-chat-messages', formData)
+    }
+
     return baseApi.http<SendMessageResponse>('POST', '/api/chat/send-chat-messages', {
       userId: Number(body.userId),
       contactId: Number(body.contactId),
       content: body.content,
+      type: body.type ?? 'TEXT',
     })
   },
 

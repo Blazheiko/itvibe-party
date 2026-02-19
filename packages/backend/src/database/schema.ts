@@ -94,6 +94,7 @@ export const messages = mysqlTable(
             .default('TEXT'),
         content: text('content').notNull(),
         src: varchar('src', { length: 500 }),
+        thumbnail: varchar('thumbnail', { length: 500 }),
         isRead: boolean('is_read').notNull().default(false),
         calendarId: bigint('calendar_id', { mode: 'bigint', unsigned: true }),
         taskId: bigint('task_id', { mode: 'bigint', unsigned: true }),

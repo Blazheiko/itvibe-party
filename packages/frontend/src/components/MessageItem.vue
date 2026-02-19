@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, nextTick, watch } from 'vue'
+import { ref, nextTick, watch, computed, onUnmounted } from 'vue'
 import type { Message } from '@/stores/messages'
 
 interface Props {
@@ -21,15 +21,18 @@ const emit = defineEmits<{
 }>()
 
 const editTextarea = ref<HTMLTextAreaElement | null>(null)
+const isImageViewerOpen = ref(false)
+const imagePreviewSrc = computed(() => props.message.thumbnail || props.message.src || '')
+const imageOriginalSrc = computed(() => props.message.src || props.message.thumbnail || '')
 
 const handleContextMenu = (event: MouseEvent) => {
-    if (props.isOwner) {
+    if (props.isOwner && (!props.message.type || props.message.type === 'TEXT')) {
         emit('context-menu', event, props.index, props.message.text)
     }
 }
 
 const handleDoubleClick = () => {
-    if (props.isOwner) {
+    if (props.isOwner && (!props.message.type || props.message.type === 'TEXT')) {
         emit('start-edit', props.index, props.message.text)
     }
 }
@@ -40,6 +43,17 @@ const handleSaveEdit = () => {
 
 const handleCancelEdit = () => {
     emit('cancel-edit')
+}
+
+const openImageViewer = () => {
+    if (!imageOriginalSrc.value) {
+        return
+    }
+    isImageViewerOpen.value = true
+}
+
+const closeImageViewer = () => {
+    isImageViewerOpen.value = false
 }
 
 const handleKeyUp = (event: KeyboardEvent) => {
@@ -82,6 +96,22 @@ watch(
     },
     { immediate: true },
 )
+
+const onDocumentKeyDown = (event: KeyboardEvent) => {
+    if (event.key === 'Escape' && isImageViewerOpen.value) {
+        closeImageViewer()
+    }
+}
+
+if (typeof document !== 'undefined') {
+    document.addEventListener('keydown', onDocumentKeyDown)
+}
+
+onUnmounted(() => {
+    if (typeof document !== 'undefined') {
+        document.removeEventListener('keydown', onDocumentKeyDown)
+    }
+})
 </script>
 
 <template>
@@ -127,7 +157,18 @@ watch(
             </div>
         </div>
         <template v-else>
-            {{ message.text }}
+            <template v-if="message.type === 'IMAGE' && imagePreviewSrc">
+                <img
+                    :src="imagePreviewSrc"
+                    alt="Chat image preview"
+                    class="message-image"
+                    @click="openImageViewer"
+                />
+                <div v-if="message.text" class="message-caption">{{ message.text }}</div>
+            </template>
+            <template v-else>
+                {{ message.text }}
+            </template>
             <div class="message-footer">
                 <span>{{ message.time }}</span>
                 <span
@@ -159,6 +200,17 @@ watch(
             </div>
         </template>
     </div>
+    <div v-if="isImageViewerOpen" class="image-viewer-overlay" @click.self="closeImageViewer">
+        <button class="image-viewer-close" @click="closeImageViewer" title="Close image viewer">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path
+                    d="M19 6.41L17.59 5L12 10.59L6.41 5L5 6.41L10.59 12L5 17.59L6.41 19L12 13.41L17.59 19L19 17.59L13.41 12L19 6.41Z"
+                    fill="currentColor"
+                />
+            </svg>
+        </button>
+        <img :src="imageOriginalSrc" alt="Original chat image" class="image-viewer-image" />
+    </div>
 </template>
 
 <style scoped>
@@ -173,6 +225,62 @@ watch(
     line-height: 1.5;
     font-size: 15px;
     cursor: context-menu;
+}
+
+.message-image {
+    max-width: 260px;
+    max-height: 260px;
+    width: auto;
+    height: auto;
+    object-fit: cover;
+    border-radius: 12px;
+    display: block;
+    cursor: zoom-in;
+}
+
+.message-caption {
+    margin-top: 8px;
+    white-space: pre-wrap;
+}
+
+.image-viewer-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 3000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.85);
+    padding: 24px;
+}
+
+.image-viewer-image {
+    max-width: min(96vw, 1400px);
+    max-height: 92vh;
+    object-fit: contain;
+    border-radius: 10px;
+    box-shadow: 0 12px 50px rgba(0, 0, 0, 0.45);
+}
+
+.image-viewer-close {
+    position: absolute;
+    top: 18px;
+    right: 18px;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255, 255, 255, 0.16);
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.image-viewer-close svg {
+    width: 24px;
+    height: 24px;
 }
 
 /* Акцентный фон по кругу для календаря/задачи */
