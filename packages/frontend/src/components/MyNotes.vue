@@ -100,7 +100,7 @@ const extractNotes = (payload: unknown): ApiNote[] => {
 const mapNoteToNewsItem = (note: ApiNote): NewsItem => {
     const photos = Array.isArray(note.photos) ? note.photos : []
     const images = photos
-        .map((photo) => (typeof photo.src === 'string' ? stateStore.getNotesPhotoUrl(photo.src) : ''))
+        .map((photo) => (typeof photo.src === 'string' ? stateStore.getStorageFileUrl(photo.src) : ''))
         .filter((src) => src.length > 0)
 
     return {

@@ -98,32 +98,49 @@ export const useStateStore = defineStore('state', () => {
         return value.endsWith('/') ? value.slice(0, -1) : value
     }
 
-    const getNotesPhotoUrl = (src: string): string => {
+    const normalizePathSegment = (value: string): string => {
+        return value.trim().replace(/^\/+|\/+$/g, '')
+    }
+
+    const hasPathPrefix = (value: string, prefix: string): boolean => {
+        if (!value || !prefix) return false
+        return value === prefix || value.startsWith(`${prefix}/`)
+    }
+
+    const getStorageFileUrl = (src: string): string => {
         if (src.startsWith('http://') || src.startsWith('https://')) {
             return src
         }
 
-        const cleanSrc = src.replace(/^\/+/, '')
-        const dynamicPrefix = notesStorageConfig.value.s3DynamicDataPrefix
-            .replace(/^\/+|\/+$/g, '')
-        const srcWithPrefix =
-            dynamicPrefix && !cleanSrc.startsWith(`${dynamicPrefix}/`)
-                ? `${dynamicPrefix}/${cleanSrc}`
-                : cleanSrc
+        const cleanSrc = src.trim().replace(/^\/+/, '')
+        const dynamicPrefix = normalizePathSegment(notesStorageConfig.value.s3DynamicDataPrefix)
+        const rootPrefix = normalizePathSegment(notesStorageConfig.value.s3Prefix)
+        let fullPath = cleanSrc
+
+        if (dynamicPrefix && !hasPathPrefix(fullPath, dynamicPrefix)) {
+            fullPath = `${dynamicPrefix}/${fullPath}`
+        }
+        if (rootPrefix && !hasPathPrefix(fullPath, rootPrefix)) {
+            fullPath = `${rootPrefix}/${fullPath}`
+        }
 
         const endpoint = notesStorageConfig.value.s3Endpoint.trim()
-        const bucket = notesStorageConfig.value.s3Bucket.trim().replace(/^\/+|\/+$/g, '')
+        const bucket = normalizePathSegment(notesStorageConfig.value.s3Bucket)
 
         if (endpoint) {
             const endpointWithProtocol = /^https?:\/\//i.test(endpoint)
                 ? endpoint
                 : `https://${endpoint}`
             const base = normalizeUrl(endpointWithProtocol)
-            return bucket ? `${base}/${bucket}/${srcWithPrefix}` : `${base}/${srcWithPrefix}`
+            return bucket ? `${base}/${bucket}/${fullPath}` : `${base}/${fullPath}`
         }
 
         const apiBase = normalizeUrl(import.meta.env.VITE_BASE_URL || 'http://127.0.0.1:5174')
-        return `${apiBase}/api/storage/${srcWithPrefix}`
+        return `${apiBase}/api/storage/${fullPath}`
+    }
+
+    const getNotesPhotoUrl = (src: string): string => {
+        return getStorageFileUrl(src)
     }
 
     // Функция для определения режима PWA
@@ -682,6 +699,7 @@ export const useStateStore = defineStore('state', () => {
         pushSubscriptionId,
         notesStorageConfig,
         setNotesStorageConfig,
+        getStorageFileUrl,
         getNotesPhotoUrl,
         requestNotificationPermission,
         ensureNotificationPermission,

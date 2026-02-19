@@ -298,10 +298,13 @@ const formatChatMesssage = (message: ApiMessage | Record<string, unknown>): Mess
     const senderId = String(getMessageField(messageData, 'senderId', 'sender_id') ?? '')
     const srcRaw = getMessageField(messageData, 'src')
     const thumbnailRaw = getMessageField(messageData, 'thumbnail')
-    const messageSrc = typeof srcRaw === 'string' && srcRaw.length > 0 ? stateStore.getNotesPhotoUrl(srcRaw) : null
+    const messageSrc =
+        typeof srcRaw === 'string' && srcRaw.length > 0
+            ? stateStore.getStorageFileUrl(srcRaw)
+            : null
     const messageThumbnail =
         typeof thumbnailRaw === 'string' && thumbnailRaw.length > 0
-            ? stateStore.getNotesPhotoUrl(thumbnailRaw)
+            ? stateStore.getStorageFileUrl(thumbnailRaw)
             : messageSrc
     const messageType = String(getMessageField(messageData, 'type') ?? 'TEXT') as Message['type']
     const content = String(getMessageField(messageData, 'content') ?? '')
