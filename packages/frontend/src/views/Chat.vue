@@ -279,6 +279,7 @@ const getLastMessagePreview = (message: Pick<Message, 'type' | 'text'>): string 
     if (message.type === 'IMAGE') return 'Image'
     if (message.type === 'AUDIO') return 'Audio'
     if (message.type === 'VIDEO') return 'Video'
+    if (message.type === 'FILE') return 'File'
     return message.text
 }
 
@@ -349,7 +350,7 @@ const sendMessage = async (payload: string | ChatSendPayload) => {
                 contactId,
                 content: text ?? '',
                 userId: userStore.user?.id,
-                type: mediaFile ? 'IMAGE' : 'TEXT',
+                type: mediaFile ? 'FILE' : 'TEXT',
             }, { mediaFile, thumbnailFile })
             if (error) {
                 console.error(error)

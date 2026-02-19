@@ -26,6 +26,12 @@ const editTextarea = ref<HTMLTextAreaElement | null>(null)
 const isImageViewerOpen = ref(false)
 const imagePreviewSrc = computed(() => props.message.thumbnail || props.message.src || '')
 const imageOriginalSrc = computed(() => props.message.src || props.message.thumbnail || '')
+const fileName = computed(() => {
+    const text = props.message.text?.trim()
+    if (text) return text
+    if (props.message.src) return props.message.src.split('/').pop() || 'file'
+    return 'file'
+})
 
 const handleContextMenu = (event: MouseEvent) => {
     if (props.isOwner) {
@@ -56,6 +62,18 @@ const openImageViewer = () => {
 
 const closeImageViewer = () => {
     isImageViewerOpen.value = false
+}
+
+const downloadCurrentFile = () => {
+    if (!props.message.src) return
+    const anchor = document.createElement('a')
+    anchor.href = props.message.src
+    anchor.download = fileName.value
+    anchor.target = '_blank'
+    anchor.rel = 'noopener'
+    document.body.append(anchor)
+    anchor.click()
+    anchor.remove()
 }
 
 const handleKeyUp = (event: KeyboardEvent) => {
@@ -184,6 +202,21 @@ onUnmounted(() => {
                 <AudioWaveform :src="imageOriginalSrc" />
                 <div v-if="message.text" class="message-caption">{{ message.text }}</div>
             </template>
+            <template v-else-if="message.type === 'FILE' && imageOriginalSrc">
+                <button class="file-message" @click="downloadCurrentFile" title="Download file">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path
+                            d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm1 7V3.5L18.5 9H15z"
+                            fill="currentColor"
+                        />
+                        <path
+                            d="M5 20h14v-2H5m14-9h-4V3H9v6H5l7 7 7-7z"
+                            fill="currentColor"
+                        />
+                    </svg>
+                    <span>{{ fileName }}</span>
+                </button>
+            </template>
             <template v-else>
                 {{ message.text }}
             </template>
@@ -268,6 +301,31 @@ onUnmounted(() => {
     border-radius: 12px;
     display: block;
     background: #111;
+}
+
+.file-message {
+    border: none;
+    border-radius: 12px;
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(0, 0, 0, 0.08);
+    color: inherit;
+    cursor: pointer;
+    max-width: 300px;
+}
+
+.file-message svg {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+}
+
+.file-message span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .image-viewer-overlay {

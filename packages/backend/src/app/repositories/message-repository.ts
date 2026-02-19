@@ -5,7 +5,7 @@ import type { InferInsertModel, InferSelectModel } from 'drizzle-orm';
 
 export type MessageRow = InferSelectModel<typeof messages>;
 export type MessageInsert = InferInsertModel<typeof messages>;
-export type MessageType = 'TEXT' | 'IMAGE' | 'VIDEO' | 'AUDIO';
+export type MessageType = 'TEXT' | 'IMAGE' | 'VIDEO' | 'AUDIO' | 'FILE';
 
 export interface IMessageRepository {
     create(data: MessageInsert): Promise<MessageRow>;

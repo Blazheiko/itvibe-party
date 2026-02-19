@@ -55,7 +55,7 @@ const dragCounter = ref(0)
 const isDragOver = ref(false)
 
 interface PendingImagePreview {
-    mediaType: 'IMAGE' | 'AUDIO' | 'VIDEO'
+    mediaType: 'IMAGE' | 'AUDIO' | 'VIDEO' | 'FILE'
     file: File
     thumbnailFile?: File
     previewUrl: string
@@ -67,6 +67,7 @@ const pendingImage = ref<PendingImagePreview | null>(null)
 const maxImageSizeBytes = 10 * 1024 * 1024
 const maxAudioSizeBytes = 20 * 1024 * 1024
 const maxVideoSizeBytes = 80 * 1024 * 1024
+const maxFileSizeBytes = 50 * 1024 * 1024
 const allowedImageMimeTypes = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/heic', 'image/heif'])
 const allowedAudioMimeTypes = new Set(['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/x-wav', 'audio/mp4', 'audio/m4a', 'audio/aac', 'audio/ogg', 'audio/webm', 'audio/flac', 'audio/opus'])
 const allowedVideoMimeTypes = new Set(['video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo', 'video/x-matroska', 'video/mp2t', 'video/ogg'])
@@ -93,6 +94,9 @@ const contextMenu = ref({
     isEditing: false,
     editText: '',
     canEdit: false,
+    canDownload: false,
+    downloadUrl: '',
+    downloadFileName: '',
 })
 
 // Добавляем состояние для редактирования сообщения
@@ -227,18 +231,19 @@ const selectImageFromButton = () => {
     imageInputRef.value?.click()
 }
 
-const detectPendingMediaType = (file: File): PendingImagePreview['mediaType'] | null => {
+const detectPendingMediaType = (file: File): PendingImagePreview['mediaType'] => {
     if (allowedImageMimeTypes.has(file.type) || file.type.startsWith('image/')) return 'IMAGE'
     if (allowedAudioMimeTypes.has(file.type) || file.type.startsWith('audio/')) return 'AUDIO'
     if (allowedVideoMimeTypes.has(file.type) || file.type.startsWith('video/')) return 'VIDEO'
-    return null
+    return 'FILE'
 }
 
 const validatePendingMediaSize = (mediaType: PendingImagePreview['mediaType'], size: number): boolean => {
     if (size <= 0) return false
     if (mediaType === 'IMAGE') return size <= maxImageSizeBytes
     if (mediaType === 'AUDIO') return size <= maxAudioSizeBytes
-    return size <= maxVideoSizeBytes
+    if (mediaType === 'VIDEO') return size <= maxVideoSizeBytes
+    return size <= maxFileSizeBytes
 }
 
 const generateThumbnailFile = async (file: File): Promise<File> => {
@@ -284,11 +289,6 @@ const setPendingImage = async (file: File | null) => {
     if (!file) return
 
     const mediaType = detectPendingMediaType(file)
-    if (!mediaType) {
-        console.error('Unsupported media type')
-        return
-    }
-
     if (!validatePendingMediaSize(mediaType, file.size)) {
         console.error('Invalid media size')
         return
@@ -415,6 +415,12 @@ const showContextMenu = (event: MouseEvent, index: number, text: string) => {
         isEditing: false,
         editText: text,
         canEdit: !message.type || message.type === 'TEXT',
+        canDownload: message.type === 'FILE' && typeof message.src === 'string' && message.src.length > 0,
+        downloadUrl: typeof message.src === 'string' ? message.src : '',
+        downloadFileName:
+            message.text?.trim().length > 0
+                ? message.text.trim()
+                : (typeof message.src === 'string' ? message.src.split('/').pop() || 'file' : 'file'),
     }
 }
 
@@ -422,6 +428,25 @@ const hideContextMenu = () => {
     contextMenu.value.show = false
     contextMenu.value.messageIndex = -1
     contextMenu.value.canEdit = false
+    contextMenu.value.canDownload = false
+    contextMenu.value.downloadUrl = ''
+    contextMenu.value.downloadFileName = ''
+}
+
+const downloadFileMessage = () => {
+    if (!contextMenu.value.canDownload || contextMenu.value.downloadUrl.length === 0) {
+        hideContextMenu()
+        return
+    }
+    const anchor = document.createElement('a')
+    anchor.href = contextMenu.value.downloadUrl
+    anchor.download = contextMenu.value.downloadFileName || 'file'
+    anchor.target = '_blank'
+    anchor.rel = 'noopener'
+    document.body.append(anchor)
+    anchor.click()
+    anchor.remove()
+    hideContextMenu()
 }
 
 const startEditing = () => {
@@ -782,16 +807,25 @@ onUnmounted(() => {
                 controls
             ></video>
             <audio
-                v-else
+                v-else-if="pendingImage.mediaType === 'AUDIO'"
                 :src="pendingImage.previewUrl"
                 class="pending-audio"
                 controls
             ></audio>
+            <div v-else class="pending-file-preview">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path
+                        d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm1 7V3.5L18.5 9H15z"
+                        fill="currentColor"
+                    />
+                </svg>
+                <span>File selected</span>
+            </div>
             <div class="pending-image-meta">
                 <div class="pending-image-name">{{ pendingImage.name }}</div>
                 <div class="pending-image-size">{{ formatFileSize(pendingImage.size) }}</div>
             </div>
-            <button class="pending-image-remove" @click="clearPendingImage" title="Remove image">
+            <button class="pending-image-remove" @click="clearPendingImage" title="Remove file">
                 <svg
                     viewBox="0 0 24 24"
                     width="18"
@@ -828,7 +862,7 @@ onUnmounted(() => {
             </button>
             <button
                 class="attachment-button"
-                title="Attach image"
+                title="Attach media or file"
                 @click="selectImageFromButton"
                 :disabled="!selectedContact"
             >
@@ -941,6 +975,15 @@ onUnmounted(() => {
                         />
                     </svg>
                     Task
+                </button>
+                <button v-if="contextMenu.canDownload" @click="downloadFileMessage" class="menu-item">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path
+                            d="M5 20h14v-2H5m14-9h-4V3H9v6H5l7 7 7-7z"
+                            fill="currentColor"
+                        />
+                    </svg>
+                    Download
                 </button>
                 <button @click="deleteMessage" class="menu-item delete">
                     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1272,6 +1315,25 @@ onUnmounted(() => {
 
 .pending-audio {
     width: min(360px, 62vw);
+}
+
+.pending-file-preview {
+    width: min(260px, 46vw);
+    min-height: 90px;
+    border-radius: 12px;
+    border: 1px dashed rgba(0, 0, 0, 0.25);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: #516171;
+    background: #fff;
+}
+
+.pending-file-preview svg {
+    width: 28px;
+    height: 28px;
 }
 
 .pending-image-meta {

@@ -4,7 +4,7 @@ export interface ApiMessage {
     createdAt: string
     senderId: string
     receiverId: string
-    type: 'TEXT' | 'IMAGE' | 'VIDEO' | 'AUDIO'
+    type: 'TEXT' | 'IMAGE' | 'VIDEO' | 'AUDIO' | 'FILE'
     src?: string | null
     thumbnail?: string | null
     taskId?: string | null

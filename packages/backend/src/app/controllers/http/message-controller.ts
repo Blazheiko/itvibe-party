@@ -47,7 +47,7 @@ function mapStatus(
 
 function parseMessageType(
   value: unknown,
-): "TEXT" | "IMAGE" | "VIDEO" | "AUDIO" | undefined {
+): "TEXT" | "IMAGE" | "VIDEO" | "AUDIO" | "FILE" | undefined {
   if (typeof value !== "string") {
     return undefined;
   }
@@ -56,11 +56,26 @@ function parseMessageType(
     normalized === "TEXT" ||
     normalized === "IMAGE" ||
     normalized === "VIDEO" ||
-    normalized === "AUDIO"
+    normalized === "AUDIO" ||
+    normalized === "FILE"
   ) {
     return normalized;
   }
   return undefined;
+}
+
+function toPositiveInt(value: unknown): number | null {
+  const normalized =
+    typeof value === "number"
+      ? value
+      : typeof value === "string"
+        ? Number(value.trim())
+        : Number.NaN;
+
+  if (!Number.isInteger(normalized) || normalized <= 0) {
+    return null;
+  }
+  return normalized;
 }
 
 export default {
@@ -118,23 +133,24 @@ export default {
     let contactId: number;
     let content: string;
     let userId: number;
-    let type: "TEXT" | "IMAGE" | "VIDEO" | "AUDIO" | undefined;
+    let type: "TEXT" | "IMAGE" | "VIDEO" | "AUDIO" | "FILE" | undefined;
     let file: UploadedFile | undefined;
     let thumbnailFile: UploadedFile | undefined;
-
-    if (httpData.files !== null) {
+    if (httpData.files !== null && httpData.files.size > 0) {
       const payload = (httpData.payload ?? {}) as Record<string, unknown>;
-      contactId = Number(payload["contactId"]);
-      content = String(payload["content"] ?? "");
-      userId = Number(payload["userId"]);
+      const sessionUserId = toPositiveInt(sessionInfo.data.userId);
+
+      contactId = toPositiveInt(payload["contactId"]) ?? 0;
+      content = String(payload["content"]);
+      userId = toPositiveInt(payload["userId"]) ?? sessionUserId ?? 0;
       type = parseMessageType(payload["type"]);
       file =
-        httpData.files?.get("media")
-        ?? httpData.files?.get("image")
-        ?? httpData.files?.get("audio")
-        ?? httpData.files?.get("video")
-        ?? httpData.files?.values().next().value;
-      thumbnailFile = httpData.files?.get("thumbnail");
+        httpData.files.get("media") ??
+        httpData.files.get("image") ??
+        httpData.files.get("audio") ??
+        httpData.files.get("video") ??
+        httpData.files.values().next().value;
+      thumbnailFile = httpData.files.get("thumbnail");
       logger.info(
         {
           mode: "multipart",
@@ -158,11 +174,11 @@ export default {
         "sendChatMessage: multipart payload parsed",
       );
     } else {
-      const parsedPayload = getTypedPayload(context);
-      contactId = parsedPayload.contactId;
-      content = parsedPayload.content;
-      userId = parsedPayload.userId;
-      type = parsedPayload.type;
+      const payload = getTypedPayload(context);
+      contactId = payload.contactId;
+      content = payload.content;
+      userId = payload.userId;
+      type = payload.type;
       logger.info(
         {
           mode: "json",
@@ -178,7 +194,7 @@ export default {
     }
 
     const sendOptions: {
-      type?: "TEXT" | "IMAGE" | "VIDEO" | "AUDIO";
+      type?: "TEXT" | "IMAGE" | "VIDEO" | "AUDIO" | "FILE";
       file?: UploadedFile;
       thumbnailFile?: UploadedFile;
     } = {};

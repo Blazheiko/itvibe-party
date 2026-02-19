@@ -89,7 +89,7 @@ export const messages = mysqlTable(
             mode: 'bigint',
             unsigned: true,
         }).notNull(),
-        type: mysqlEnum('type', ['TEXT', 'IMAGE', 'VIDEO', 'AUDIO'])
+        type: mysqlEnum('type', ['TEXT', 'IMAGE', 'VIDEO', 'AUDIO', 'FILE'])
             .notNull()
             .default('TEXT'),
         content: text('content').notNull(),

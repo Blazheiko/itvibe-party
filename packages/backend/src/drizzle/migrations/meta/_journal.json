@@ -29,6 +29,13 @@
       "when": 1771533000000,
       "tag": "0003_add_thumbnail_to_messages",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1771602000000,
+      "tag": "0004_add_file_type_to_messages",
+      "breakpoints": true
     }
   ]
 }

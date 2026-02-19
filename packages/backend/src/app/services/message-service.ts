@@ -45,10 +45,11 @@ function resolveMediaMimeType(file: UploadedFile): string {
         return '';
     })();
 
-    return (file.type || mimeTypeFromExt).toLowerCase();
+    const normalized = (file.type || mimeTypeFromExt).toLowerCase();
+    return normalized.length > 0 ? normalized : 'application/octet-stream';
 }
 
-function resolveMediaTypeFromFile(file: UploadedFile): 'IMAGE' | 'AUDIO' | 'VIDEO' | null {
+function resolveMediaTypeFromFile(file: UploadedFile): 'IMAGE' | 'AUDIO' | 'VIDEO' | 'FILE' {
     const mimeType = resolveMediaMimeType(file);
     if (mimeType.startsWith('image/')) return 'IMAGE';
     if (mimeType.startsWith('audio/')) return 'AUDIO';
@@ -58,12 +59,12 @@ function resolveMediaTypeFromFile(file: UploadedFile): 'IMAGE' | 'AUDIO' | 'VIDE
     if (['.jpg', '.jpeg', '.png', '.webp', '.gif', '.heic', '.heif'].includes(ext)) return 'IMAGE';
     if (['.mp3', '.wav', '.m4a', '.ogg', '.aac', '.flac', '.opus'].includes(ext)) return 'AUDIO';
     if (['.mp4', '.webm', '.mov', '.m4v', '.avi', '.mkv'].includes(ext)) return 'VIDEO';
-    return null;
+    return 'FILE';
 }
 
 async function uploadChatImageToS3(
     file: UploadedFile,
-    directory: 'chat-images' | 'chat-thumbnails' | 'chat-audio' | 'chat-video',
+    directory: 'chat-images' | 'chat-thumbnails' | 'chat-audio' | 'chat-video' | 'chat-files',
 ): Promise<{ key: string; mimeType: string }> {
     const extname = path.extname(file.filename);
     const ext = extname === '' ? '.bin' : extname;
@@ -119,7 +120,7 @@ export const messageService = {
         contactId: number,
         content: string,
         options: {
-            type?: 'TEXT' | 'IMAGE' | 'VIDEO' | 'AUDIO';
+            type?: 'TEXT' | 'IMAGE' | 'VIDEO' | 'AUDIO' | 'FILE';
             file?: UploadedFile;
             thumbnailFile?: UploadedFile;
         } = {},
@@ -142,22 +143,21 @@ export const messageService = {
         const fileType = options.file ? resolveMediaTypeFromFile(options.file) : null;
         const requestedType = options.type ?? (fileType ?? 'TEXT');
         const normalizedType = String(requestedType).trim().toUpperCase();
-        let messageType: 'TEXT' | 'IMAGE' | 'VIDEO' | 'AUDIO' | null = null;
+        let messageType: 'TEXT' | 'IMAGE' | 'VIDEO' | 'AUDIO' | 'FILE';
         if (
             normalizedType === 'TEXT' ||
             normalizedType === 'IMAGE' ||
             normalizedType === 'VIDEO' ||
-            normalizedType === 'AUDIO'
+            normalizedType === 'AUDIO' ||
+            normalizedType === 'FILE'
         ) {
             messageType = normalizedType;
-        }
-
-        if (messageType === null) {
+        } else {
             return failure('BAD_REQUEST', 'Unsupported message type');
         }
 
-        if (options.file !== undefined && fileType === null) {
-            return failure('BAD_REQUEST', 'Unsupported media format');
+        if (messageType === 'FILE' && options.file === undefined) {
+            return failure('BAD_REQUEST', 'File message requires uploaded file');
         }
 
         let messageContent = content.trim();
@@ -201,10 +201,7 @@ export const messageService = {
             ]);
 
             const normalizedFileType = resolveMediaMimeType(file);
-            const detectedType = fileType;
-            if (detectedType === null) {
-                return failure('BAD_REQUEST', 'Unsupported media format');
-            }
+            const detectedType = resolveMediaTypeFromFile(file);
             messageType = detectedType;
 
             if (
@@ -221,7 +218,9 @@ export const messageService = {
                     ? 10 * 1024 * 1024
                     : detectedType === 'AUDIO'
                         ? 20 * 1024 * 1024
-                        : 80 * 1024 * 1024;
+                        : detectedType === 'VIDEO'
+                            ? 80 * 1024 * 1024
+                            : 50 * 1024 * 1024;
             if (fileSize <= 0) {
                 return failure('BAD_REQUEST', 'Uploaded media file is empty');
             }
@@ -234,9 +233,14 @@ export const messageService = {
                     ? 'chat-images'
                     : detectedType === 'AUDIO'
                         ? 'chat-audio'
-                        : 'chat-video';
+                        : detectedType === 'VIDEO'
+                            ? 'chat-video'
+                            : 'chat-files';
             const uploadedOriginal = await uploadChatImageToS3(file, uploadDirectory);
             messageSrc = uploadedOriginal.key;
+            if (detectedType === 'FILE' && messageContent.length === 0) {
+                messageContent = file.filename;
+            }
 
             if (detectedType === 'IMAGE') {
                 const thumbnailFile = options.thumbnailFile;

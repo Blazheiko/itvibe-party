@@ -13,7 +13,7 @@ export interface Message {
     sender_id?: number
     receiver_id?: number
     text: string
-    type?: 'TEXT' | 'IMAGE' | 'VIDEO' | 'AUDIO'
+    type?: 'TEXT' | 'IMAGE' | 'VIDEO' | 'AUDIO' | 'FILE'
     src?: string | null
     thumbnail?: string | null
     time: string
