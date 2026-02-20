@@ -1577,6 +1577,40 @@ function updateWindowWidth() {
     height: 18px;
 }
 
+.create-post-icon-button {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: white;
+    cursor: pointer;
+    padding: 0;
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.create-post-icon-button svg {
+    width: 20px;
+    height: 20px;
+}
+
+.create-post-icon-button:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+@media (max-width: 768px) {
+    .news-feed > .news-header {
+        padding: 14px 16px;
+    }
+
+    .news-feed > .news-header h2 {
+        font-size: 16px;
+    }
+}
+
 .back-to-chat-button {
     display: flex;
     align-items: center;

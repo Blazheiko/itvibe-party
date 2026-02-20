@@ -1620,6 +1620,14 @@ onUnmounted(() => {
         height: 10px;
     }
 
+    .toggle-contacts {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        width: 24px;
+        height: 24px;
+    }
     .message {
         max-width: 85%;
         font-size: 14px;

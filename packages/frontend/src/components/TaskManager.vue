@@ -1730,18 +1730,18 @@ onMounted(() => {
     }
 
     .task-header {
-        padding: 18px 20px;
+        padding: 14px 16px;
     }
 
     .task-header h2 {
-        font-size: 18px;
-        margin: 0 16px;
+        font-size: 16px;
+        margin: 0 12px;
     }
 
     .back-button,
     .create-task-button {
-        width: 36px;
-        height: 36px;
+        width: 24px;
+        height: 24px;
     }
 
     .task-content {
