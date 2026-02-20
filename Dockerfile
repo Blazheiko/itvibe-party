@@ -25,8 +25,18 @@ RUN pnpm install --frozen-lockfile
 # Копируем весь проект
 COPY . .
 
-# Сборка проекта
-RUN pnpm build
+# 1. Собираем shared (зависимость для frontend и backend)
+RUN pnpm --filter shared build
+
+# 2. Собираем frontend
+RUN pnpm --filter frontend build
+
+# 3. Собираем backend
+RUN pnpm --filter backend build
+
+# 4. Копируем собранный frontend в папку public backend
+RUN rm -rf packages/backend/public && \
+    cp -r packages/frontend/dist packages/backend/public
 
 
 # --- Этап 2: продакшн ---
@@ -57,11 +67,11 @@ RUN pnpm install --frozen-lockfile --prod=false
 
 ENV NODE_ENV=production
 
-# Копируем собранный код
+# Копируем собранный код backend и shared
 COPY --from=builder /app/packages/backend/dist ./packages/backend/dist
 COPY --from=builder /app/packages/shared/dist ./packages/shared/dist
 
-# Копируем папки public и public-test (нужны для static-server)
+# Копируем public (frontend build) и public-test
 COPY --from=builder /app/packages/backend/public ./packages/backend/public
 COPY --from=builder /app/packages/backend/public-test ./packages/backend/public-test
 
@@ -74,6 +84,5 @@ COPY --from=builder /app/packages/backend/src/drizzle/migrations ./packages/back
 EXPOSE 3000
 
 # Запускаем миграции и приложение
-# Используем команду start из backend/package.json
 WORKDIR /app/packages/backend
 CMD ["sh", "-c", "pnpm db:migrate && pnpm start"]
