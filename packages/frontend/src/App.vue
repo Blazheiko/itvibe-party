@@ -93,14 +93,7 @@ const handleWebRTCCallEnd = (data: { targetUserId: string | number; reason?: str
     })
 }
 
-// Вычисляем, нужно ли показывать кнопку переключения темы
-const showThemeToggle = computed(() => {
-    // Скрываем кнопку на странице чата в мобильной версии
-    if ((route.name === 'Chat' || route.name === 'UserAccount') && windowWidth <= 1400) {
-        return false
-    }
-    return true
-})
+
 
 // Пропсы для глобального хедера из meta маршрута
 const headerTitle = computed(() => (route.meta.title as string) || '')
@@ -207,10 +200,7 @@ const initializeApp = async () => {
     }
 }
 
-// Переключение темы
-const toggleTheme = () => {
-    stateStore.setDarkMode(!stateStore.darkMode)
-}
+
 
 // Обработка входящего звонка
 const handleAcceptCall = () => {
@@ -321,11 +311,6 @@ const handleEndOutgoingCall = () => {
                 :back-path="headerBackPath"
                 :back-label="headerBackLabel"
             />
-            <div v-if="showThemeToggle" class="theme-toggle">
-                <button @click="toggleTheme">
-                    {{ stateStore.darkMode ? '☀️' : '🌙' }}
-                </button>
-            </div>
             <router-view />
         </template>
 
@@ -510,49 +495,7 @@ input {
     }
 }
 
-.theme-toggle {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    z-index: 999;
-}
 
-.theme-toggle button {
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-size: 1.5rem;
-    padding: 8px;
-    border-radius: 50%;
-    background-color: rgba(0, 0, 0, 0.1);
-    transition: background-color 0.3s;
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.dark-theme .theme-toggle button {
-    background-color: rgba(255, 255, 255, 0.1);
-}
-
-.theme-toggle button:hover {
-    background-color: rgba(0, 0, 0, 0.2);
-}
-
-.dark-theme .theme-toggle button:hover {
-    background-color: rgba(255, 255, 255, 0.2);
-}
-
-/* Изменение позиции кнопки темы на мобильных устройствах */
-@media (max-width: 1400px) {
-    .theme-toggle {
-        top: auto;
-        bottom: 20px;
-        right: 20px;
-    }
-}
 
 .loader-container {
     position: fixed;
