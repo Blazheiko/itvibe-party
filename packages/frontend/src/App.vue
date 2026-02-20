@@ -358,29 +358,37 @@ const handleEndOutgoingCall = () => {
 
 <style>
 :root {
-    --primary-color: #145fc2;
-    --accent-color: #195cc6;
-    --background-color: #f8f9fa;
-    --text-color: #212529;
-    --border-color: #dee2e6;
-    --box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    --border-radius: 8px;
+    --primary-color: #2563eb; /* Tailwind blue-600 */
+    --accent-color: #3b82f6; /* Tailwind blue-500 */
+    --background-color: #f8fafc; /* Tailwind slate-50 */
+    --surface-color: #ffffff;
+    --text-color: #0f172a; /* Tailwind slate-900 */
+    --text-secondary: #64748b; /* Tailwind slate-500 */
+    --border-color: #e2e8f0; /* Tailwind slate-200 */
+    --box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --border-radius: 12px;
     --content-max-width: 800px;
-    --header-height: 36px;
+    --header-height: 56px;
     /* Цвета индикаторов: календарь и задачи */
-    --calendar-color: #ff3b30; /* оттенок красного, как в календаре */
-    --task-color: #4caf50; /* зеленый как в task manager */
+    --calendar-color: #ef4444; /* Tailwind red-500 */
+    --task-color: #22c55e; /* Tailwind green-500 */
+    --glass-bg: rgba(255, 255, 255, 0.8);
+    --glass-border: rgba(255, 255, 255, 0.3);
 }
 
 :root.dark-theme {
-    --primary-color: #0d47a1;
-    --accent-color: #0d47a1;
-    --background-color: #121212;
-    --text-color: #e0e0e0;
-    --border-color: #424242;
-    --box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
-    --calendar-color: #ff6b6b;
-    --task-color: #66bb6a;
+    --primary-color: #3b82f6; /* Tailwind blue-500 */
+    --accent-color: #60a5fa; /* Tailwind blue-400 */
+    --background-color: #0f172a; /* Tailwind slate-900 */
+    --surface-color: #1e293b; /* Tailwind slate-800 */
+    --text-color: #f8fafc; /* Tailwind slate-50 */
+    --text-secondary: #94a3b8; /* Tailwind slate-400 */
+    --border-color: #334155; /* Tailwind slate-700 */
+    --box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+    --calendar-color: #f87171; /* Tailwind red-400 */
+    --task-color: #4ade80; /* Tailwind green-400 */
+    --glass-bg: rgba(30, 41, 59, 0.8);
+    --glass-border: rgba(255, 255, 255, 0.1);
 }
 
 * {
@@ -392,7 +400,7 @@ const handleEndOutgoingCall = () => {
 html,
 body {
     width: 100%;
-    height: 100%;
+    height: 100dvh;
     overflow: hidden;
     margin: 0;
     padding: 0;
@@ -428,7 +436,7 @@ body {
 }
 
 #app {
-    height: 100%;
+    height: 100dvh;
     width: 100%;
     position: relative;
     display: flex;
@@ -478,7 +486,7 @@ input {
 @media (max-width: 768px) {
     :root {
         --content-max-width: 100%;
-        --header-height: 32px;
+        --header-height: 48px;
     }
 
     body {

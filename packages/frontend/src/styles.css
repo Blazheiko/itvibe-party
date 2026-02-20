@@ -5,23 +5,23 @@
 }
 
 body {
-  font-family: Arial, sans-serif;
-  height: 100vh;
+  font-family: 'Inter', Arial, sans-serif;
+  height: 100dvh;
 }
 
 .chat-container {
   display: grid;
   grid-template-columns: 300px 1fr;
-  height: 100vh;
-  background-color: #fff;
+  height: 100dvh;
+  background-color: var(--surface-color, #fff);
   position: relative;
   margin-top: 0;
   transition: margin-top 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .contacts {
-  background-color: #f5f5f5;
-  border-right: 1px solid #ddd;
+  background-color: var(--background-color);
+  bordervar(--border-color);
   padding: 20px;
   z-index: 10;
 }
@@ -31,7 +31,7 @@ body {
   position: absolute;
   top: 20px;
   left: 20px;
-  background-color: #003399;
+  background-color: var(--primary-color);
   color: white;
   border: none;
   border-radius: 5px;
@@ -62,6 +62,7 @@ body {
 
   .contacts.show {
       left: 0;
+      box-shadow: 0 0 0 10000px rgba(0, 0, 0, 0.4);
   }
 
   .toggle-contacts {
@@ -104,7 +105,7 @@ body {
 }
 
 .contact.active {
-  background-color: #003399;
+  background-color: var(--primary-color);
   color: white;
 }
 
@@ -125,7 +126,7 @@ body {
 }
 
 .chat-header {
-  background-color: #003399;
+  background-color: var(--primary-color);
   color: white;
   padding: 20px;
   display: flex;
@@ -138,7 +139,7 @@ body {
   padding: 20px;
   padding-bottom: 0;
   overflow-y: auto;
-  background-color: #fff;
+  background-color: var(--surface-color);
   display: flex;
   flex-direction: column;
 }
@@ -146,7 +147,7 @@ body {
 .message {
   margin-bottom: 15px;
   padding: 10px 15px;
-  border-radius: 10px;
+  border-radius: 16px;
   max-width: 70%;
   position: relative;
 }
@@ -159,8 +160,9 @@ body {
 }
 
 .message.received {
-  background-color: #f0f0f0;
+  background-color: var(--background-color);
   align-self: flex-start;
+  border-bottom-left-radius: 4px;
 }
 
 .message.received .message-time {
@@ -168,9 +170,10 @@ body {
 }
 
 .message.sent {
-  background-color: #003399;
+  background-color: var(--primary-color);
   color: white;
   align-self: flex-end;
+  border-bottom-right-radius: 4px;
 }
 
 .message.sent .message-time {
@@ -191,12 +194,12 @@ body {
   top: 50%;
   width: 100%;
   height: 1px;
-  background-color: #ddd;
+  background-color: var(--border-color);
   z-index: 1;
 }
 
 .date-divider span {
-  background-color: #fff;
+  background-color: var(--surface-color);
   padding: 0 10px;
   color: #666;
   font-size: 14px;
@@ -206,8 +209,8 @@ body {
 
 .input-area {
   padding: 20px;
-  background-color: #fff;
-  border-top: 1px solid #ddd;
+  background-color: var(--surface-color);
+  bordervar(--border-color);
   display: flex;
   gap: 10px;
 }
@@ -215,13 +218,13 @@ body {
 .message-input {
   flex-grow: 1;
   padding: 15px;
-  border: 2px solid #003399;
+  border: 2px solid var(--primary-color);
   border-radius: 25px;
   outline: none;
 }
 
 .send-button {
-  background-color: #003399;
+  background-color: var(--primary-color);
   color: white;
   border: none;
   border-radius: 50%;
@@ -234,7 +237,7 @@ body {
 }
 
 .send-button:hover {
-  background-color: #002277;
+  background-color: var(--accent-color);
 }
 
 .message-input:focus {
@@ -286,7 +289,7 @@ body {
   transform: scale(0.95);
   opacity: 0;
   transition: transform 0.3s ease, opacity 0.3s ease;
-  background-color: white;
+  background-color: var(--surface-color);
   padding: 30px;
   border-radius: 10px;
   width: 100%;
@@ -296,7 +299,7 @@ body {
 
 .modal h2 {
   margin-bottom: 20px;
-  color: #003399;
+  color: var(--primary-color);
 }
 
 .modal-close {
@@ -317,13 +320,13 @@ body {
 .form-group label {
   display: block;
   margin-bottom: 5px;
-  color: #333;
+  color: var(--text-color);
 }
 
 .form-group input {
   width: 100%;
   padding: 10px;
-  border: 2px solid #003399;
+  border: 2px solid var(--primary-color);
   border-radius: 5px;
   outline: none;
 }
@@ -335,7 +338,7 @@ body {
 .auth-button {
   width: 100%;
   padding: 12px;
-  background-color: #003399;
+  background-color: var(--primary-color);
   color: white;
   border: none;
   border-radius: 5px;
@@ -344,7 +347,7 @@ body {
 }
 
 .auth-button:hover {
-  background-color: #002277;
+  background-color: var(--accent-color);
 }
 
 .switch-form {
@@ -354,7 +357,7 @@ body {
 }
 
 .switch-form a {
-  color: #003399;
+  color: var(--primary-color);
   text-decoration: none;
   cursor: pointer;
 }
@@ -539,7 +542,7 @@ body {
   width: 48px;
   height: 48px;
   border: 5px solid #FFF;
-  border-bottom-color: #003399;
+  border-bottom-color: var(--primary-color);
   border-radius: 50%;
   display: inline-block;
   box-sizing: border-box;
@@ -566,7 +569,7 @@ body {
 .loader div {
   width: 12px;
   height: 12px;
-  background: #003399;
+  background: var(--primary-color);
   border-radius: 50%;
   animation: bounce 0.5s ease-in-out infinite;
 }
@@ -588,7 +591,7 @@ body {
 .loader {
   width: 48px;
   height: 48px;
-  background: #003399;
+  background: var(--primary-color);
   border-radius: 50%;
   display: inline-block;
   animation: pulse 1.2s ease-in-out infinite;
@@ -622,7 +625,7 @@ button:active {
 
 /* Специфичные эффекты для разных кнопок */
 .send-button:active {
-  background-color: #001e66; /* Темный оттенок основного цвета */
+  background-color: var(--accent-color); /* Темный оттенок основного цвета */
   transform: scale(0.92);
 }
 
@@ -641,11 +644,11 @@ button:active {
 
 .modal-close:active {
   transform: scale(0.8);
-  color: #333;
+  color: var(--text-color);
 }
 
 .auth-button:active {
-  background-color: #001e66;
+  background-color: var(--accent-color);
   transform: scale(0.98);
 }
 
@@ -660,4 +663,5 @@ button:active {
 
 /* Анимация нажатия для ссылок */
 .switch-form a:active {
-  color: #001e66;
+  color: var(--accent-color);
+}

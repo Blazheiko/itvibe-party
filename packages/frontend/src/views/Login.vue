@@ -63,10 +63,11 @@ onMounted(() => {
             setTimeout(typeWriter, 150)
         } else {
             typingComplete.value = true
-            // Проверяем PWA режим после завершения анимации
-            checkPWAAndShowModal()
         }
     }
+
+    // Проверяем PWA сразу, не дожидаясь анимации
+    checkPWAAndShowModal()
 
     // Запускаем анимацию печати с небольшой задержкой
     setTimeout(typeWriter, 1000)

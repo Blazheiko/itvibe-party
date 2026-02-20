@@ -221,12 +221,17 @@ const goBack = () => {
     color: white;
     box-shadow: var(--box-shadow);
     width: 100%;
-    padding: 4px 0;
+    padding: 0;
+    height: var(--header-height);
+    z-index: 50;
 }
 
 .dark-theme .app-header {
-    background-color: #0d47a1;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    background-color: var(--glass-bg);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--glass-border);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
 }
 
 .header-content {
@@ -437,10 +442,13 @@ const goBack = () => {
     }
 
     .notification-button {
-        width: 32px;
-        height: 32px;
-        padding: 6px;
-        margin-right: 12px;
+        width: 44px;
+        height: 44px;
+        padding: 10px;
+        margin-right: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 
     /* WebSocket status на мобильных - показываем только точку */
@@ -463,8 +471,11 @@ const goBack = () => {
     }
 
     .back-button {
-        padding: 6px 12px;
-        font-size: 13px;
+        padding: 10px 12px;
+        font-size: 14px;
+        min-height: 44px;
+        min-width: 44px;
+        justify-content: center;
     }
 
     .back-button span {
