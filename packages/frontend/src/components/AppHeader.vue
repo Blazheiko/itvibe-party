@@ -224,6 +224,7 @@ const goBack = () => {
     padding: 0;
     height: var(--header-height);
     z-index: 50;
+    position: relative;
 }
 
 .dark-theme .app-header {
