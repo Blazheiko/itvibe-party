@@ -1374,11 +1374,17 @@ const toggleTask = () => {
 
     .contacts-header h2 {
         color: white;
+        font-size: 16px;
     }
 
     .close-contacts {
-        display: block;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         color: white;
+        padding: 0;
+        width: 24px;
+        height: 24px;
     }
 
     .close-contacts svg path {
