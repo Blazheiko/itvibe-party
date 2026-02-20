@@ -359,6 +359,7 @@ const handleEndOutgoingCall = () => {
     --task-color: #22c55e; /* Tailwind green-500 */
     --glass-bg: rgba(255, 255, 255, 0.8);
     --glass-border: rgba(255, 255, 255, 0.3);
+    --app-header-bg: #1e40af; /* Tailwind blue-800 - slightly darker than primary to separate from chat */
 }
 
 :root.dark-theme {
@@ -374,6 +375,7 @@ const handleEndOutgoingCall = () => {
     --task-color: #4ade80; /* Tailwind green-400 */
     --glass-bg: rgba(30, 41, 59, 0.8);
     --glass-border: rgba(255, 255, 255, 0.1);
+    --app-header-dark-bg: rgba(15, 23, 42, 0.85); /* Slightly darker glass for app header */
 }
 
 * {

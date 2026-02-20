@@ -217,7 +217,7 @@ const goBack = () => {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background-color: var(--primary-color);
+    background-color: var(--app-header-bg, #2146bfff);
     color: white;
     box-shadow: var(--box-shadow);
     width: 100%;
@@ -228,7 +228,7 @@ const goBack = () => {
 }
 
 .dark-theme .app-header {
-    background-color: var(--glass-bg);
+    background-color: var(--app-header-dark-bg, rgba(15, 23, 42, 0.85));
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     border-bottom: 1px solid var(--glass-border);
